@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel the World · Experiências</title>
+    <!-- Google Fonts + Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <div class="nav-left">
+                <div class="logo">TOURBYFOOT.COM  </div>
+
+                <div class="lang-selector" id="langSelector">
+                    <button class="lang-btn" type="button" id="langBtn">
+                	<span class="flag flag-pt"></span> Português
+                    </button>
+                    <ul class="lang-list" id="langList">
+                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                       </ul>
+                </div>
+                
+                <nav>
+                    <a href="#" class="active" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#" data-i18n="nav_about">SOBRE</a>
+                    <a href="#" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#" data-i18n="nav_help">AJUDA</a>
+                </nav>
+            </div>
+
+  
+
+            <!-- Botão hamburger para mobile -->
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="nav-right" id="navRight">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
+                    <button type="button"><i class="fa fa-search"></i></button>
+                </div>
+
+                <button class="btn-signup" data-i18n="login">LOGIN</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="hero-text">
+                <h1 class="hero-title" data-i18n="hero_title">Free <br> Walking Tour</h1>
+                <div class="subtitle" data-i18n="hero_subtitle">“Descubra novos destinos,<br>experiências inesquecíveis<br>& novas aventuras”</div>
+
+                <div class="city-title" data-i18n="choose_city">Escolha a cidade:</div>
+                <div class="city-list">
+                    <a class="city-card" href="imagem/RiodeJaneiro.jpeg" target="_blank" rel="noopener">
+                        <span class="city-thumb city-thumb-rio"></span>
+                        <span class="city-name" data-i18n="city_rio">Rio de Janeiro</span>
+                    </a>
+                    <a class="city-card" href="imagem/Salvador.jpeg" target="_blank" rel="noopener">
+                        <span class="city-thumb city-thumb-salvador"></span>
+                        <span class="city-name" data-i18n="city_salvador">Salvador</span>
+                    </a>
+                    <a class="city-card" href="imagem/SaoLuis.jpeg" target="_blank" rel="noopener">
+                        <span class="city-thumb city-thumb-saoluis"></span>
+                        <span class="city-name" data-i18n="city_saoluis">São Luís do Maranhão</span>
+                    </a>
+                    <a class="city-card" href="https://www.tourbyfoot.com/visit-lencois/pt" target="_blank" rel="noopener">
+                        <span class="city-thumb city-thumb-lencois"></span>
+                        <span class="city-name" data-i18n="city_lencois">Lençóis Maranhenses</span>
+                    </a>
+                </div>
+
+                <div class="social-icons">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <!-- Imagens inclinadas -->
+            <div class="hero-images">
+                <div class="pill-mask"></div>
+                <div class="pill-mask"></div>
+                <div class="pill-mask"></div>
+                <div class="pill-mask"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
