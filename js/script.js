@@ -173,4 +173,60 @@ console.log('Layout da imagem de referência carregado.');
 			if (!wrapper.contains(e.target)) wrapper.classList.remove("open");
 		});
 	}
+	/* Video sync code is below, outside the IIFE */
+})();
+
+/* ===================================================== */
+/* VIDEO CAPSULE SYNC  (split-screen local mp4)          */
+/* Trecho de 0:12 a 2:00, depois repete                  */
+/* ===================================================== */
+(function () {
+	var START = 12;
+	var END   = 120;
+	var videos = document.querySelectorAll('.capsule-video');
+	if (!videos.length) return;
+
+	var master = videos[0];
+
+	// Configura todos os vídeos no ponto inicial
+	videos.forEach(function (v) {
+		v.currentTime = START;
+	});
+
+	// Inicia a reprodução quando o master estiver pronto
+	master.addEventListener('canplay', function handler() {
+		master.removeEventListener('canplay', handler);
+		videos.forEach(function (v) {
+			v.currentTime = START;
+			v.play().catch(function () {});
+		});
+	});
+
+	// Loop manual: quando chegar em END, volta para START
+	master.addEventListener('timeupdate', function () {
+		if (master.currentTime >= END) {
+			videos.forEach(function (v) {
+				v.currentTime = START;
+				v.play().catch(function () {});
+			});
+		}
+	});
+
+	// Sincroniza os seguidores com o master a cada 500ms
+	setInterval(function () {
+		if (master.paused) return;
+		for (var i = 1; i < videos.length; i++) {
+			if (Math.abs(videos[i].currentTime - master.currentTime) > 0.15) {
+				videos[i].currentTime = master.currentTime;
+			}
+		}
+	}, 500);
+
+	// Se o vídeo terminar naturalmente, reinicia
+	master.addEventListener('ended', function () {
+		videos.forEach(function (v) {
+			v.currentTime = START;
+			v.play().catch(function () {});
+		});
+	});
 })();
