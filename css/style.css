@@ -429,7 +429,7 @@ main {
 
 .city-thumb {
     width: 90%;
-    aspect-ratio: 3 / 3;
+    aspect-ratio: 4 / 5;
     background-size: cover;
     background-position: center;
     border-radius: 14px;
@@ -458,18 +458,24 @@ main {
 }
 
 .lang-btn {
-    background: rgba(255,255,255,0.9);
-    border: none;
+    background: #e9dfc7;
+    border: 1px solid #C2B280;
     border-radius: 20px;
     padding: 0.4rem 0.9rem;
     font-weight: 700;
     cursor: pointer;
-    color: var(--green-dark);
+    color: #5a4e3a;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 0.85rem;
     white-space: nowrap;
+    transition: background 0.3s, color 0.3s;
+}
+
+.lang-btn:hover {
+    background: #C2B280;
+    color: #fff;
 }
 
 .lang-list {
@@ -478,7 +484,8 @@ main {
     top: 42px;
     left: 0;
     list-style: none;
-    background: #fff;
+    background: #f5eed8;
+    border: 1px solid #C2B280;
     border-radius: 10px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     padding: 6px 0;
@@ -489,13 +496,14 @@ main {
 .lang-list li {
     padding: 8px 12px;
     cursor: pointer;
-    color: #1a2e2a;
+    color: #5a4e3a;
     font-weight: 600;
     font-size: 0.85rem;
 }
 
 .lang-list li:hover {
-    background: rgba(0,0,0,0.06);
+    background: #e9dfc7;
+    color: #3d3422;
 }
 
 .lang-selector.open .lang-list {
@@ -582,7 +590,7 @@ main {
     }
 
     .city-thumb {
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 4 / 5;
         height: auto;
     }
 
@@ -644,12 +652,51 @@ main {
     .nav-left {
         width: 100%;
         justify-content: space-between;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         flex: 1 1 100%;
     }
 
     .lang-selector {
-        order: -1;
+        display: none;
+        order: 13;
+        width: 100%;
+        padding: 0;
+        background: none;
+        border-radius: 0;
+    }
+
+    .lang-selector .lang-btn {
+        width: 100%;
+        background: rgba(13, 85, 72, 0.95);
+        border: none;
+        border-radius: 0 0 12px 12px;
+        color: #e9dfc7;
+        padding: 0.9rem 1.2rem;
+        font-size: 1rem;
+        justify-content: flex-start;
+    }
+
+    .lang-selector .lang-list {
+        position: static;
+        background: rgba(13, 85, 72, 0.98);
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .lang-selector .lang-list li {
+        color: #e9dfc7;
+        padding: 0.7rem 1.2rem 0.7rem 2rem;
+    }
+
+    .lang-selector .lang-list li:hover {
+        background: rgba(194,178,128,0.2);
+    }
+
+    header.menu-open .lang-selector {
+        display: block;
     }
 
     header {
@@ -708,7 +755,7 @@ main {
     }
 
     .city-thumb {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 4 / 5;
         height: auto;
     }
 
@@ -778,7 +825,7 @@ main {
     }
 
     .city-thumb {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 4 / 5;
         height: auto;
     }
 
