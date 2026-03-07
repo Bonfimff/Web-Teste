@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Walking Tour · São Luís do Maranhão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css">
+    <link rel="stylesheet" href="../css/Saolu%C3%ADsdomaranhao.css">
+</head>
+<body>
+    <div class="main-container rio-page">
+        <header>
+            <div class="nav-left">
+                <div class="lang-selector" id="langSelector">
+                    <button class="lang-btn" type="button" id="langBtn">
+                        <span class="flag flag-pt"></span> Português
+                    </button>
+                    <ul class="lang-list" id="langList">
+                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                    </ul>
+                </div>
+                <nav>
+                    <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#" data-i18n="nav_about">SOBRE</a>
+                    <a href="#" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#" data-i18n="nav_help">AJUDA</a>
+                </nav>
+            </div>
+
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="nav-right" id="navRight">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
+                    <button type="button"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="btn-signup" data-i18n="login">LOGIN</button>
+            </div>
+        </header>
+
+        <!-- HERO SÃO LUÍS -->
+        <section class="rio-hero">
+            <div class="rio-hero-overlay"></div>
+            <div class="rio-hero-content">
+                <h1 class="rio-hero-title">Free Walking Tour em<br><span class="rio-city-highlight">São Luís do Maranhão</span></h1>
+                <p class="rio-hero-location">Maranhão — Brasil</p>
+                <p class="rio-hero-desc">Bem-vindo à capital ludovicense; além de porta de entrada para o paraíso natural dos Lençóis Maranhenses, São Luís possui um dos mais emblemáticos e encantadores centros históricos do mundo.</p>
+                <a href="#tours" class="btn-book">Conhecer Tours</a>
+            </div>
+        </section>
+
+        <!-- AVISO -->
+        <section class="rio-notice">
+            <h2 class="rio-notice-title">Olá, estamos de volta!</h2>
+            <div class="rio-notice-text">
+                <p><i class="fa fa-circle-info"></i> Para participar de nosso Free Tour é necessário reservar sua vaga.</p>
+                <p><i class="fa fa-circle-info"></i> Seguimos todas as medidas sanitárias exigidas para este tipo de passeio.</p>
+                <p><i class="fa fa-circle-info"></i> Por favor estar atentos aos dias disponíveis no formulário de reserva.</p>
+                <p><i class="fa fa-circle-info"></i> Sua contribuição é a remuneração do guia, seja consciente.</p>
+                <p><i class="fa fa-circle-info"></i> Em caso de não poder comparecer ao tour, cancele sua reserva pelo WhatsApp <strong>+55 21 97001-8590</strong>.</p>
+            </div>
+        </section>
+
+        <!-- TOURS -->
+        <section class="rio-tours" id="tours">
+            <h2 class="rio-section-title">Nossas Experiências</h2>
+            <div class="rio-section-divider"></div>
+            <h3 class="rio-section-subtitle">Free Tours</h3>
+
+            <div class="rio-tours-grid">
+
+                <!-- FREE TOUR — CENTRO HISTÓRICO -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/centro-historico-750.webp" alt="Centro Histórico de São Luís" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Centro Histórico</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-clock"></i> <strong>Duração:</strong> 2h15</li>
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Todos os dias (Jul–Set) às 10:00 e 15:30 (PT) · Qua e Sáb às 10:00 (ES)</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Cais da Praia Grande, Av. Sen. Vitorino Freire — Centro</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://maps.app.goo.gl/CaisDaPraiaGrande" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://docs.google.com/forms/d/e/1FAIpQLScNx3uZNREK0eQcT79D21gt1CMwLgcG7ioJRD8k8MvZQPEMeQ/viewform?usp=sf_link" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- TOURS PAGOS -->
+            <h3 class="rio-section-subtitle rio-paid-label">Outros Tours</h3>
+            <div class="rio-section-divider rio-divider-small"></div>
+            <h4 class="rio-paid-subtitle">Tours Privados</h4>
+
+            <div class="rio-tours-grid">
+                <article class="rio-tour-card rio-tour-paid">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-750.webp" alt="Tour Privado — Centro Histórico" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Tour Privado <span class="rio-tour-name-sub">(Centro Histórico)</span></h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-clock"></i> <strong>Duração:</strong> 3h00</li>
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Todos os dias às 10:00, 13:00 e 15:00</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-tag"></i> <strong>Valor:</strong> R$ 250,00 (1–3 pessoas) · R$ 80,00/pessoa (4+)</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Cais da Praia Grande, Av. Sen. Vitorino Freire — Centro</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://maps.app.goo.gl/CaisDaPraiaGrande" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://api.whatsapp.com/send?phone=5521970018590&text=Ol%C3%A1%2C%20gostaria%20de%20agendar%20um%20tour%20privado%20em%20S%C3%A3o%20Lu%C3%ADs%20do%20Maranh%C3%A3o." target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar via WhatsApp</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="rio-footer">
+            <div class="social-icons">
+                <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                <a href="https://wa.me/5521970018590" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+            <p class="rio-footer-text">Travel the World · Experiências — São Luís do Maranhão</p>
+        </footer>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/Saolu%C3%ADsdomaranhao.js"></script>
+</body>
+</html>

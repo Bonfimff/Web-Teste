@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Walking Tour · Rio de Janeiro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css">
+</head>
+<body>
+    <div class="main-container rio-page">
+        <header>
+            <div class="nav-left">
+                <div class="lang-selector" id="langSelector">
+                    <button class="lang-btn" type="button" id="langBtn">
+                        <span class="flag flag-pt"></span> Português
+                    </button>
+                    <ul class="lang-list" id="langList">
+                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                    </ul>
+                </div>
+                <nav>
+                    <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#" data-i18n="nav_about">SOBRE</a>
+                    <a href="#" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#" data-i18n="nav_help">AJUDA</a>
+                </nav>
+            </div>
+
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="nav-right" id="navRight">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
+                    <button type="button"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="btn-signup" data-i18n="login">LOGIN</button>
+            </div>
+        </header>
+
+        <!-- HERO RIO -->
+        <section class="rio-hero">
+            <div class="rio-hero-overlay"></div>
+            <div class="rio-hero-content">
+                <h1 class="rio-hero-title">Free Walking Tour no<br><span class="rio-city-highlight">Rio de Janeiro</span></h1>
+                <p class="rio-hero-location">Rio de Janeiro — Brasil</p>
+                <p class="rio-hero-desc">Seja bem vindo à cidade Maravilhosa; o Rio dos amores e da beleza inconfundível te espera de braços abertos.</p>
+                <a href="#tours" class="btn-book">Conhecer Tours</a>
+            </div>
+        </section>
+
+        <!-- AVISO -->
+        <section class="rio-notice">
+            <h2 class="rio-notice-title">Olá, estamos de volta!</h2>
+            <div class="rio-notice-text">
+                <p><i class="fa fa-circle-info"></i> Para participar de nosso Free Tour é necessário reservar sua vaga.</p>
+                <p><i class="fa fa-circle-info"></i> Seguimos todas as medidas sanitárias exigidas para este tipo de passeio.</p>
+                <p><i class="fa fa-circle-info"></i> Por favor estar atentos aos dias disponíveis no formulário de reserva.</p>
+                <p><i class="fa fa-circle-info"></i> Sua contribuição é a remuneração do guia, seja consciente.</p>
+                <p><i class="fa fa-circle-info"></i> Em caso de não poder comparecer ao tour, cancele sua reserva pelo WhatsApp <strong>+55 21 96445-8696</strong>.</p>
+            </div>
+        </section>
+
+        <!-- TOURS -->
+        <section class="rio-tours" id="tours">
+            <h2 class="rio-section-title">Nossas Experiências</h2>
+            <div class="rio-section-divider"></div>
+            <h3 class="rio-section-subtitle">Free Tours</h3>
+
+            <div class="rio-tours-grid">
+
+                <!-- CENTRO HISTÓRICO -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/centro-historico-750.webp" alt="Centro Histórico do Rio" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Centro Histórico</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Segunda a Sábado às 10:30am</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Praça Cinelândia, em frente ao Theatro Municipal</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://goo.gl/maps/7mJhdvazUuyrh9tp7" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- SANTA TERESA -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/bonde_santa_teresa_govrj-750.webp" alt="Santa Teresa" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Santa Teresa</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Quarta às 15h e Domingo às 11:30am</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Largo dos Guimarães, em frente ao Cine Santa Teresa</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://goo.gl/maps/7Ho6a1XUrmDGpSjNA" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- PEDRA DO SAL -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/pedra-do-sal-2-750.webp" alt="Pedra do Sal" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Pedra do Sal: Samba e Herança Afrobrasileira</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Segundas e Sextas às 16h</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Museu de Arte do Rio (MAR) — Praça Mauá, 5 — Centro</li>
+                            <li><i class="fa fa-flag-checkered"></i> <strong>Finalização:</strong> Pedra do Sal (17:30)</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://g.page/museuarterio?share" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- COPACABANA E IPANEMA -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2022/5/6154b435ca6c9c0010a3dead/copacabana-750.webp" alt="Copacabana e Ipanema" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Copacabana e Ipanema</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Quintas às 15:30</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Estação General Osório (Metrô) — Saída A</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://goo.gl/maps/WBo5vJ76AuiLp96u8" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- TOURS PAGOS -->
+            <h3 class="rio-section-subtitle rio-paid-label">Outros Tours</h3>
+            <div class="rio-section-divider rio-divider-small"></div>
+            <h4 class="rio-paid-subtitle">Tours Pagos</h4>
+
+            <div class="rio-tours-grid">
+                <article class="rio-tour-card rio-tour-paid">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/1639076728414-750.webp" alt="Favela Tour — Morro Dona Marta" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Favela Tour <span class="rio-tour-name-sub">(Morro Dona Marta)</span></h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Dias:</strong> Todos os dias às 14h</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-tag"></i> <strong>Valor:</strong> R$ 120,00 por pessoa</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Praça Corumbá — Botafogo</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://goo.gl/maps/aRQ9UYneFVPpu1ea9" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="rio-footer">
+            <div class="social-icons">
+                <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                <a href="https://wa.me/5521964458696" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+            <p class="rio-footer-text">Travel the World · Experiências — Rio de Janeiro</p>
+        </footer>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/Riodejaneiro.js"></script>
+</body>
+</html>

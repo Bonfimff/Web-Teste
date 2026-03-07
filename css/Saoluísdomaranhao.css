@@ -1,0 +1,5 @@
+/* São Luís do Maranhão — Overrides */
+/* Re-usa classes rio-* de Riodejaneiro.css */
+.rio-hero {
+    background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp') center/cover no-repeat;
+}

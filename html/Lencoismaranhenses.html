@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiências · Lençóis Maranhenses</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css">
+    <link rel="stylesheet" href="../css/Lencoismaranhenses.css">
+</head>
+<body>
+    <div class="main-container rio-page">
+        <header>
+            <div class="nav-left">
+                <div class="lang-selector" id="langSelector">
+                    <button class="lang-btn" type="button" id="langBtn">
+                        <span class="flag flag-pt"></span> Português
+                    </button>
+                    <ul class="lang-list" id="langList">
+                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                    </ul>
+                </div>
+                <nav>
+                    <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#" data-i18n="nav_about">SOBRE</a>
+                    <a href="#" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#" data-i18n="nav_help">AJUDA</a>
+                </nav>
+            </div>
+
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="nav-right" id="navRight">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
+                    <button type="button"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="btn-signup" data-i18n="login">LOGIN</button>
+            </div>
+        </header>
+
+        <!-- HERO LENÇÓIS -->
+        <section class="rio-hero">
+            <div class="rio-hero-overlay"></div>
+            <div class="rio-hero-content">
+                <h1 class="rio-hero-title">Experiências nos<br><span class="rio-city-highlight">Lençóis Maranhenses</span></h1>
+                <p class="rio-hero-location">Maranhão — Brasil</p>
+                <p class="rio-hero-desc">Descubra o paraíso das dunas e lagoas cristalinas no coração do Maranhão. Uma experiência única em um dos cenários naturais mais impressionantes do planeta.</p>
+                <a href="#tours" class="btn-book">Conhecer Tours</a>
+            </div>
+        </section>
+
+        <!-- AVISO -->
+        <section class="rio-notice">
+            <h2 class="rio-notice-title">Informações Importantes</h2>
+            <div class="rio-notice-text">
+                <p><i class="fa fa-circle-info"></i> A melhor época para visitar os Lençóis Maranhenses é entre junho e setembro, quando as lagoas estão cheias.</p>
+                <p><i class="fa fa-circle-info"></i> Para reservar sua experiência, entre em contato conosco pelo WhatsApp <strong>+55 21 97001-8590</strong>.</p>
+                <p><i class="fa fa-circle-info"></i> Todos os passeios incluem transporte, guia credenciado e seguro.</p>
+                <p><i class="fa fa-circle-info"></i> Recomendamos protetor solar, roupas leves, chapéu e calçados confortáveis.</p>
+            </div>
+        </section>
+
+        <!-- TOURS -->
+        <section class="rio-tours" id="tours">
+            <h2 class="rio-section-title">Nossas Experiências</h2>
+            <div class="rio-section-divider"></div>
+            <h3 class="rio-section-subtitle">Passeios</h3>
+
+            <div class="rio-tours-grid">
+
+                <!-- LAGOAS DE SANTO AMARO -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/brasil-maranhao-santo-amaro-parque-nacional-dos-lencois-maranhenses-10-750.webp" alt="Lagoas de Santo Amaro" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Lagoas de Santo Amaro</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Período:</strong> Junho a Setembro</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Saída:</strong> São Luís ou Barreirinhas</li>
+                            <li><i class="fa fa-users"></i> <strong>Grupo:</strong> Mínimo 2 pessoas</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://www.tourbyfoot.com/visit-lencois/pt" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-info-circle"></i> Mais Detalhes</a>
+                            <a href="https://api.whatsapp.com/send?phone=5521970018590&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20os%20passeios%20nos%20Len%C3%A7%C3%B3is%20Maranhenses." target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar via WhatsApp</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- CIRCUITO COMPLETO -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <img src="https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/delta2-750.webp" alt="Circuito Completo Lençóis" loading="lazy">
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Circuito Completo Lençóis</h4>
+                        <ul class="rio-tour-details">
+                            <li><i class="fa fa-calendar"></i> <strong>Período:</strong> Junho a Setembro</li>
+                            <li><i class="fa fa-clock"></i> <strong>Duração:</strong> 3 a 5 dias</li>
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Saída:</strong> São Luís</li>
+                            <li><i class="fa fa-check-circle"></i> <strong>Inclui:</strong> Transporte, hospedagem, guia e refeições</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://www.tourbyfoot.com/visit-lencois/pt" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-info-circle"></i> Mais Detalhes</a>
+                            <a href="https://api.whatsapp.com/send?phone=5521970018590&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Circuito%20Completo%20Len%C3%A7%C3%B3is." target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar via WhatsApp</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="rio-footer">
+            <div class="social-icons">
+                <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                <a href="https://wa.me/5521970018590" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+            <p class="rio-footer-text">Travel the World · Experiências — Lençóis Maranhenses</p>
+        </footer>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/Lencoismaranhenses.js"></script>
+</body>
+</html>

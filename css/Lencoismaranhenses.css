@@ -1,0 +1,5 @@
+/* Lençóis Maranhenses — Overrides */
+/* Re-usa classes rio-* de Riodejaneiro.css */
+.rio-hero {
+    background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/brasil-maranhao-santo-amaro-parque-nacional-dos-lencois-maranhenses-10-750.webp') center/cover no-repeat;
+}

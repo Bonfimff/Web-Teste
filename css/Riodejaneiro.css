@@ -1,0 +1,408 @@
+/* ===================================================== */
+/* RIO DE JANEIRO — PÁGINA ESPECÍFICA                    */
+/* Herda variáveis e componentes globais de style.css     */
+/* ===================================================== */
+
+/* ---------- OVERRIDE DO CONTAINER PRINCIPAL ----------- */
+.rio-page {
+    background:
+        radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,0.08), transparent 60%),
+        radial-gradient(900px 500px at 20% 80%, rgba(255,255,255,0.06), transparent 55%),
+        radial-gradient(800px 600px at 100% 100%, rgba(255,255,255,0.22), transparent 60%),
+        linear-gradient(120deg, #0d5548 0%, #21af9c 55%, #7fe9e2 100%);
+    background-blend-mode: screen, screen, screen, normal;
+}
+
+/* ===================================================== */
+/* HERO                                                  */
+/* ===================================================== */
+.rio-hero {
+    position: relative;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    background:
+        url('https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/cabe-alho-site.jpeg')
+        center / cover no-repeat;
+}
+
+.rio-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(13, 85, 72, 0.75) 0%,
+        rgba(13, 85, 72, 0.55) 60%,
+        rgba(13, 85, 72, 0.85) 100%
+    );
+    z-index: 1;
+}
+
+.rio-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    padding: 3rem 2rem;
+    animation: heroIntro 0.9s ease-out forwards;
+}
+
+.rio-hero-title {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+}
+
+.rio-city-highlight {
+    display: block;
+    background: linear-gradient(120deg, #c2b280 0%, #f0e5c0 45%, #c2b280 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: clamp(2.2rem, 5vw, 4rem);
+}
+
+.rio-hero-location {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 600;
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 1.2rem;
+}
+
+.rio-hero-desc {
+    font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+    color: rgba(255,255,255,0.9);
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+/* ===================================================== */
+/* SEÇÃO DE AVISO                                        */
+/* ===================================================== */
+.rio-notice {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.rio-notice-title {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    background: linear-gradient(120deg, #c2b280 0%, #f0e5c0 45%, #c2b280 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1.5rem;
+}
+
+.rio-notice-text {
+    text-align: left;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(194,178,128,0.2);
+    border-radius: 16px;
+    padding: 1.8rem 2rem;
+}
+
+.rio-notice-text p {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 0.6rem;
+}
+
+.rio-notice-text p:last-child {
+    margin-bottom: 0;
+}
+
+.rio-notice-text i {
+    color: #C2B280;
+    margin-right: 0.5rem;
+    font-size: 0.85rem;
+}
+
+/* ===================================================== */
+/* SEÇÃO DE TOURS                                        */
+/* ===================================================== */
+.rio-tours {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 2rem 3rem;
+}
+
+.rio-section-title {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+    color: #fff;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.rio-section-divider {
+    width: 80px;
+    height: 3px;
+    background: #C2B280;
+    margin: 0 auto 1.5rem;
+    border-radius: 2px;
+}
+
+.rio-divider-small {
+    width: 50px;
+}
+
+.rio-section-subtitle {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.2rem, 2vw, 1.8rem);
+    color: #C2B280;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.rio-paid-label {
+    margin-top: 3rem;
+}
+
+.rio-paid-subtitle {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 600;
+    font-size: clamp(1rem, 1.6vw, 1.4rem);
+    color: rgba(255,255,255,0.8);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* ===================================================== */
+/* CARDS DE TOURS                                        */
+/* ===================================================== */
+.rio-tours-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.rio-tour-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(194,178,128,0.2);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+    display: flex;
+    flex-direction: column;
+}
+
+.rio-tour-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+    border-color: rgba(194,178,128,0.45);
+}
+
+.rio-tour-paid {
+    border-color: rgba(194,178,128,0.4);
+    background: rgba(194,178,128,0.08);
+}
+
+.rio-tour-images {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+}
+
+.rio-tour-images img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+}
+
+.rio-tour-card:hover .rio-tour-images img {
+    transform: scale(1.05);
+}
+
+.rio-tour-info {
+    padding: 1.4rem 1.6rem 1.6rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.rio-tour-name {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    color: #C2B280;
+    margin-bottom: 1rem;
+}
+
+.rio-tour-name-sub {
+    font-weight: 600;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.7);
+}
+
+.rio-tour-details {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.2rem;
+    flex: 1;
+}
+
+.rio-tour-details li {
+    color: rgba(255,255,255,0.88);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.rio-tour-details li:last-child {
+    border-bottom: none;
+}
+
+.rio-tour-details i {
+    color: var(--green-light);
+    width: 20px;
+    text-align: center;
+    margin-right: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.rio-tour-details strong {
+    color: rgba(255,255,255,0.95);
+}
+
+/* ===================================================== */
+/* AÇÕES DO TOUR (mapa + reservar)                       */
+/* ===================================================== */
+.rio-tour-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 0.8rem;
+}
+
+.rio-link-map {
+    color: var(--green-light);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.rio-link-map:hover {
+    color: #C2B280;
+}
+
+.rio-link-map i {
+    margin-right: 0.3rem;
+}
+
+.rio-btn-reserve {
+    padding: 0.65rem 1.6rem;
+    font-size: 0.9rem;
+    margin-top: 0;
+}
+
+/* ===================================================== */
+/* FOOTER                                                */
+/* ===================================================== */
+.rio-footer {
+    text-align: center;
+    padding: 2rem 1rem 3rem;
+}
+
+.rio-footer .social-icons {
+    justify-content: center;
+}
+
+.rio-footer-text {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+    margin-top: 1rem;
+}
+
+/* ===================================================== */
+/* RESPONSIVO                                            */
+/* ===================================================== */
+@media (max-width: 900px) {
+    .rio-tours-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rio-hero {
+        min-height: 55vh;
+    }
+
+    .rio-hero-content {
+        padding: 2rem 1.2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .rio-hero {
+        min-height: 50vh;
+    }
+
+    .rio-hero-title {
+        font-size: clamp(1.4rem, 6vw, 2rem);
+    }
+
+    .rio-city-highlight {
+        font-size: clamp(1.8rem, 8vw, 2.8rem);
+    }
+
+    .rio-notice {
+        padding: 2rem 1rem;
+    }
+
+    .rio-notice-text {
+        padding: 1.2rem 1rem;
+    }
+
+    .rio-tours {
+        padding: 1.5rem 1rem 2rem;
+    }
+
+    .rio-tour-info {
+        padding: 1rem 1.2rem 1.4rem;
+    }
+
+    .rio-tour-actions {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .rio-btn-reserve {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ===================================================== */
+/* ANIMAÇÃO DOS CARDS (scroll reveal)                    */
+/* ===================================================== */
+.rio-card-hidden {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.rio-card-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}

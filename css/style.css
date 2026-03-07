@@ -306,6 +306,7 @@ main {
     color: #C2B280;
     background: linear-gradient(120deg, #c2b280 0%, #f0e5c0 45%, #c2b280 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
     text-shadow: 0 4px 12px rgba(0,0,0,0.25);
     background-size: 200% 200%;

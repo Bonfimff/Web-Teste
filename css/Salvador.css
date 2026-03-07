@@ -1,0 +1,5 @@
+/* Salvador — Overrides */
+/* Re-usa classes rio-* de Riodejaneiro.css */
+.rio-hero {
+    background: url('https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp') center/cover no-repeat;
+}
