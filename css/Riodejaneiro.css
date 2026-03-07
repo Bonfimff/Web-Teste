@@ -86,13 +86,17 @@
 }
 
 /* ===================================================== */
-/* SEÇÃO DE AVISO                                        */
+/* SEÇÃO DE AVISO (modal)                                */
 /* ===================================================== */
 .rio-notice {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 3rem 2rem;
-    text-align: center;
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
 }
 
 .rio-notice-title {
@@ -108,10 +112,11 @@
 
 .rio-notice-text {
     text-align: left;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(194,178,128,0.2);
-    border-radius: 16px;
-    padding: 1.8rem 2rem;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    border-radius: 20px;
+    padding: 2.5rem 3rem;
+    max-width: 600px;
 }
 
 .rio-notice-text p {
@@ -129,6 +134,18 @@
     color: #C2B280;
     margin-right: 0.5rem;
     font-size: 0.85rem;
+}
+
+.rio-notice-text .btn-proceed {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.8rem 2rem;
+    border-radius: 60px;
+    background: #C2B280;
+    color: #111;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 /* ===================================================== */
@@ -366,11 +383,11 @@
     }
 
     .rio-notice {
-        padding: 2rem 1rem;
+        padding: 1rem;
     }
 
     .rio-notice-text {
-        padding: 1.2rem 1rem;
+        padding: 1.5rem;
     }
 
     .rio-tours {

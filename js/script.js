@@ -13,7 +13,6 @@ console.log('Layout da imagem de referência carregado.');
 			headerEl.classList.toggle("menu-open");
 		});
 
-		// Fecha o menu ao clicar em um link da nav
 		document.querySelectorAll("nav a").forEach((link) => {
 			link.addEventListener("click", () => {
 				hamburger.classList.remove("active");
@@ -23,19 +22,18 @@ console.log('Layout da imagem de referência carregado.');
 	}
 
 	/* ================================================= */
-	/* TRADUÇÕES (i18n)                                  */
+	/* TRADUCOES BASE (i18n)                             */
 	/* ================================================= */
 	const translations = {
 		pt: {
 			hero_title: "Free <br> Walking Tour",
-			hero_subtitle: "“Descubra novos destinos,<br>experiências inesquecíveis<br>& novas aventuras”",
+			hero_subtitle: "Descubra novos destinos,<br>experiências inesquecíveis<br>& novas aventuras",
 			choose_city: "Escolha a cidade:",
 			city_rio: "Rio de Janeiro",
 			city_salvador: "Salvador",
 			city_saoluis: "São Luís do Maranhão",
 			city_lencois: "Lençóis Maranhenses",
 			nav_home: "INÍCIO",
-			nav_services: "SERVIÇOS",
 			nav_about: "SOBRE",
 			nav_contact: "CONTATO",
 			nav_help: "AJUDA",
@@ -44,14 +42,13 @@ console.log('Layout da imagem de referência carregado.');
 		},
 		en: {
 			hero_title: "Free <br> Walking Tour",
-			hero_subtitle: "“Discover new destinations,<br>unforgettable experiences<br>& new adventures”",
+			hero_subtitle: "Discover new destinations,<br>unforgettable experiences<br>& new adventures",
 			choose_city: "Choose the city:",
 			city_rio: "Rio de Janeiro",
 			city_salvador: "Salvador",
 			city_saoluis: "São Luís do Maranhão",
 			city_lencois: "Lençóis Maranhenses",
 			nav_home: "HOME",
-			nav_services: "SERVICES",
 			nav_about: "ABOUT",
 			nav_contact: "CONTACT",
 			nav_help: "HELP",
@@ -60,14 +57,13 @@ console.log('Layout da imagem de referência carregado.');
 		},
 		fr: {
 			hero_title: "Free <br> Walking Tour",
-			hero_subtitle: "“Découvrez de nouvelles destinations,<br>des expériences inoubliables<br>& de nouvelles aventures”",
+			hero_subtitle: "Découvrez de nouvelles destinations,<br>des expériences inoubliables<br>& de nouvelles aventures",
 			choose_city: "Choisissez la ville :",
 			city_rio: "Rio de Janeiro",
 			city_salvador: "Salvador",
 			city_saoluis: "São Luís do Maranhão",
 			city_lencois: "Lençóis Maranhenses",
 			nav_home: "ACCUEIL",
-			nav_services: "SERVICES",
 			nav_about: "À PROPOS",
 			nav_contact: "CONTACT",
 			nav_help: "AIDE",
@@ -76,14 +72,13 @@ console.log('Layout da imagem de referência carregado.');
 		},
 		es: {
 			hero_title: "Free <br> Walking Tour",
-			hero_subtitle: "“Descubre nuevos destinos,<br>experiencias inolvidables<br>& nuevas aventuras”",
+			hero_subtitle: "Descubre nuevos destinos,<br>experiencias inolvidables<br>& nuevas aventuras",
 			choose_city: "Elige la ciudad:",
 			city_rio: "Rio de Janeiro",
 			city_salvador: "Salvador",
 			city_saoluis: "São Luís do Maranhão",
 			city_lencois: "Lençóis Maranhenses",
 			nav_home: "INICIO",
-			nav_services: "SERVICIOS",
 			nav_about: "SOBRE",
 			nav_contact: "CONTACTO",
 			nav_help: "AYUDA",
@@ -92,14 +87,13 @@ console.log('Layout da imagem de referência carregado.');
 		},
 		it: {
 			hero_title: "Free <br> Walking Tour",
-			hero_subtitle: "“Scopri nuove destinazioni,<br>esperienze indimenticabili<br>& nuove avventure”",
+			hero_subtitle: "Scopri nuove destinazioni,<br>esperienze indimenticabili<br>& nuove avventure",
 			choose_city: "Scegli la città:",
 			city_rio: "Rio de Janeiro",
 			city_salvador: "Salvador",
 			city_saoluis: "São Luís do Maranhão",
 			city_lencois: "Lençóis Maranhenses",
 			nav_home: "INIZIO",
-			nav_services: "SERVIZI",
 			nav_about: "CHI SIAMO",
 			nav_contact: "CONTATTO",
 			nav_help: "AIUTO",
@@ -108,14 +102,13 @@ console.log('Layout da imagem de referência carregado.');
 		},
 		zh: {
 			hero_title: "Free <br> Walking Tour",
-			hero_subtitle: "“探索新的目的地，<br>难忘的体验<br>& 全新的冒险”",
+			hero_subtitle: "探索新的目的地，<br>难忘的体验<br>& 全新的冒险",
 			choose_city: "选择城市：",
 			city_rio: "里约热内卢",
 			city_salvador: "萨尔瓦多",
 			city_saoluis: "圣路易斯（马拉尼昂州）",
 			city_lencois: "伦索伊斯马拉年塞斯",
 			nav_home: "首页",
-			nav_services: "服务",
 			nav_about: "关于",
 			nav_contact: "联系",
 			nav_help: "帮助",
@@ -136,9 +129,15 @@ console.log('Layout da imagem de referência carregado.');
 	const btn = document.getElementById("langBtn");
 	const list = document.getElementById("langList");
 	const wrapper = document.getElementById("langSelector");
+	let currentLang = "pt";
 
 	const applyLang = (lang) => {
-		const dict = translations[lang] || translations.pt;
+		currentLang = translations[lang] ? lang : "pt";
+		window.__appLang = currentLang;
+		try { localStorage.setItem('appLang', currentLang); } catch(e) {}
+		document.documentElement.lang = currentLang;
+
+		const dict = translations[currentLang] || translations.pt;
 		document.querySelectorAll("[data-i18n]").forEach((el) => {
 			const key = el.getAttribute("data-i18n");
 			if (dict[key]) el.innerHTML = dict[key];
@@ -147,15 +146,24 @@ console.log('Layout da imagem de referência carregado.');
 			const key = el.getAttribute("data-i18n-placeholder");
 			if (dict[key]) el.setAttribute("placeholder", dict[key]);
 		});
+
 		if (btn) {
-			const info = langMap[lang] || langMap.pt;
+			const info = langMap[currentLang] || langMap.pt;
 			btn.innerHTML = `<span class="flag ${info.flag}"></span> ${info.label}`;
 		}
+
+		document.dispatchEvent(new CustomEvent("app:language-changed", {
+			detail: { lang: currentLang }
+		}));
 	};
 
+	window.getCurrentLanguage = () => currentLang;
+
 	if (btn && list && wrapper) {
+		let savedLang;
+		try { savedLang = localStorage.getItem('appLang'); } catch(e) {}
 		const browserLang = (navigator.language || "pt").slice(0, 2);
-		const initialLang = translations[browserLang] ? browserLang : "pt";
+		const initialLang = savedLang && translations[savedLang] ? savedLang : (translations[browserLang] ? browserLang : "pt");
 		applyLang(initialLang);
 
 		btn.addEventListener("click", () => {
@@ -173,7 +181,6 @@ console.log('Layout da imagem de referência carregado.');
 			if (!wrapper.contains(e.target)) wrapper.classList.remove("open");
 		});
 	}
-	/* Video sync code is below, outside the IIFE */
 })();
 
 /* ===================================================== */
@@ -230,3 +237,14 @@ console.log('Layout da imagem de referência carregado.');
 		});
 	});
 })();
+
+// fecha modal de aviso quando usuário clica em prosseguir
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.querySelector('.rio-notice .btn-proceed');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            const notice = btn.closest('.rio-notice');
+            if (notice) notice.style.display = 'none';
+        });
+    }
+});
