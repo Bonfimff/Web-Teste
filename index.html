@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="main-container">
+    <div class="main-container" id="inicio">
         <header>
             <div class="nav-left">
                 <div class="lang-selector" id="langSelector">
@@ -29,10 +29,10 @@
                 </div>
                 
                 <nav>
-                    <a href="#" class="active" data-i18n="nav_home">INÍCIO</a>
-                    <a href="#" data-i18n="nav_about">SOBRE</a>
-                    <a href="#" data-i18n="nav_contact">CONTATO</a>
-                    <a href="#" data-i18n="nav_help">AJUDA</a>
+                    <a href="#inicio" class="active" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#sobre" data-i18n="nav_about">SOBRE</a>
+                    <a href="#contato" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#ajuda" data-i18n="nav_help">AJUDA</a>
                 </nav>
             </div>
 
@@ -105,6 +105,28 @@
                 </div>
             </div>
         </main>
+
+        <section class="site-sections is-empty" aria-label="Informações do site" id="infoSections">
+            <article class="site-section-card is-hidden" id="sobre">
+                <h2 data-i18n="about_title">Sobre</h2>
+                <p data-i18n="about_text">Somos uma equipe apaixonada por experiências locais autênticas, conectando viajantes a guias especialistas em cada destino.</p>
+            </article>
+
+            <article class="site-section-card is-hidden" id="contato">
+                <h2 data-i18n="contact_title">Contato</h2>
+                <p data-i18n="contact_text">Fale com a Travel the World para dúvidas, parcerias e reservas personalizadas.</p>
+                <div class="site-section-links">
+                    <a href="mailto:contato@traveltheworld.com">contato@traveltheworld.com</a>
+                    <a href="https://wa.me/5521970018590" target="_blank" rel="noopener">WhatsApp: +55 21 97001-8590</a>
+                </div>
+            </article>
+
+            <article class="site-section-card is-hidden" id="ajuda">
+                <h2 data-i18n="help_title">Ajuda</h2>
+                <p data-i18n="help_text">Precisa de suporte com idioma, horários, cancelamentos ou ponto de encontro? Nossa equipe está pronta para ajudar.</p>
+            </article>
+        </section>
+
     </div>
 
     <script src="js/script.js"></script>

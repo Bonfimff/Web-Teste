@@ -29,9 +29,9 @@
                 </div>
                 <nav>
                     <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
-                    <a href="#" data-i18n="nav_about">SOBRE</a>
-                    <a href="#" data-i18n="nav_contact">CONTATO</a>
-                    <a href="#" data-i18n="nav_help">AJUDA</a>
+                    <a href="../index.html#sobre" data-i18n="nav_about">SOBRE</a>
+                    <a href="../index.html#contato" data-i18n="nav_contact">CONTATO</a>
+                    <a href="../index.html#ajuda" data-i18n="nav_help">AJUDA</a>
                 </nav>
             </div>
 
@@ -132,6 +132,22 @@
             </div>
             <p class="rio-footer-text">Travel the World · Experiências — Lençóis Maranhenses</p>
         </footer>
+
+        <div class="award-modal" id="awardModal" aria-hidden="true" aria-live="polite" aria-atomic="true">
+            <div class="award-modal__dialog" role="status" aria-labelledby="awardTitle">
+                <button class="award-modal__close" type="button" data-close-award aria-label="Fechar">&times;</button>
+                <h3 id="awardTitle" class="award-modal__title" data-i18n="award_title">Reconhecimento Especial</h3>
+                <div class="hs-modal__body">
+                    <section class="hs-modal__leftImage"><span class="hs-icon js-hs-icon"><img src="https://app.hoversignal.com/AppImage/Signals/4bd5923d-79aa-4fa7-9ac0-e9ecac175d3e" alt="Prêmio TripAdvisor"></span></section>
+                    <section class="hs-modal__rightDescr">
+                        <div class="hs-modal__rightDescrBody">
+                            <div class="js-hs-description" data-signaltext="" data-i18n="award_text">Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰</div>
+                            <div class="award-modal__countdown" id="awardCountdown" aria-live="polite"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="../js/script.js"></script>

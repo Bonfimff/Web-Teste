@@ -4,13 +4,107 @@
 /* ===================================================== */
 
 /* ---------- OVERRIDE DO CONTAINER PRINCIPAL ----------- */
+/* imagem de fundo RJ fornecida pelo usuário deve ficar em /imagem/
+   usamos o arquivo existente 'fundo rj.png' (espacos escapados)*/
 .rio-page {
-    background:
-        radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,0.08), transparent 60%),
-        radial-gradient(900px 500px at 20% 80%, rgba(255,255,255,0.06), transparent 55%),
-        radial-gradient(800px 600px at 100% 100%, rgba(255,255,255,0.22), transparent 60%),
-        linear-gradient(120deg, #0d5548 0%, #21af9c 55%, #7fe9e2 100%);
-    background-blend-mode: screen, screen, screen, normal;
+    /* camada inferior creme para transição suave
+       camada superior foto ajustada para cobrir o corpo da página */
+    /* uso propriedades separadas para forçar redimensionamento correto */
+    background-image: url('../imagem/fundo rj.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    background-attachment: fixed !important;
+    background-color: transparent !important; /* evita camada creme sobre a foto */
+    background-blend-mode: normal !important;
+    color: #2c3e50;
+}
+
+/* ===================================================== */
+/* HEADER TRANSPARENTE SOBRE O HERO                      */
+/* ===================================================== */
+.rio-page header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.2rem clamp(1rem, 4vw, 4rem);
+}
+
+.rio-page nav a {
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.rio-page nav a:hover,
+.rio-page nav a.active {
+    color: #f0e5c0;
+    border-bottom-color: #f0e5c0;
+}
+
+.rio-page .lang-btn {
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.rio-page .lang-list {
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rio-page .lang-list li {
+    color: #e9dfc7;
+}
+
+.rio-page .lang-list li:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.rio-page .search-bar {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.rio-page .search-bar input {
+    color: #fff;
+}
+
+.rio-page .search-bar input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.rio-page .search-bar button {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.rio-page .search-bar button:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.rio-page .btn-signup {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.rio-page .btn-signup:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.rio-page .hamburger span {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 /* ===================================================== */
@@ -24,9 +118,10 @@
     justify-content: center;
     text-align: center;
     overflow: hidden;
+    padding-top: 70px;
+    /* herói mantém sua própria foto acima do fundo do corpo */
     background:
-        url('https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/cabe-alho-site.jpeg')
-        center / cover no-repeat;
+        url('https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/cabe-alho-site.jpeg') center/cover no-repeat;
 }
 
 .rio-hero-overlay {
@@ -34,11 +129,34 @@
     inset: 0;
     background: linear-gradient(
         180deg,
-        rgba(13, 85, 72, 0.75) 0%,
-        rgba(13, 85, 72, 0.55) 60%,
-        rgba(13, 85, 72, 0.85) 100%
+        rgba(12, 35, 64, 0.78) 0%,
+        rgba(26, 82, 118, 0.5) 60%,
+        rgba(12, 35, 64, 0.88) 100%
     );
     z-index: 1;
+}
+
+/* Calçadão de Copacabana — moldura em ondas portuguesas
+   Topo: transparente (foto do hero visível pelas faixas escuras)
+   Base: sólido #f5f2ec (transição suave para o corpo da página)
+   Técnica: CSS mask recorta o fundo creme em ondas; a foto aparece
+   nos vãos, criando as faixas escuras naturalmente. */
+.rio-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    z-index: 3;
+    pointer-events: none;
+    background: #f5f2ec;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 100' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cpath d='M0,68 C120,56 240,56 360,68 C480,80 600,80 720,68 C840,56 960,56 1080,68 C1200,80 1320,80 1440,68 V100 H0Z' fill='white'/%3E%3Cpath d='M0,52 C120,40 240,40 360,52 C480,64 600,64 720,52 C840,40 960,40 1080,52 C1200,64 1320,64 1440,52 L1440,60 C1320,72 1200,72 1080,60 C960,48 840,48 720,60 C600,72 480,72 360,60 C240,48 120,48 0,60Z' fill='white'/%3E%3Cpath d='M0,36 C120,24 240,24 360,36 C480,48 600,48 720,36 C840,24 960,24 1080,36 C1200,48 1320,48 1440,36 L1440,44 C1320,56 1200,56 1080,44 C960,32 840,32 720,44 C600,56 480,56 360,44 C240,32 120,32 0,44Z' fill='white'/%3E%3Cpath d='M0,20 C120,8 240,8 360,20 C480,32 600,32 720,20 C840,8 960,8 1080,20 C1200,32 1320,32 1440,20 L1440,28 C1320,40 1200,40 1080,28 C960,16 840,16 720,28 C600,40 480,40 360,28 C240,16 120,16 0,28Z' fill='white'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 100' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cpath d='M0,68 C120,56 240,56 360,68 C480,80 600,80 720,68 C840,56 960,56 1080,68 C1200,80 1320,80 1440,68 V100 H0Z' fill='white'/%3E%3Cpath d='M0,52 C120,40 240,40 360,52 C480,64 600,64 720,52 C840,40 960,40 1080,52 C1200,64 1320,64 1440,52 L1440,60 C1320,72 1200,72 1080,60 C960,48 840,48 720,60 C600,72 480,72 360,60 C240,48 120,48 0,60Z' fill='white'/%3E%3Cpath d='M0,36 C120,24 240,24 360,36 C480,48 600,48 720,36 C840,24 960,24 1080,36 C1200,48 1320,48 1440,36 L1440,44 C1320,56 1200,56 1080,44 C960,32 840,32 720,44 C600,56 480,56 360,44 C240,32 120,32 0,44Z' fill='white'/%3E%3Cpath d='M0,20 C120,8 240,8 360,20 C480,32 600,32 720,20 C840,8 960,8 1080,20 C1200,32 1320,32 1440,20 L1440,28 C1320,40 1200,40 1080,28 C960,16 840,16 720,28 C600,40 480,40 360,28 C240,16 120,16 0,28Z' fill='white'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
 }
 
 .rio-hero-content {
@@ -94,8 +212,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     z-index: 1000;
 }
 
@@ -112,9 +231,11 @@
 
 .rio-notice-text {
     text-align: left;
-    background: rgba(255,255,255,0.12);
-    border: none;
-    border-radius: 20px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
     padding: 2.5rem 3rem;
     max-width: 600px;
 }
@@ -146,6 +267,13 @@
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
+    border: none;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.rio-notice-text .btn-proceed:hover {
+    background: #b5a370;
+    transform: scale(1.03);
 }
 
 /* ===================================================== */
@@ -155,13 +283,24 @@
     max-width: 1100px;
     margin: 0 auto;
     padding: 2rem 2rem 3rem;
+    position: relative;
+}
+
+/* Textura sutil inspirada no calçadão — ondas em baixíssima opacidade */
+.rio-tours::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='48'%3E%3Cpath d='M0,12 C60,4 120,4 180,12 C240,20 300,20 360,12 L360,17 C300,25 240,25 180,17 C120,9 60,9 0,17Z' fill='%23000' opacity='0.025'/%3E%3Cpath d='M0,30 C60,22 120,22 180,30 C240,38 300,38 360,30 L360,35 C300,43 240,43 180,35 C120,27 60,27 0,35Z' fill='%23000' opacity='0.02'/%3E%3C/svg%3E") repeat;
+    background-size: 360px 48px;
 }
 
 .rio-section-title {
     font-family: "Montserrat", sans-serif;
     font-weight: 800;
     font-size: clamp(1.4rem, 2.5vw, 2.2rem);
-    color: #fff;
+    color: #2c3e50;
     text-align: center;
     margin-bottom: 0.5rem;
 }
@@ -182,7 +321,7 @@
     font-family: "Montserrat", sans-serif;
     font-weight: 700;
     font-size: clamp(1.2rem, 2vw, 1.8rem);
-    color: #C2B280;
+    color: #8b6914;
     text-align: center;
     margin-bottom: 2rem;
 }
@@ -195,7 +334,7 @@
     font-family: "Montserrat", sans-serif;
     font-weight: 600;
     font-size: clamp(1rem, 1.6vw, 1.4rem);
-    color: rgba(255,255,255,0.8);
+    color: #5a6c7d;
     text-align: center;
     margin-bottom: 2rem;
 }
@@ -211,24 +350,24 @@
 }
 
 .rio-tour-card {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(194,178,128,0.2);
-    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 24px;
     overflow: hidden;
-    transition: transform 0.25s, box-shadow 0.25s;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
 .rio-tour-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
-    border-color: rgba(194,178,128,0.45);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.12);
 }
 
 .rio-tour-paid {
-    border-color: rgba(194,178,128,0.4);
-    background: rgba(194,178,128,0.08);
+    border-color: rgba(194,178,128,0.3);
+    background: #fffdf7;
 }
 
 .rio-tour-images {
@@ -259,14 +398,14 @@
     font-family: "Montserrat", sans-serif;
     font-weight: 800;
     font-size: clamp(1.1rem, 1.8vw, 1.4rem);
-    color: #C2B280;
+    color: #2c3e50;
     margin-bottom: 1rem;
 }
 
 .rio-tour-name-sub {
     font-weight: 600;
     font-size: 0.85em;
-    color: rgba(255,255,255,0.7);
+    color: #8b9db0;
 }
 
 .rio-tour-details {
@@ -277,11 +416,11 @@
 }
 
 .rio-tour-details li {
-    color: rgba(255,255,255,0.88);
+    color: #4a5568;
     font-size: 0.9rem;
     line-height: 1.5;
     padding: 0.35rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .rio-tour-details li:last-child {
@@ -289,7 +428,7 @@
 }
 
 .rio-tour-details i {
-    color: var(--green-light);
+    color: #c9a96e;
     width: 20px;
     text-align: center;
     margin-right: 0.5rem;
@@ -297,7 +436,7 @@
 }
 
 .rio-tour-details strong {
-    color: rgba(255,255,255,0.95);
+    color: #2c3e50;
 }
 
 /* ===================================================== */
@@ -313,7 +452,7 @@
 }
 
 .rio-link-map {
-    color: var(--green-light);
+    color: #1da194;
     font-weight: 600;
     font-size: 0.9rem;
     text-decoration: none;
@@ -346,8 +485,20 @@
     justify-content: center;
 }
 
+.rio-footer .social-icons a {
+    color: #2c3e50;
+    background: rgba(0,0,0,0.06);
+    border-color: rgba(0,0,0,0.1);
+}
+
+.rio-footer .social-icons a:hover {
+    background: #1da194;
+    color: #fff;
+    border-color: #1da194;
+}
+
 .rio-footer-text {
-    color: rgba(255,255,255,0.5);
+    color: rgba(44,62,80,0.5);
     font-size: 0.85rem;
     margin-top: 1rem;
 }
@@ -356,22 +507,55 @@
 /* RESPONSIVO                                            */
 /* ===================================================== */
 @media (max-width: 900px) {
+    .rio-page header {
+        padding: 0.8rem 1.2rem;
+    }
+
+    .rio-page header.menu-open nav {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+
+    .rio-page header.menu-open nav a {
+        color: #fff;
+    }
+
+    .rio-page header.menu-open .lang-selector .lang-btn {
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+    }
+
     .rio-tours-grid {
         grid-template-columns: 1fr;
     }
 
     .rio-hero {
         min-height: 55vh;
+        padding-top: 80px;
     }
 
     .rio-hero-content {
         padding: 2rem 1.2rem;
     }
+
+    .rio-hero::after {
+        height: 80px;
+    }
 }
 
 @media (max-width: 600px) {
+    .rio-page header {
+        padding: 0.6rem 0.8rem;
+    }
+
     .rio-hero {
         min-height: 50vh;
+        padding-top: 70px;
+    }
+
+    .rio-hero::after {
+        height: 60px;
     }
 
     .rio-hero-title {

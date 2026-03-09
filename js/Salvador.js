@@ -11,7 +11,7 @@
                 'Seguimos todas as medidas sanitárias exigidas para este tipo de passeio.',
                 'Por favor estar atentos aos dias disponíveis no formulário de reserva.',
                 'Sua contribuição é a remuneração do guia, seja consciente.',
-                'Em caso de não poder comparecer ao tour, cancele sua reserva pelo <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
+                'Em caso de não poder comparecer ao tour, cancele sua reserva pelo <a href="https://wa.me/5521970018590?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
             ],
             proceed: 'Prosseguir',
             section_title: 'Nossas Experiências',
@@ -38,7 +38,7 @@
                 'We follow all required health and safety measures for this kind of activity.',
                 'Please check available days in the booking form.',
                 'Your contribution is the guide remuneration, please be mindful.',
-                'If you cannot attend the tour, please cancel your booking via <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
+                'If you cannot attend the tour, please cancel your booking via <a href="https://wa.me/5521970018590?text=Hello%2C%20I%20need%20to%20cancel%20my%20booking." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
             ],
             proceed: 'Proceed',
             section_title: 'Our Experiences',
@@ -65,7 +65,7 @@
                 'Nous suivons toutes les mesures sanitaires exigées pour ce type de visite.',
                 'Veuillez vérifier les jours disponibles dans le formulaire de réservation.',
                 'Votre contribution est la rémunération du guide, soyez conscient.',
-                'Si vous ne pouvez pas participer, annulez votre réservation via <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
+                'Si vous ne pouvez pas participer, annulez votre réservation via <a href="https://wa.me/5521970018590?text=Bonjour%2C%20je%20dois%20annuler%20ma%20r%C3%A9servation." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
             ],
             proceed: 'Continuer',
             section_title: 'Nos expériences',
@@ -92,7 +92,7 @@
                 'Seguimos todas las medidas sanitarias exigidas para este tipo de paseo.',
                 'Por favor revise los días disponibles en el formulario de reserva.',
                 'Su contribución es la remuneración del guía, sea consciente.',
-                'Si no puede asistir al tour, cancele su reserva por <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
+                'Si no puede asistir al tour, cancele su reserva por <a href="https://wa.me/5521970018590?text=Hola%2C%20necesito%20cancelar%20mi%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
             ],
             proceed: 'Continuar',
             section_title: 'Nuestras experiencias',
@@ -119,7 +119,7 @@
                 'Seguiamo tutte le misure sanitarie richieste per questo tipo di visita.',
                 'Controlla i giorni disponibili nel modulo di prenotazione.',
                 'Il tuo contributo è la remunerazione della guida, sii consapevole.',
-                'Se non puoi partecipare al tour, annulla la tua prenotazione via <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
+                'Se non puoi partecipare al tour, annulla la tua prenotazione via <a href="https://wa.me/5521970018590?text=Ciao%2C%20devo%20annullare%20la%20mia%20prenotazione." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.'
             ],
             proceed: 'Procedi',
             section_title: 'Le nostre esperienze',
@@ -146,7 +146,7 @@
                 '我们遵守此类活动所要求的所有卫生安全措施。',
                 '请在预约表格中查看可用日期。',
                 '您的贡献是导游的报酬，请用心对待。',
-                '如果无法参加，请通过 <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a> 取消预约。'
+                '如果无法参加，请通过 <a href="https://wa.me/5521970018590?text=%E4%BD%A0%E5%A5%BD%EF%BC%8C%E6%88%91%E9%9C%80%E8%A6%81%E5%8F%96%E6%B6%88%E6%88%91%E7%9A%84%E9%A2%84%E8%AE%A2%E3%80%82" target="_blank" rel="noopener"><strong>WhatsApp</strong></a> 取消预约。'
             ],
             proceed: '继续',
             section_title: '我们的体验',

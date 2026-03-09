@@ -1,5 +1,44 @@
-/* Lençóis Maranhenses — Overrides */
+/* Lençóis Maranhenses — Tema Dunas & Lagoas (claro) */
 /* Re-usa classes rio-* de Riodejaneiro.css */
+
+/* Fundo claro com suave tom turquesa das lagoas cristalinas */
+.rio-page {
+    background:
+        radial-gradient(ellipse at 60% 0%, rgba(28,168,152,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse at 25% 100%, rgba(194,178,128,0.06) 0%, transparent 60%),
+        #f5faf9;
+    color: #1f3d3a;
+}
+
 .rio-hero {
     background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/brasil-maranhao-santo-amaro-parque-nacional-dos-lencois-maranhenses-10-750.webp') center/cover no-repeat;
 }
+
+/* Remove padrão Copacabana — exclusivo do Rio */
+.rio-hero::after {
+    mask-image: none;
+    -webkit-mask-image: none;
+    background: linear-gradient(to bottom, transparent 0%, #f5faf9 100%);
+}
+
+.rio-hero-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(15, 46, 48, 0.72) 0%,
+        rgba(22, 112, 112, 0.38) 60%,
+        rgba(15, 46, 48, 0.82) 100%
+    );
+}
+
+/* Textura de ondulação de dunas, sutil */
+.rio-tours::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='30'%3E%3Cpath d='M0 20 Q30 5 60 20 Q90 35 120 20' fill='none' stroke='%23c2b280' stroke-width='0.8' opacity='0.06'/%3E%3Cpath d='M0 10 Q30 0 60 10 Q90 20 120 10' fill='none' stroke='%231ca898' stroke-width='0.5' opacity='0.04'/%3E%3C/svg%3E") repeat;
+    background-size: 120px 30px;
+}
+
+.rio-section-title { color: #1f3d3a; }
+.rio-section-subtitle { color: #1ca898; }
+.rio-tour-card { background: #ffffff; border-color: rgba(28,168,152,0.08); }
+.rio-tour-name { color: #167070; }
+.rio-tour-details i { color: #1ca898; }
+.rio-footer-text { color: rgba(31,61,58,0.45); }

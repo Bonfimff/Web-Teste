@@ -1,5 +1,44 @@
-/* São Luís do Maranhão — Overrides */
+/* São Luís do Maranhão — Tema Azulejos Portugueses (claro) */
 /* Re-usa classes rio-* de Riodejaneiro.css */
+
+/* Fundo claro com suave tonalidade azul dos azulejos */
+.rio-page {
+    background:
+        radial-gradient(ellipse at 20% 0%, rgba(26,58,106,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse at 75% 100%, rgba(44,95,158,0.04) 0%, transparent 60%),
+        #f4f6fa;
+    color: #1e2d4a;
+}
+
 .rio-hero {
     background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp') center/cover no-repeat;
 }
+
+/* Remove padrão Copacabana — exclusivo do Rio */
+.rio-hero::after {
+    mask-image: none;
+    -webkit-mask-image: none;
+    background: linear-gradient(to bottom, transparent 0%, #f4f6fa 100%);
+}
+
+.rio-hero-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(15, 30, 61, 0.72) 0%,
+        rgba(26, 58, 106, 0.4) 60%,
+        rgba(15, 30, 61, 0.82) 100%
+    );
+}
+
+/* Textura de azulejo português sutil */
+.rio-tours::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Crect x='5' y='5' width='50' height='50' rx='3' fill='none' stroke='%231a3a6a' stroke-width='0.5' opacity='0.06'/%3E%3Cline x1='30' y1='5' x2='30' y2='55' stroke='%231a3a6a' stroke-width='0.3' opacity='0.04'/%3E%3Cline x1='5' y1='30' x2='55' y2='30' stroke='%231a3a6a' stroke-width='0.3' opacity='0.04'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%231a3a6a' stroke-width='0.4' opacity='0.05'/%3E%3C/svg%3E") repeat;
+    background-size: 60px 60px;
+}
+
+.rio-section-title { color: #1e2d4a; }
+.rio-section-subtitle { color: #2c5f9e; }
+.rio-tour-card { background: #ffffff; border-color: rgba(26,58,106,0.08); }
+.rio-tour-name { color: #1a3a6a; }
+.rio-tour-details i { color: #3a7bd5; }
+.rio-footer-text { color: rgba(30,45,74,0.45); }

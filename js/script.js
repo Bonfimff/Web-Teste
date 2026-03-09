@@ -37,6 +37,14 @@ console.log('Layout da imagem de referência carregado.');
 			nav_about: "SOBRE",
 			nav_contact: "CONTATO",
 			nav_help: "AJUDA",
+			about_title: "Sobre",
+			about_text: "Somos uma equipe apaixonada por experiências locais autênticas, conectando viajantes a guias especialistas em cada destino.",
+			contact_title: "Contato",
+			contact_text: "Fale com a Travel the World para dúvidas, parcerias e reservas personalizadas.",
+			help_title: "Ajuda",
+			help_text: "Precisa de suporte com idioma, horários, cancelamentos ou ponto de encontro? Nossa equipe está pronta para ajudar.",
+			award_title: "Reconhecimento Especial",
+			award_text: "Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰",
 			search_placeholder: "Pesquisar",
 			login: "LOGIN"
 		},
@@ -52,6 +60,14 @@ console.log('Layout da imagem de referência carregado.');
 			nav_about: "ABOUT",
 			nav_contact: "CONTACT",
 			nav_help: "HELP",
+			about_title: "About",
+			about_text: "We are a team passionate about authentic local experiences, connecting travelers with expert guides in each destination.",
+			contact_title: "Contact",
+			contact_text: "Get in touch with Travel the World for questions, partnerships and personalized bookings.",
+			help_title: "Help",
+			help_text: "Need support with language, schedules, cancellations or meeting point? Our team is ready to help.",
+			award_title: "Special Recognition",
+			award_text: "Did you know we were awarded as the <b>best choice</b> by <b>TripAdvisor</b> in 2021? 🥰",
 			search_placeholder: "Search",
 			login: "LOGIN"
 		},
@@ -67,6 +83,14 @@ console.log('Layout da imagem de referência carregado.');
 			nav_about: "À PROPOS",
 			nav_contact: "CONTACT",
 			nav_help: "AIDE",
+			about_title: "À propos",
+			about_text: "Nous sommes une équipe passionnée par les expériences locales authentiques, reliant les voyageurs à des guides experts dans chaque destination.",
+			contact_title: "Contact",
+			contact_text: "Contactez Travel the World pour questions, partenariats et réservations personnalisées.",
+			help_title: "Aide",
+			help_text: "Besoin d'aide pour la langue, les horaires, les annulations ou le point de rendez-vous ? Notre équipe est prête à vous aider.",
+			award_title: "Reconnaissance Spéciale",
+			award_text: "Saviez-vous que nous avons été récompensés comme le <b>meilleur choix</b> par <b>TripAdvisor</b> en 2021 ? 🥰",
 			search_placeholder: "Rechercher",
 			login: "LOGIN"
 		},
@@ -82,6 +106,14 @@ console.log('Layout da imagem de referência carregado.');
 			nav_about: "SOBRE",
 			nav_contact: "CONTACTO",
 			nav_help: "AYUDA",
+			about_title: "Sobre",
+			about_text: "Somos un equipo apasionado por experiencias locales auténticas, conectando viajeros con guías expertos en cada destino.",
+			contact_title: "Contacto",
+			contact_text: "Habla con Travel the World para dudas, alianzas y reservas personalizadas.",
+			help_title: "Ayuda",
+			help_text: "¿Necesitas ayuda con idioma, horarios, cancelaciones o punto de encuentro? Nuestro equipo está listo para ayudarte.",
+			award_title: "Reconocimiento Especial",
+			award_text: "¿Sabías que fuimos premiados como la <b>mejor elección</b> por <b>TripAdvisor</b> en 2021? 🥰",
 			search_placeholder: "Buscar",
 			login: "LOGIN"
 		},
@@ -97,6 +129,14 @@ console.log('Layout da imagem de referência carregado.');
 			nav_about: "CHI SIAMO",
 			nav_contact: "CONTATTO",
 			nav_help: "AIUTO",
+			about_title: "Chi siamo",
+			about_text: "Siamo un team appassionato di esperienze locali autentiche, che collega i viaggiatori a guide esperte in ogni destinazione.",
+			contact_title: "Contatto",
+			contact_text: "Contatta Travel the World per domande, partnership e prenotazioni personalizzate.",
+			help_title: "Aiuto",
+			help_text: "Hai bisogno di supporto con lingua, orari, cancellazioni o punto di incontro? Il nostro team è pronto ad aiutarti.",
+			award_title: "Riconoscimento Speciale",
+			award_text: "Sapevi che siamo stati premiati come la <b>migliore scelta</b> da <b>TripAdvisor</b> nel 2021? 🥰",
 			search_placeholder: "Cerca",
 			login: "LOGIN"
 		},
@@ -112,6 +152,14 @@ console.log('Layout da imagem de referência carregado.');
 			nav_about: "关于",
 			nav_contact: "联系",
 			nav_help: "帮助",
+			about_title: "关于我们",
+			about_text: "我们是一支热爱本地真实体验的团队，把旅行者与每个目的地的专业向导连接起来。",
+			contact_title: "联系我们",
+			contact_text: "如需咨询、合作或定制预订，请联系Travel the World。",
+			help_title: "帮助",
+			help_text: "需要语言、时间安排、取消或集合点方面的支持吗？我们的团队随时为您服务。",
+			award_title: "特别荣誉",
+			award_text: "您知道吗？我们在2021年被<b>TripAdvisor</b>评为<b>最佳选择</b>！🥰",
 			search_placeholder: "搜索",
 			login: "登录"
 		}
@@ -180,6 +228,152 @@ console.log('Layout da imagem de referência carregado.');
 		document.addEventListener("click", (e) => {
 			if (!wrapper.contains(e.target)) wrapper.classList.remove("open");
 		});
+	}
+
+	const modal = document.getElementById("awardModal");
+	if (modal) {
+		const countdownEl = document.getElementById("awardCountdown");
+		const awardLink = "https://www.tripadvisor.com.br/Attraction_Review-g303506-d12219836-Reviews-Rio_by_Foot_Free_Walking_Tour-Rio_de_Janeiro_State_of_Rio_de_Janeiro.html";
+		let countdownTimer = null;
+
+		const getCountdownLabel = (seconds) => {
+			const labels = {
+				pt: "Fecha em",
+				en: "Closes in",
+				fr: "Se ferme dans",
+				es: "Se cierra en",
+				it: "Si chiude tra",
+				zh: "将在"
+			};
+			const lang = window.getCurrentLanguage ? window.getCurrentLanguage() : "pt";
+			const prefix = labels[lang] || labels.pt;
+			return lang === "zh" ? `${prefix} ${seconds} 秒` : `${prefix} ${seconds}s`;
+		};
+
+		const stopCountdown = () => {
+			if (countdownTimer) {
+				clearInterval(countdownTimer);
+				countdownTimer = null;
+			}
+		};
+
+		const closeModal = () => {
+			stopCountdown();
+			modal.classList.remove("is-open");
+			modal.setAttribute("aria-hidden", "true");
+			try { sessionStorage.setItem("awardModalSeen", "1"); } catch (e) {}
+		};
+
+		const openModal = () => {
+			let secondsLeft = 10;
+			modal.classList.add("is-open");
+			modal.setAttribute("aria-hidden", "false");
+			if (countdownEl) countdownEl.textContent = getCountdownLabel(secondsLeft);
+
+			stopCountdown();
+			countdownTimer = setInterval(() => {
+				secondsLeft -= 1;
+				if (secondsLeft <= 0) {
+					closeModal();
+					return;
+				}
+				if (countdownEl) countdownEl.textContent = getCountdownLabel(secondsLeft);
+			}, 1000);
+		};
+
+		modal.querySelectorAll("[data-close-award]").forEach((el) => {
+			el.addEventListener("click", (e) => {
+				e.stopPropagation();
+				closeModal();
+			});
+		});
+
+		const dialog = modal.querySelector(".award-modal__dialog");
+		if (dialog) {
+			dialog.addEventListener("click", (e) => {
+				if (e.target.closest("[data-close-award]")) return;
+				closeModal();
+				window.location.href = awardLink;
+			});
+		}
+
+		document.addEventListener("app:language-changed", () => {
+			if (!modal.classList.contains("is-open") || !countdownEl) return;
+			const match = countdownEl.textContent.match(/(\d+)/);
+			const seconds = match ? Number(match[1]) : 15;
+			countdownEl.textContent = getCountdownLabel(seconds);
+		});
+
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape" && modal.classList.contains("is-open")) {
+				closeModal();
+			}
+		});
+
+		let alreadySeen = false;
+		try { alreadySeen = sessionStorage.getItem("awardModalSeen") === "1"; } catch (e) {}
+		if (!alreadySeen) {
+			setTimeout(openModal, 700);
+		}
+	}
+
+	const navLinks = document.querySelectorAll("nav a[href^='#']");
+	const infoSections = document.getElementById("infoSections");
+	const infoCards = infoSections ? infoSections.querySelectorAll(".site-section-card") : [];
+
+	const showInfoSection = (sectionId) => {
+		if (!infoSections) return;
+
+		if (!sectionId) {
+			infoSections.classList.add("is-empty");
+			infoSections.classList.remove("single-view");
+			infoCards.forEach((card) => card.classList.add("is-hidden"));
+			return;
+		}
+
+		let hasMatch = false;
+		infoCards.forEach((card) => {
+			const isTarget = card.id === sectionId;
+			card.classList.toggle("is-hidden", !isTarget);
+			if (isTarget) hasMatch = true;
+		});
+
+		if (hasMatch) {
+			infoSections.classList.remove("is-empty");
+			infoSections.classList.add("single-view");
+		}
+	};
+
+	navLinks.forEach((link) => {
+		link.addEventListener("click", (e) => {
+			const href = link.getAttribute("href");
+			if (!href) return;
+
+			const targetId = href.replace("#", "");
+			const isInfoTab = targetId === "sobre" || targetId === "contato" || targetId === "ajuda";
+			const target = document.querySelector(href);
+			if (!target) return;
+
+			e.preventDefault();
+			navLinks.forEach((item) => item.classList.remove("active"));
+			link.classList.add("active");
+
+			if (isInfoTab) {
+				showInfoSection(targetId);
+				target.scrollIntoView({ behavior: "smooth", block: "start" });
+				return;
+			}
+
+			showInfoSection(null);
+			target.scrollIntoView({ behavior: "smooth", block: "start" });
+		});
+	});
+
+	const hash = window.location.hash ? window.location.hash.replace("#", "") : "";
+	if (hash === "sobre" || hash === "contato" || hash === "ajuda") {
+		showInfoSection(hash);
+	} else {
+		showInfoSection(null);
 	}
 })();
 

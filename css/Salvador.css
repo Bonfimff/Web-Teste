@@ -1,5 +1,44 @@
-/* Salvador — Overrides */
+/* Salvador — Tema Pelourinho (claro, colonial) */
 /* Re-usa classes rio-* de Riodejaneiro.css */
+
+/* Fundo claro com tom quente de areia, remetendo às fachadas coloridas */
+.rio-page {
+    background:
+        radial-gradient(ellipse at 30% 0%, rgba(210,140,60,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse at 80% 100%, rgba(194,120,50,0.05) 0%, transparent 60%),
+        #faf6f0;
+    color: #3d2b1f;
+}
+
 .rio-hero {
     background: url('https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp') center/cover no-repeat;
 }
+
+/* Remove padrão Copacabana — exclusivo do Rio */
+.rio-hero::after {
+    mask-image: none;
+    -webkit-mask-image: none;
+    background: linear-gradient(to bottom, transparent 0%, #faf6f0 100%);
+}
+
+.rio-hero-overlay {
+    background: linear-gradient(
+        180deg,
+        rgba(61, 43, 31, 0.72) 0%,
+        rgba(140, 90, 40, 0.4) 60%,
+        rgba(61, 43, 31, 0.82) 100%
+    );
+}
+
+/* Textura sutil de ladrilho colonial */
+.rio-tours::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='none'/%3E%3Crect x='0' y='0' width='20' height='20' fill='%23d2944a' opacity='0.04'/%3E%3Crect x='20' y='20' width='20' height='20' fill='%23d2944a' opacity='0.04'/%3E%3C/svg%3E") repeat;
+    background-size: 40px 40px;
+}
+
+.rio-section-title { color: #3d2b1f; }
+.rio-section-subtitle { color: #a06520; }
+.rio-tour-card { background: #ffffff; border-color: rgba(161,101,32,0.1); }
+.rio-tour-name { color: #5c3a10; }
+.rio-tour-details i { color: #c88930; }
+.rio-footer-text { color: rgba(61,43,31,0.45); }
