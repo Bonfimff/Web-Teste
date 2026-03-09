@@ -122,6 +122,37 @@
     /* herói mantém sua própria foto acima do fundo do corpo */
     background:
         url('https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/cabe-alho-site.jpeg') center/cover no-repeat;
+    /* aplicar máscara de transparência na base para fade ao fundo */
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    /* overlay de transição suave para o fundo da página */
+    position: relative;
+}
+
+/* gradiente de transição em tom de areia com textura delicada */
+.rio-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(0,0,0,0) 0%,
+            rgba(170, 134, 62, 0.6) 60%,
+            #ffcf6f 100%
+        ),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='60'%3E%3Cpath d='M0 30 C30 10, 60 10, 90 30 S150 50, 180 30' fill='none' stroke='%236b4c20' stroke-width='4'/%3E%3Cpath d='M0 50 C30 30, 60 30, 90 50 S150 70, 180 50' fill='none' stroke='%236b4c20' stroke-width='3'/%3E%3C/svg%3E") center/cover no-repeat;
+    background-blend-mode: normal;
+    opacity: 0.18;
+    z-index: 2;
 }
 
 .rio-hero-overlay {
@@ -129,41 +160,19 @@
     inset: 0;
     background: linear-gradient(
         180deg,
-        rgba(12, 35, 64, 0.78) 0%,
-        rgba(26, 82, 118, 0.5) 60%,
-        rgba(12, 35, 64, 0.88) 100%
+        rgba(12, 35, 64, 0.62) 0%,
+        rgba(26, 82, 118, 0.38) 60%,
+        rgba(12, 35, 64, 0.72) 100%
     );
     z-index: 1;
 }
 
-/* Calçadão de Copacabana — moldura em ondas portuguesas
-   Topo: transparente (foto do hero visível pelas faixas escuras)
-   Base: sólido #f5f2ec (transição suave para o corpo da página)
-   Técnica: CSS mask recorta o fundo creme em ondas; a foto aparece
-   nos vãos, criando as faixas escuras naturalmente. */
-.rio-hero::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 100px;
-    z-index: 3;
-    pointer-events: none;
-    background: #f5f2ec;
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 100' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cpath d='M0,68 C120,56 240,56 360,68 C480,80 600,80 720,68 C840,56 960,56 1080,68 C1200,80 1320,80 1440,68 V100 H0Z' fill='white'/%3E%3Cpath d='M0,52 C120,40 240,40 360,52 C480,64 600,64 720,52 C840,40 960,40 1080,52 C1200,64 1320,64 1440,52 L1440,60 C1320,72 1200,72 1080,60 C960,48 840,48 720,60 C600,72 480,72 360,60 C240,48 120,48 0,60Z' fill='white'/%3E%3Cpath d='M0,36 C120,24 240,24 360,36 C480,48 600,48 720,36 C840,24 960,24 1080,36 C1200,48 1320,48 1440,36 L1440,44 C1320,56 1200,56 1080,44 C960,32 840,32 720,44 C600,56 480,56 360,44 C240,32 120,32 0,44Z' fill='white'/%3E%3Cpath d='M0,20 C120,8 240,8 360,20 C480,32 600,32 720,20 C840,8 960,8 1080,20 C1200,32 1320,32 1440,20 L1440,28 C1320,40 1200,40 1080,28 C960,16 840,16 720,28 C600,40 480,40 360,28 C240,16 120,16 0,28Z' fill='white'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 100' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cpath d='M0,68 C120,56 240,56 360,68 C480,80 600,80 720,68 C840,56 960,56 1080,68 C1200,80 1320,80 1440,68 V100 H0Z' fill='white'/%3E%3Cpath d='M0,52 C120,40 240,40 360,52 C480,64 600,64 720,52 C840,40 960,40 1080,52 C1200,64 1320,64 1440,52 L1440,60 C1320,72 1200,72 1080,60 C960,48 840,48 720,60 C600,72 480,72 360,60 C240,48 120,48 0,60Z' fill='white'/%3E%3Cpath d='M0,36 C120,24 240,24 360,36 C480,48 600,48 720,36 C840,24 960,24 1080,36 C1200,48 1320,48 1440,36 L1440,44 C1320,56 1200,56 1080,44 C960,32 840,32 720,44 C600,56 480,56 360,44 C240,32 120,32 0,44Z' fill='white'/%3E%3Cpath d='M0,20 C120,8 240,8 360,20 C480,32 600,32 720,20 C840,8 960,8 1080,20 C1200,32 1320,32 1440,20 L1440,28 C1320,40 1200,40 1080,28 C960,16 840,16 720,28 C600,40 480,40 360,28 C240,16 120,16 0,28Z' fill='white'/%3E%3C/svg%3E");
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-}
 
 .rio-hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 5;
     max-width: 800px;
-    padding: 3rem 2rem;
+    padding: 3rem 2rem 5rem;
     animation: heroIntro 0.9s ease-out forwards;
 }
 
@@ -539,9 +548,6 @@
         padding: 2rem 1.2rem;
     }
 
-    .rio-hero::after {
-        height: 80px;
-    }
 }
 
 @media (max-width: 600px) {
@@ -552,10 +558,6 @@
     .rio-hero {
         min-height: 50vh;
         padding-top: 70px;
-    }
-
-    .rio-hero::after {
-        height: 60px;
     }
 
     .rio-hero-title {

@@ -300,7 +300,7 @@ console.log('Layout da imagem de referência carregado.');
 		document.addEventListener("app:language-changed", () => {
 			if (!modal.classList.contains("is-open") || !countdownEl) return;
 			const match = countdownEl.textContent.match(/(\d+)/);
-			const seconds = match ? Number(match[1]) : 15;
+			const seconds = match ? Number(match[1]) : 10;
 			countdownEl.textContent = getCountdownLabel(seconds);
 		});
 
