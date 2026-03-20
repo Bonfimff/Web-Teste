@@ -3,233 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Tour no Rio de Janeiro</title>
-    <link rel="icon" type="image/jpeg" href="imagem/logo.jpg">
+    <title>Travel the World · Experiências</title>
+    <!-- Google Fonts + Font Awesome -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- CSS externo -->
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/Riodejaneiro.css">
 </head>
 <body>
-    <div class="rio-page">
+    <div class="main-container" id="inicio">
         <header>
-           
-                <div class="nav-left">
-                    <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
-                        <span></span><span></span><span></span>
+            <div class="nav-left">
+                <div class="lang-selector" id="langSelector">
+                    <button class="lang-btn" type="button" id="langBtn">
+                	<span class="flag flag-pt"></span> Português
                     </button>
-                    <nav>
-                        <a href="#" data-footer-action="sobre" data-i18n="nav_about">SOBRE</a>
-                        <a href="#" data-footer-action="contato" data-i18n="nav_contact">CONTATO</a>
-                        <a href="#" data-footer-action="ajuda" data-i18n="nav_help">AJUDA</a>
-                    </nav>
+                    <ul class="lang-list" id="langList">
+                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                       </ul>
+                </div>
+                
+                <nav>
+                    <a href="#inicio" class="active" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#sobre" data-i18n="nav_about">SOBRE</a>
+                    <a href="#contato" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#ajuda" data-i18n="nav_help">AJUDA</a>
+                </nav>
+            </div>
+
+  
+
+            <!-- Botão hamburger para mobile -->
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="nav-right" id="navRight">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
+                    <button type="button"><i class="fa fa-search"></i></button>
                 </div>
 
-                <div class="header-spacer" aria-hidden="true"></div>
-
-                <div class="header-center">
-                    <div class="lang-selector" id="langSelector">
-                        <button class="lang-btn" type="button" id="langBtn">
-                            <span class="flag flag-pt"></span><span class="lang-label" data-i18n="lang_label">Português</span>
-                        </button>
-                        <ul class="lang-list" id="langList">
-                            <li data-lang="pt"><span class="flag flag-pt"></span><span class="lang-label">Português</span></li>
-                            <li data-lang="en"><span class="flag flag-en"></span><span class="lang-label">English</span></li>
-                            <li data-lang="fr"><span class="flag flag-fr"></span><span class="lang-label">Français</span></li>
-                            <li data-lang="es"><span class="flag flag-es"></span><span class="lang-label">Español</span></li>
-                            <li data-lang="it"><span class="flag flag-it"></span><span class="lang-label">Italiano</span></li>
-                            <li data-lang="zh"><span class="flag flag-zh"></span><span class="lang-label">中文(普通话)</span></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="header-spacer" aria-hidden="true"></div>
-
-                <div class="profile-menu">
-                    <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-label="Conta"><i class="fa fa-user-circle"></i></button>
-                    <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
-                        <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
-                        <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
-                    </div>
-                </div>
-           
+                <button class="btn-signup" data-i18n="login">LOGIN</button>
+            </div>
         </header>
 
-        <div class="mobile-menu-container" id="mobileMenuContainer" aria-hidden="true">
-            <div class="mobile-menu-panel">
-                <div class="mobile-menu-header">
-                    <button class="mobile-menu-back" id="mobileMenuBack" type="button" aria-label="Voltar">←</button>
-                    <span class="mobile-menu-title" id="mobileMenuTitle">Menu</span>
-                    <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Fechar">×</button>
+        <main>
+            <div class="hero-text">
+                <h1 class="hero-title" data-i18n="hero_title">Free <br> Walking Tour</h1>
+                <div class="subtitle" data-i18n="hero_subtitle">“Descubra novos destinos,<br>experiências inesquecíveis<br>& novas aventuras”</div>
+
+                <div class="city-title" data-i18n="choose_city">Escolha a cidade:</div>
+                <div class="city-list">
+                    <a class="city-card" href="html/Riodejaneiro.html">
+                        <span class="city-thumb city-thumb-rio"></span>
+                        <span class="city-name" data-i18n="city_rio">Rio de Janeiro</span>
+                    </a>
+                    <a class="city-card" href="html/Salvador.html">
+                        <span class="city-thumb city-thumb-salvador"></span>
+                        <span class="city-name" data-i18n="city_salvador">Salvador</span>
+                    </a>
+                    <a class="city-card" href="html/Saolu%C3%ADsdomaranhao.html">
+                        <span class="city-thumb city-thumb-saoluis"></span>
+                        <span class="city-name" data-i18n="city_saoluis">São Luís do Maranhão</span>
+                    </a>
+                    <a class="city-card" href="html/Lencoismaranhenses.html">
+                        <span class="city-thumb city-thumb-lencois"></span>
+                        <span class="city-name" data-i18n="city_lencois">Lençóis Maranhenses</span>
+                    </a>
                 </div>
-                <div class="mobile-menu-content">
-                    <div class="mobile-menu-view mobile-menu-main" data-view="main"></div>
-                    <div class="mobile-menu-view mobile-menu-lang" data-view="lang"></div>
-                    <div class="mobile-menu-view mobile-menu-user" data-view="user"></div>
-                </div>
-            </div>
-        </div>
 
-        <!-- HERO RIO -->
-        <section class="rio-hero">
-            <div class="rio-hero-overlay"></div>
-            <div class="rio-hero-content">
-                <h1 class="rio-hero-title">Tuor no<br><span class="rio-city-highlight">RIO DE JANEIRO</span></h1>
-                <span id="rioHeroDesc" data-i18n="hero_desc_rio" class="hero-desc-text">Seja bem vindo à cidade Maravilhosa; o Rio dos amores e da beleza inconfundível te espera de braços abertos.</span>
-                <a href="#tours" class="btn-book" data-i18n="btn_book">Conhecer Tours</a>
-            </div>
-        </section>
-
-    <div class="main-container">
-        <!-- TOURS -->
-        <section class="rio-tours" id="tours">
-            <h2 class="rio-section-title" data-i18n="tours_section_title">Nossas Experiências</h2>
-            <div class="rio-section-divider"></div>
-
-            <div class="rio-tours-grid">
-
-                <!-- CENTRO HISTÓRICO -->
-                <article class="rio-tour-card">
-                    <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/centro-historico-750.webp" alt="Centro Histórico e Lapa do Rio" loading="lazy">
-                    </div>
-                    <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Centro Histórico e Lapa</h4>
-                        <ul class="rio-tour-details">
-                            
-                            <li><i class="fa fa-language"></i> <strong data-i18n="label_idiomas">Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Praça Cinelândia, em frente ao Theatro Municipal</li>
-                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
-                        </ul>
-                        <div class="rio-tour-actions">
-                            <a href="https://goo.gl/maps/7mJhdvazUuyrh9tp7" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
-                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- SANTA TERESA -->
-                <article class="rio-tour-card">
-                    <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/bonde_santa_teresa_govrj-750.webp" alt="Santa Teresa & Experiência Gastronômica Carioca" loading="lazy">
-                    </div>
-                    <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Santa Teresa & Experiência Gastronômica Carioca</h4>
-                        <ul class="rio-tour-details">
-                            
-                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                        <li><i class="fa fa-map-marker-alt"></i> <strong data-i18n="label_encontro">Encontro:</strong> Praça General Osório, em frente à estação de metrô</li>
-                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
-                        </ul>
-                        <div class="rio-tour-actions">
-                            <a href="https://goo.gl/maps/65kNR3KaU4e2vYtn8" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
-                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- PEDRA DO SAL -->
-                <article class="rio-tour-card">
-                    <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/pedra-do-sal-2-750.webp" alt="Pedra do Sal" loading="lazy">
-                    </div>
-                    <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Pedra do Sal: Samba e Herança Afrobrasileira</h4>
-                        <ul class="rio-tour-details">
-                           
-                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Museu de Arte do Rio (MAR) — Praça Mauá, 5 — Centro</li>
-                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
-                        </ul>
-                        <div class="rio-tour-actions">
-                            <a href="https://g.page/museuarterio?share" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
-                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- PEDRA DO SAL + EXPERIÊNCIA DE CARNAVAL -->
-                <article class="rio-tour-card">
-                    <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/pedra-do-sal-2-750.webp" alt="Pedra do Sal + Experiência de Carnaval" loading="lazy">
-                    </div>
-                    <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Pedra do Sal + Experiência de Carnaval</h4>
-                        <ul class="rio-tour-details">
-                           
-                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Museu de Arte do Rio (MAR) — Praça Mauá, 5 — Centro</li>
-                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
-                        </ul>
-                        <div class="rio-tour-actions">
-                            <a href="https://g.page/museuarterio?share" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
-                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- COPACABANA E IPANEMA -->
-                <article class="rio-tour-card">
-                    <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2022/5/6154b435ca6c9c0010a3dead/copacabana-750.webp" alt="Copacabana e Ipanema" loading="lazy">
-                    </div>
-                    <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Copacabana e Ipanema</h4>
-                        <ul class="rio-tour-details">
-                          
-                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Estação General Osório (Metrô) — Saída A</li>
-                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
-                        </ul>
-                        <div class="rio-tour-actions">
-                            <a href="https://goo.gl/maps/WBo5vJ76AuiLp96u8" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
-                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
-                        </div>
-                    </div>
-                </article>
-            </div>
-
-            <!-- TOURS PAGOS -->
-            <div class="rio-section-divider rio-divider-small"></div>
-
-            <div class="rio-tours-grid">
-            </div>
-        </section>
-
-        <!-- FOOTER -->
-        <footer class="rio-footer">
-            <div class="rio-footer-card" id="rioFooterCard">
-                <button class="footer-card-up" type="button" aria-label="Ir ao topo">
-                    <i class="fa fa-arrow-up"></i>
-                </button>
-                <h3 class="rio-footer-card-title">Informações</h3>
-                <div class="rio-footer-card-body" id="rioFooterCardBody">
-                    Clique em “CONTATO” para ver as informações dentro deste cartão.
-                </div>
-                <div class="footer-info-icons">
+                <div class="social-icons">
+                    
+                
                     <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
                     <a href="https://wa.me/5521970018590" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
-                    <a href="mailto:riobyfoottour@gmail.com" aria-label="Email"><i class="fa fa-envelope"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
                 </div>
             </div>
-        </footer>
 
-        <div class="award-toast" id="awardToast" aria-live="polite" aria-atomic="true" role="status" aria-label="Notificação">
-            <div class="award-toast__dialog">
-                <button class="award-toast__close" type="button" data-close-award aria-label="Fechar">&times;</button>
-                <h3 class="award-toast__title" data-i18n="award_title">Reconhecimento Especial</h3>
-                <div class="award-toast__body">
-                    <div class="award-toast__icon"><img src="https://app.hoversignal.com/AppImage/Signals/4bd5923d-79aa-4fa7-9ac0-e9ecac175d3e" alt="Prêmio TripAdvisor"></div>
-                    <div class="award-toast__text">
-                        <div class="award-toast__message" data-i18n="award_text">Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰</div>
-                        <div class="award-toast__countdown" id="awardCountdown" aria-live="polite"></div>
-                    </div>
+            <div class="hero-images" aria-hidden="true">
+                <div class="capsule capsule-left">
+                    <video class="capsule-video" muted playsinline>
+                        <source src="videos/video1.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="capsule capsule-center">
+                    <video class="capsule-video" muted playsinline>
+                        <source src="videos/video1.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="capsule capsule-right">
+                    <video class="capsule-video" muted playsinline>
+                        <source src="videos/video1.mp4" type="video/mp4">
+                    </video>
                 </div>
             </div>
-        </div>
-    </div> 
+        </main>
+
+        <section class="site-sections is-empty" aria-label="Informações do site" id="infoSections">
+            <article class="site-section-card is-hidden" id="sobre">
+                <h2 data-i18n="about_title">Sobre</h2>
+                <p data-i18n="about_text">Somos uma equipe apaixonada por experiências locais autênticas, conectando viajantes a guias especialistas em cada destino.</p>
+            </article>
+
+            <article class="site-section-card is-hidden" id="contato">
+                <h2 data-i18n="contact_title">Contato</h2>
+                <p data-i18n="contact_text">Fale com a Travel the World para dúvidas, parcerias e reservas personalizadas.</p>
+                <div class="site-section-links">
+                    <a href="mailto:contato@traveltheworld.com">contato@traveltheworld.com</a>
+                    <a href="https://wa.me/5521970018590" target="_blank" rel="noopener">WhatsApp: +55 21 97001-8590</a>
+                </div>
+            </article>
+
+            <article class="site-section-card is-hidden" id="ajuda">
+                <h2 data-i18n="help_title">Ajuda</h2>
+                <p data-i18n="help_text">Precisa de suporte com idioma, horários, cancelamentos ou ponto de encontro? Nossa equipe está pronta para ajudar.</p>
+            </article>
+        </section>
+
     </div>
+
     <script src="js/script.js"></script>
-    <script src="js/Riodejaneiro.js"></script>
 </body>
 </html>
