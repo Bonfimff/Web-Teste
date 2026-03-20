@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Reservas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/Gerenciamento.css">
+</head>
+<body>
+    <header class="gerenciamento-header">
+        <div class="nav-left">
+            <h1 style="margin: 0; font-size: 1.2rem; color: #fff;">Gerenciamento</h1>
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <nav class="gerenciamento-nav" id="gerenciamentoNav">
+                <a href="../index.html" class="nav-link">Principal</a>
+                <a href="Gerenciamento.html" class="nav-link">Reservas</a>
+                <a href="Gerenciamento.html" class="nav-link">Gerenciamento</a>
+                <a href="Gerenciamento.html" class="nav-link">Financeiro</a>
+                <a href="Gerenciamento.html" class="nav-link">Contas</a>
+            </nav>
+        </div>
+
+        <div class="profile-menu">
+            <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-label="Conta"><i class="fa fa-user-circle"></i></button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
+                <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
+                <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
+                <a href="#" class="profile-item profile-item--admin" data-profile-action="manage" data-i18n="profile_manage" style="display:none;">Gerenciamento</a>
+            </div>
+        </div>
+    </header>
+    <main class="main-container">
+        <section class="rio-notice" style="padding-top: 2rem;">
+            <div class="rio-notice-text blurry-card">
+                <h2 class="rio-notice-title">Gerenciamento de Reservas</h2>
+                <div class="gerenciamento-stats" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
+                    <div style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:180px;">
+                        <strong>Reservas em aberto</strong>
+                        <div id="statOpen" style="font-size:1.5rem; font-weight:800;">0</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:220px;">
+                        <strong>Próximo tour</strong>
+                        <div id="statNext" style="font-size:1.2rem; font-weight:700;">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="margin-top: 2rem;">
+            <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
+                <strong>Filtrar reservas</strong>
+                <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:0.75rem;">
+                    <label style="display:flex; flex-direction:column; font-size:0.85rem;">
+                        Data inicial
+                        <input type="date" id="filterFrom" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);" />
+                    </label>
+                    <label style="display:flex; flex-direction:column; font-size:0.85rem;">
+                        Data final
+                        <input type="date" id="filterTo" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);" />
+                    </label>
+                    <label style="display:flex; flex-direction:column; font-size:0.85rem;">
+                        Tour
+                        <select id="filterTour" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);">
+                            <option value="all">Todos</option>
+                        </select>
+                    </label>
+                    <label style="display:flex; flex-direction:column; font-size:0.85rem;">
+                        Modalidade
+                        <select id="filterModality" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);">
+                            <option value="all">Todos</option>
+                            <option value="free">Free</option>
+                            <option value="privado">Privado</option>
+                        </select>
+                    </label>
+                    <label style="display:flex; flex-direction:column; font-size:0.85rem;">
+                        Status
+                        <select id="filterStatus" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);">
+                            <option value="all">Todos</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Confirmado">Confirmado</option>
+                            <option value="Cancelado">Cancelado</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </select>
+                    </label>
+                    <button id="addReservation" class="btn-book" style="height:fit-content; border-radius:999px;">Adicionar reserva</button>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="rio-tour-table">
+                    <thead>
+                        <tr>
+                            <th>Tour</th>
+                            <th>Idioma</th>
+                            <th>Modalidade</th>
+                            <th>Guia</th>
+                            <th>Data</th>
+                            <th>Hora</th>
+                            <th>Pessoas</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationsBody">
+                        <tr><td colspan="7" style="padding:0.75rem;">Carregando reservas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de edição de reserva -->
+    <div id="reservationModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-content">
+            <h3 id="modalTitle">Editar reserva</h3>
+            <div class="modal-body">
+              <form id="reservationForm">
+                  <label>
+                      Tour
+                      <select id="modalTour" required>
+                          <option value="">Selecione um tour</option>
+                      </select>
+                  </label>
+                  <label>
+                      Data
+                      <input type="date" id="modalDate" required />
+                  </label>
+                  <label>
+                      Hora
+                      <input type="time" id="modalTime" required />
+                  </label>
+                  <label>
+                      Idioma
+                      <select id="modalLanguage">
+                          <option value="">Selecione um idioma</option>
+                      </select>
+                  </label>
+                  <label>
+                      Modalidade
+                      <select id="modalModality">
+                          <option value="free">Free</option>
+                          <option value="privado">Privado</option>
+                      </select>
+                  </label>
+                  <label class="phone-field">
+                      Celular
+                      <div class="phone-input-wrapper">
+                        <input type="tel" id="modalPhone" placeholder="(00) 00000-0000" />
+                        <button type="button" class="whatsapp-link" aria-label="Abrir WhatsApp">
+                          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                  </label>
+                  <label>
+                      Guia
+                      <input type="text" id="modalGuide" />
+                  </label>
+                  <label>
+                      Pessoas
+                      <input type="number" id="modalQuantity" min="1" value="1" />
+                  </label>
+                  <label>
+                      Status
+                      <select id="modalStatus">
+                          <option value="Pendente">Pendente</option>
+                          <option value="Confirmado">Confirmado</option>
+                          <option value="Cancelado">Cancelado</option>                            <option value="Finalizado">Finalizado</option>                      </select>
+                  </label>
+                  <div class="modal-actions">
+                      <button type="button" id="modalDelete" class="btn-book btn-danger">Excluir</button>
+                      <button type="button" id="modalCancel" class="btn-book">Cancelar</button>
+                      <button type="button" id="modalSave" class="btn-book">Salvar</button>
+                  </div>
+                  <div id="deleteConfirmation" class="delete-confirmation hidden">
+                      <p>Deslize para confirmar a exclusão:</p>
+                      <div class="delete-slider">
+                          <input type="range" id="deleteSlider" min="0" max="100" value="0" />
+                          <span id="deleteSliderLabel">Arraste até o final</span>
+                      </div>
+                    <div class="modal-actions">
+                        <button type="button" id="modalDeleteCancel" class="btn-book">Cancelar</button>
+                        <button type="button" id="modalDeleteConfirm" class="btn-book btn-danger" disabled>Confirmar exclusão</button>
+                    </div>
+                  </div>
+              </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/Riodejaneiro.js"></script>
+    <script src="../js/Gerenciamento.js"></script>
+</body>
+</html>
