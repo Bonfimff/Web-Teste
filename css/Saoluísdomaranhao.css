@@ -1,26 +1,24 @@
 /* São Luís do Maranhão — Tema Azulejos Portugueses (claro) */
 /* Re-usa classes rio-* de Riodejaneiro.css */
 
-/* Fundo claro com suave tonalidade azul dos azulejos e imagem de São Luís */
+/* Fundo claro com suave tonalidade azul dos azulejos */
 .rio-page {
     background:
-        url('../imagem/fundo%20sl.png') center/cover fixed,
         radial-gradient(ellipse at 20% 0%, rgba(26,58,106,0.05) 0%, transparent 70%),
         radial-gradient(ellipse at 75% 100%, rgba(44,95,158,0.04) 0%, transparent 60%),
-        #f4f6fa !important;
-    background-blend-mode: normal, screen, screen, normal;
+        #f4f6fa;
     color: #1e2d4a;
 }
 
 .rio-hero {
     background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp') center/cover no-repeat;
-    /* máscara de fade 30% base (início mais próximo da base para suavizar) */
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0.3) 100%);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
+}
+
+/* Remove padrão Copacabana — exclusivo do Rio */
+.rio-hero::after {
+    mask-image: none;
+    -webkit-mask-image: none;
+    background: linear-gradient(to bottom, transparent 0%, #f4f6fa 100%);
 }
 
 .rio-hero-overlay {

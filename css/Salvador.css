@@ -1,26 +1,24 @@
 /* Salvador — Tema Pelourinho (claro, colonial) */
 /* Re-usa classes rio-* de Riodejaneiro.css */
 
-/* Fundo claro com tom quente de areia e imagem de Salvador */
+/* Fundo claro com tom quente de areia, remetendo às fachadas coloridas */
 .rio-page {
     background:
-        url('../imagem/fundo%20salvador.png') center/cover fixed,
         radial-gradient(ellipse at 30% 0%, rgba(210,140,60,0.06) 0%, transparent 70%),
         radial-gradient(ellipse at 80% 100%, rgba(194,120,50,0.05) 0%, transparent 60%),
-        #faf6f0 !important;
-    background-blend-mode: normal, screen, screen, normal;
+        #faf6f0;
     color: #3d2b1f;
 }
 
 .rio-hero {
     background: url('https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp') center/cover no-repeat;
-    /* suave máscara transparente 30% na base */
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0.3) 100%);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
+}
+
+/* Remove padrão Copacabana — exclusivo do Rio */
+.rio-hero::after {
+    mask-image: none;
+    -webkit-mask-image: none;
+    background: linear-gradient(to bottom, transparent 0%, #faf6f0 100%);
 }
 
 .rio-hero-overlay {

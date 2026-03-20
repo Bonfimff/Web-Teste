@@ -1,26 +1,24 @@
 /* Lençóis Maranhenses — Tema Dunas & Lagoas (claro) */
 /* Re-usa classes rio-* de Riodejaneiro.css */
 
-/* Fundo claro com suave tom turquesa das lagoas cristalinas mais imagem */
+/* Fundo claro com suave tom turquesa das lagoas cristalinas */
 .rio-page {
     background:
-        url('../imagem/fundo lencois.png') center/cover fixed,
         radial-gradient(ellipse at 60% 0%, rgba(28,168,152,0.05) 0%, transparent 70%),
         radial-gradient(ellipse at 25% 100%, rgba(194,178,128,0.06) 0%, transparent 60%),
-        #f5faf9 !important;
-    background-blend-mode: normal, screen, screen, normal;
+        #f5faf9;
     color: #1f3d3a;
 }
 
 .rio-hero {
     background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/brasil-maranhao-santo-amaro-parque-nacional-dos-lencois-maranhenses-10-750.webp') center/cover no-repeat;
-    /* máscara leve, base 30% transparente */
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 90%, rgba(0,0,0,0.3) 100%);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 90%, rgba(0,0,0,0.3) 100%);
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
+}
+
+/* Remove padrão Copacabana — exclusivo do Rio */
+.rio-hero::after {
+    mask-image: none;
+    -webkit-mask-image: none;
+    background: linear-gradient(to bottom, transparent 0%, #f5faf9 100%);
 }
 
 .rio-hero-overlay {
