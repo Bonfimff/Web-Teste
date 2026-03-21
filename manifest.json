@@ -1,0 +1,29 @@
+{
+  "name": "Tour no Rio de Janeiro",
+  "short_name": "Rio Tour",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#02415a",
+  "background_color": "#02415a",
+  "icons": [
+    {
+      "src": "imagem/Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "imagem/Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "imagem/Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
