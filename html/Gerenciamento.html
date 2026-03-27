@@ -1,3 +1,5 @@
+<!-- version 1.0 -->
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -31,22 +33,52 @@
             <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
                 <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
                 <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
+                <a href="#" class="profile-item" data-profile-action="account">Minha Conta</a>
+                <a href="#" class="profile-item" data-profile-action="logout">Sair</a>
                 <a href="#" class="profile-item profile-item--admin" data-profile-action="manage" data-i18n="profile_manage" style="display:none;">Gerenciamento</a>
             </div>
         </div>
     </header>
+
+    <div class="mobile-menu-container" id="mobileMenuContainer" aria-hidden="true">
+        <div class="mobile-menu-panel">
+            <div class="mobile-menu-header">
+                <button class="mobile-menu-back" id="mobileMenuBack" type="button" aria-label="Voltar">←</button>
+                <span class="mobile-menu-title" id="mobileMenuTitle">Menu</span>
+                <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Fechar">×</button>
+            </div>
+            <div class="mobile-menu-content">
+                <div class="mobile-menu-view mobile-menu-main" data-view="main"></div>
+                <div class="mobile-menu-view mobile-menu-lang" data-view="lang"></div>
+                <div class="mobile-menu-view mobile-menu-user" data-view="user"></div>
+            </div>
+        </div>
+    </div>
+
     <main class="main-container">
         <section class="rio-notice" style="padding-top: 2rem;">
             <div class="rio-notice-text blurry-card">
                 <h2 class="rio-notice-title">Gerenciamento de Reservas</h2>
                 <div class="gerenciamento-stats" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
-                    <div style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:180px;">
-                        <strong>Reservas em aberto</strong>
-                        <div id="statOpen" style="font-size:1.5rem; font-weight:800;">0</div>
+                    <div class="status-group" style="display:flex; gap:1rem; width:100%; flex-wrap:wrap;">
+                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:1;"> 
+                            <strong>Pendente</strong>
+                            <div id="statPending" style="font-size:1.4rem; font-weight:800;">0</div>
+                        </div>
+                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:1;">
+                            <strong>Confirmado</strong>
+                            <div id="statConfirmed" style="font-size:1.4rem; font-weight:800;">0</div>
+                        </div>
+                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:1;">
+                            <strong>Finalizado</strong>
+                            <div id="statFinalized" style="font-size:1.4rem; font-weight:800;">0</div>
+                        </div>
                     </div>
-                    <div style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:220px;">
+                    <div id="nextTourCard" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:220px;">
                         <strong>Próximo tour</strong>
                         <div id="statNext" style="font-size:1.2rem; font-weight:700;">-</div>
+                        <button id="nextTourToggle" type="button" class="next-tour-toggle" aria-expanded="false">▾</button>
+                        <div id="nextTourDetails" class="next-tour-details-panel" style="margin-top:0.5rem; font-size:0.85rem; color:#374151;"></div>
                     </div>
                 </div>
             </div>
@@ -54,8 +86,8 @@
 
         <section style="margin-top: 2rem;">
             <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
-                <strong>Filtrar reservas</strong>
-                <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:0.75rem;">
+                <strong>Filtros</strong>
+                <div class="filtro-reservas-grid" style="margin-top:0.75rem;">
                     <label style="display:flex; flex-direction:column; font-size:0.85rem;">
                         Data inicial
                         <input type="date" id="filterFrom" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);" />
@@ -95,7 +127,7 @@
             <div style="overflow-x:auto;">
                 <table class="rio-tour-table">
                     <thead>
-                        <tr>
+                            <tr>
                             <th>Tour</th>
                             <th>Idioma</th>
                             <th>Modalidade</th>
@@ -155,6 +187,14 @@
                           <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
                         </button>
                       </div>
+                  </label>
+                  <label>
+                      Email
+                      <input type="email" id="modalEmail"  />
+                  </label>
+                  <label>
+                      Nome
+                      <input type="text" id="modalName" placeholder="Nome do cliente" />
                   </label>
                   <label>
                       Guia

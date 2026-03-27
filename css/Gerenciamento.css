@@ -1,17 +1,29 @@
+/* version 1.1 - Responsivo Completo */
+
 /* Estilo para a página de gerenciamento de reservas */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    font-family: 'Montserrat', sans-serif;
+    
+    /* REMOVIDO O LINEAR-GRADIENT: Apenas a imagem direta */
+    background-image: url('../img/147185.jpg');
+    
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    
+    color: #333;
 }
 
 /* Formulário de reserva: labels cinza */
 #reservationModal label,
 #reservationModal .login-modal__field label,
 #reservationModal .login-modal__field {
-  color: #6b7280; /* cinza-escuro claro*/
+  color: #6b7280;
 }
 
 /* Botões de ações na página e modal */
@@ -22,12 +34,13 @@ body {
 .modal-actions .btn-book {
   background: #f8fafc !important;
   color: #4b5563 !important;
-  border: 1px solid #3b82f6 !important;
+  border: 1px solid #000000 !important;
   border-radius: 999px !important;
   padding: 0.5rem 1.1rem !important;
   min-width: 130px;
   font-weight: 700;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .rio-tour-table button.btn-book {
@@ -55,9 +68,8 @@ body {
   gap: 0.5rem;
 }
 
-
 body {
-  background-image: url('../imagem/fundo rj.png');
+  background-image: url('../imagem/assets/fundo rj.png');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -71,7 +83,7 @@ body {
 .rio-page,
 .gerenciamento-page,
 body {
-  background-image: url('../imagem/fundo rj.png') !important;
+  background-image: url('../imagem/assets/fundo rj.png') !important;
   background-repeat: no-repeat !important;
   background-position: center center !important;
   background-size: cover !important;
@@ -81,6 +93,123 @@ body {
   color: #f2f5f8;
 }
 
+/* Mobile menu container shared with Riodejaneiro */
+.mobile-menu-container {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  width: min(92vw, 360px);
+  max-height: calc(100vh - 90px);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.22);
+  display: none;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.mobile-menu-container.open {
+  display: block;
+}
+
+.mobile-menu-panel {
+  position: relative;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  max-height: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+  transform: translateY(-10px);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+}
+
+.mobile-menu-container.open .mobile-menu-panel {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.mobile-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mobile-menu-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
+.mobile-menu-back,
+.mobile-menu-close {
+  border: none;
+  background: transparent;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.mobile-menu-content {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 0 0 16px 16px;
+}
+
+.mobile-menu-view {
+  display: none;
+}
+
+.mobile-menu-view.active {
+  display: block;
+}
+
+.mobile-menu-view a,
+.mobile-menu-launcher,
+.mobile-lang-list li {
+  display: block;
+  padding: 0.75rem 0.6rem;
+  border-radius: 8px;
+  color: #234160;
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.mobile-menu-view a:hover,
+.mobile-lang-list li:hover,
+.mobile-menu-launcher:hover {
+  background: rgba(194, 178, 128, 0.2);
+}
+
+.mobile-lang-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mobile-lang-list li {
+  cursor: pointer;
+}
+
+/* Header responsivo */
 .gerenciamento-header {
   position: sticky;
   top: 0;
@@ -89,10 +218,27 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.gerenciamento-header h1 {
+  margin: 0;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  color: #fff;
+  white-space: nowrap;
 }
 
 .gerenciamento-header .nav-link,
@@ -105,78 +251,137 @@ body {
   color: #f0e5c0;
 }
 
-.btn-book,
-.login-modal__submit,
-.modal-actions .btn-book {
-  background: #f8fafc;
-  color: #4b5563;
-  border: 1px solid #3b82f6;
-  border-radius: 999px;
-  padding: 0.5rem 1.1rem;
-  min-width: 130px;
-  font-weight: 700;
-  transition: all 0.2s ease;
+/* Navegação desktop */
+.gerenciamento-nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
 }
 
-.btn-book,
-.login-modal__submit,
-.modal-actions .btn-book,
-.btn-danger {
-  background: #f8fafc;
-  color: #4b5563;
+.gerenciamento-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
 }
 
-.btn-danger {
-  border: 1px solid #dc2626;
-  color: #dc2626;
+.gerenciamento-nav a:hover {
+  opacity: 0.8;
 }
 
-#modalDelete,
-#modalDeleteConfirm {
-  border: 1px solid #dc2626 !important;
-  color: #dc2626 !important;
-  background: #fef2f2 !important;
+/* Hamburger menu - mobile */
+.hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
-#modalDelete:hover,
-#modalDeleteConfirm:hover {
-  background: #fee2e2 !important;
-  color: #b91c1c !important;
+.hamburger:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.btn-danger:hover {
-  background: #fee2e2;
-  color: #b91c1c;
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  margin: 5px 0;
+  background: #fff;
+  transition: transform 0.2s ease, opacity 0.2s;
 }
 
-#reservationModal .modal-actions button {
-  border: 1px solid #3b82f6;
-  color: #4b5563;
-  background: #f8fafc;
+/* Profile menu */
+.profile-menu {
+  position: relative;
+  z-index: 30;
 }
 
-#reservationModal .modal-actions button:hover {
-  background: #eef2ff;
-  color: #1e3a8a;
+.profile-btn {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.btn-book:hover,
-.login-modal__submit:hover,
-.modal-actions .btn-book:hover {
-  background: rgba(255, 255, 255, 0.35);
-  color: #0b3c6d;
+.profile-btn i {
+  font-size: 1.6rem;
+  color: #ffffff;
+  line-height: 1;
 }
 
-/* Se quiser trocar a imagem de fundo, substitua o arquivo abaixo */
-body.theme-background {
-  background-image: url('../imagem/fundo-rj.jpg');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-  background-attachment: fixed;
+.profile-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
 }
 
-/* Overlay para garantir contraste do conteúdo sobre o fundo */
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  margin-top: 0.4rem;
+  right: 0;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0;
+  z-index: 2000;
+}
+
+.profile-menu.open .profile-dropdown {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.profile-dropdown {
+  z-index: 9999 !important;
+  min-width: 220px;
+}
+
+.profile-item {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #0b3a66 !important;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.profile-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Container principal */
+.main-container {
+  min-height: 100vh;
+  padding: 2rem;
+  padding-bottom: 5rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Overlay para contraste */
 body::before {
   content: '';
   position: fixed;
@@ -186,308 +391,333 @@ body::before {
   z-index: -1;
 }
 
-/* Remove qualquer fundo sólido que esteja escondendo a imagem */
-.main-container,
-.gerenciamento-container,
-section,
-.rio-notice {
-  background: transparent !important;
-}
-
-.main-container {
-  min-height: 100vh;
-  padding: 2.5rem 1.5rem;
-  padding-bottom: 5rem;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 1;
-}
-
-/* Efeito de vidro suave para todos os elementos com fundo branco */
+/* Cards com efeito vidro */
 .blurry-card,
 .rio-notice-text,
 .gerenciamento-stats > div,
 .rio-tour-table,
-.rio-tour-table tr,
-.rio-tour-table th,
-.rio-tour-table td,
 .modal-content,
 .delete-confirmation {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Cards com efeito de vidro */
 .blurry-card,
 .rio-notice-text {
-  background: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
-/* Campo de celular com botão do WhatsApp */
-.phone-field {
+.rio-notice-title {
+  font-size: clamp(1.3rem, 5vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+  color: #0b3c6d;
+}
+
+.rio-notice-text > strong {
+  color: #0b3c6d !important;
+  font-weight: 700;
+}
+
+/* Estatísticas responsivas */
+.gerenciamento-stats {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.phone-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.phone-input-wrapper input {
-  width: 100%;
-  padding-right: 3rem;
-}
-
-.whatsapp-link {
-  position: absolute;
-  right: 0.5rem;
-  border: none;
-  background: rgba(37, 211, 102, 0.95);
-  color: white;
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.whatsapp-link i {
-  font-size: 1rem;
-}
-
-.whatsapp-link:hover {
-  transform: scale(1.06);
-  background: rgba(37, 211, 102, 1);
-}
-
-.whatsapp-link:active {
-  transform: scale(0.98);
-}
-
-/* Login/register modals: manter ocultos até serem abertos via classe .open */
-.login-modal-overlay,
-.register-modal-overlay {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 1500;
-}
-
-.login-modal-overlay.open,
-.register-modal-overlay.open {
-  display: flex;
-}
-
-body.modal-open {
-  overflow: hidden;
-}
-
-body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
-  filter: blur(3px);
-  transition: filter 0.2s ease;
-}
-
-/* CORREÇÃO PRINCIPAL: Tabela com fundo translúcido e destaque */
-.rio-tour-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.96) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
-}
-
-/* Células da tabela com fundo transparente */
-.rio-tour-table th,
-.rio-tour-table td {
-  padding: 0.85rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  text-align: left;
-  background: transparent !important;
-  color: #4a4a4a;
-}
-
-/* Destaque para o container que permite rolagem horizontal */
-div[style*="overflow-x:auto"] {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  gap: 1rem;
+  flex-wrap: wrap;
   margin-top: 1rem;
 }
 
-/* Hover effect na tabela */
-.rio-tour-table tr:hover {
-  background: rgba(11, 77, 139, 0.15) !important;
-  transition: background 0.2s ease;
+.status-group {
+  display: flex;
+  gap: 1rem;
+  flex: 2;
+  min-width: 200px;
 }
 
-.rio-tour-table a {
-  color: rgba(11, 77, 139, 1);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.rio-tour-table a:hover {
-  text-decoration: underline;
-}
-
-/* CORREÇÃO: Cards de estatísticas com fundo translúcido */
-.gerenciamento-stats > div {
-  padding: 1.25rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.85) !important;
+.status-card {
+  background: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(11, 77, 139, 0.12);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+  border-radius: 16px;
+  flex: 1;
+  min-width: 100px;
+  border: 1px solid rgba(11, 77, 139, 0.15);
+  transition: transform 0.2s;
 }
 
-.gerenciamento-stats > div strong {
+.status-card:hover {
+  transform: translateY(-2px);
+}
+
+.status-card strong {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.65);
+  color: #0b3c6d;
   margin-bottom: 0.5rem;
 }
 
-.gerenciamento-stats > div > div {
-  font-size: 2.2rem;
+.status-card > div {
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
   font-weight: 800;
   color: rgba(0, 0, 0, 0.9);
   line-height: 1.1;
 }
 
-/* Make the next tour summary and details rounded too */
-.next-tour-summary,
-.next-tour-details {
-  border-radius: 14px;
-  overflow: hidden;
+#nextTourCard {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(8px);
+  padding: 1rem;
+  border-radius: 16px;
+  flex: 1;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  position: relative;
+  border: 1px solid rgba(11, 77, 139, 0.15);
+  overflow-x: hidden !important;
+  overflow-wrap: anywhere !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  box-sizing: border-box;
 }
 
-/* Header com efeito de vidro */
-.gerenciamento-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #fff;
+.profile-menu.open .profile-dropdown {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-.gerenciamento-nav {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-left: 2rem;
+.profile-dropdown {
+  z-index: 9999 !important;
+  min-width: 220px;
 }
 
-.gerenciamento-nav a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: 700;
+@media (max-width: 900px) {
+  .profile-menu .profile-dropdown {
+    display: none !important;
+  }
 }
 
-.gerenciamento-header a,
-.gerenciamento-header .lang-label,
-.gerenciamento-header .profile-btn {
-  color: #fff;
+@media (min-width: 901px) {
+  .profile-menu .profile-dropdown {
+    display: none;
+  }
+  .profile-menu.open .profile-dropdown {
+    display: block !important;
+  }
 }
 
-.gerenciamento-header .profile-dropdown {
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.gerenciamento-header .nav-link {
-  color: #fff;
-  margin-right: 1rem;
-}
-
-.gerenciamento-header .hamburger {
-  display: none;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-}
-
-.gerenciamento-header .hamburger span {
+#nextTourCard strong {
   display: block;
-  width: 22px;
-  height: 2px;
-  margin: 4px 0;
-  background: #fff;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0b3c6d;
+  margin-bottom: 0.5rem;
+}
+
+#statNext {
+  font-size: clamp(0.9rem, 3vw, 1rem);
+  font-weight: 600;
+  color: #374151;
+}
+
+.next-tour-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(11, 77, 139, 0.1);
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
-.gerenciamento-nav.open {
+.next-tour-toggle.open {
+  transform: rotate(180deg);
+}
+
+.next-tour-details-panel {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem;
+  color: #374151;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.next-tour-details-panel.open {
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.next-tour-details-panel div {
+  margin: 0.5rem 0;
+}
+
+.next-tour-details-panel strong {
+  color: #0b3c6d;
+}
+
+/* Filtros responsivos */
+.filtro-reservas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+  margin-top: 1rem;
+}
+
+.filtro-reservas-grid label {
   display: flex;
   flex-direction: column;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 1rem;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 600;
 }
 
-.hidden {
-  display: none !important;
-}
-
-/* Filtros com efeito de vidro */
-#filterFrom,
-#filterTo,
-#filterTour,
-#filterStatus {
+.filtro-reservas-grid input,
+.filtro-reservas-grid select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
 }
 
-/* Modal com efeito de vidro */
+.filtro-reservas-grid input:focus,
+.filtro-reservas-grid select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.filtro-reservas-grid button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-width: 160px;
+}
+
+/* Tabela responsiva */
+.rio-tour-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.rio-tour-table th,
+.rio-tour-table td {
+  padding: 1rem;
+  text-align: left;
+  background: transparent !important;
+  color: #374151;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.rio-tour-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #0b3c6d !important;
+}
+
+.rio-tour-table th {
+  font-weight: 700;
+  color: #0b3c6d;
+  background: rgba(11, 77, 139, 0.05) !important;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Garantir imagem de fundo também em mobile */
+@media (max-width: 768px) {
+  html, body, .rio-page, .gerenciamento-page {
+    background-image: url('../imagem/assets/fundo rj.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    background-attachment: scroll !important;
+    background-color: transparent !important;
+    background-blend-mode: normal !important;
+  }
+
+  body::before {
+    background: rgba(0, 0, 0, 0.35);
+  }
+}
+
+.rio-tour-table tr:hover {
+  background: rgba(11, 77, 139, 0.08) !important;
+  transition: background 0.2s ease;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.pendente {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.confirmado {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.status-badge.finalizado {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.status-badge.cancelado {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Modal */
 .modal {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .modal.hidden {
@@ -496,298 +726,337 @@ div[style*="overflow-x:auto"] {
 
 .modal-content {
   position: relative;
-  width: min(480px, 100%);
+  width: min(500px, 100%);
   max-height: 90vh;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-  padding: 1rem;
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
 }
 
-.modal-content * {
-  max-width: 99%;
-  box-sizing: border-box;
+/* Delete confirmation should appear above form content */
+.delete-confirmation {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(95%, 420px);
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+  display: none;
+}
+
+.delete-confirmation.hidden {
+  display: none !important;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-content h3 {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  background: rgba(11, 77, 139, 0.05);
+  color: #0b3c6d;
+  font-size: 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .modal-body {
   max-height: calc(90vh - 8rem);
   overflow-y: auto;
-  padding-right: 0.5rem;
+  padding: 1.5rem;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #0b3c6d;
+.modal-body form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.modal-content form {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.modal-content label {
-  display: grid;
-  gap: 0.25rem;
+.modal-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
 }
 
-.modal-content input,
-.modal-content select {
-  padding: 0.5rem;
+.modal-body input,
+.modal-body select,
+.modal-body textarea {
+  padding: 0.7rem;
   border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 0.65rem;
+  border-radius: 12px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+/* Garantir largura uniforme para todos os campos do formulário */
+.modal-body label {
+  width: 100%;
+  min-width: 0;
+}
+
+.modal-body .phone-input-wrapper,
+.modal-body .modal-actions {
+  width: 100%;
+}
+
+.modal-body input:focus,
+.modal-body select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.phone-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.phone-input-wrapper input {
+  padding-right: 3rem;
+}
+
+.whatsapp-link {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  border: none;
+  background: #25d366;
+  color: white;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.whatsapp-link:hover {
+  transform: translateY(-50%) scale(1.05);
+}
+
+.whatsapp-link i {
+  font-size: 1.1rem;
 }
 
 .modal-actions {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
 }
 
-.btn-book {
-  border-radius: 999px;
-  padding: 0.5rem 1rem;
-  border: none;
-  background: #0b4d8b;
-  color: white;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.btn-book:hover {
-  background: #0a3d6f;
-}
-
-.modal .btn-book {
+.modal-actions button {
   flex: 1;
-  text-align: center;
-  padding: 0.75rem 1rem;
+  min-width: 100px;
+  padding: 0.75rem;
 }
 
 .btn-danger {
-  background: #d62f2f;
-  color: #fff;
+  border: 1px solid #dc2626 !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+  color: #dc2626 !important;
 }
 
 .btn-danger:hover {
-  background: #b11a1a;
+  background: rgba(220, 38, 38, 0.16) !important;
+  color: #b91c1c !important;
 }
 
-/* Título principal */
-.rio-notice-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.8rem;
-  color: #0b3c6d;
-}
-
-#statNext {
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.next-tour-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 400;
-}
-
-.next-tour-line {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 0.35rem;
-}
-
-.next-tour-label {
-  color: rgba(0, 0, 0, 0.65);
-  font-weight: 400;
-}
-
-.next-tour-value {
-  color: rgba(0, 0, 0, 0.85);
-  font-weight: 400;
-}
-
-.next-tour-details {
-  margin-top: 0.75rem;
-  padding: 0.8rem;
-  border-radius: 0.85rem;
-  background: rgba(11, 77, 139, 0.12);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.next-tour-details div {
-  margin: 0.25rem 0;
-}
-
-.next-tour-details.hidden {
-  display: none;
-}
-
-/* Confirmação de exclusão */
+/* Delete confirmation */
 .delete-confirmation {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(420px, 100%);
+  position: fixed !important;
+  top: 20% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(95%, 420px) !important;
+  z-index: 10001 !important;
+  margin-top: 0 !important;
   padding: 1rem;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 1rem;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  z-index: 1100;
 }
 
 .delete-confirmation p {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
   font-size: 0.9rem;
+  color: #dc2626;
+  font-weight: 600;
 }
 
 .delete-slider {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .delete-slider input[type="range"] {
   flex: 1;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-  accent-color: #d62f2f;
-  border-radius: 0;
-  height: 0.75rem;
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.delete-slider input[type="range"]::-webkit-slider-runnable-track {
-  height: 0.75rem;
-  border-radius: 0;
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.delete-slider input[type="range"]::-moz-range-track {
-  height: 0.75rem;
-  border-radius: 0;
-  background: rgba(0, 0, 0, 0.12);
-}
-
-
-.delete-slider input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  background: #d62f2f;
-  cursor: pointer;
-}
-
-.delete-slider input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  background: #d62f2f;
-  cursor: pointer;
+  height: 0.5rem;
+  border-radius: 10px;
+  accent-color: #dc2626;
 }
 
 .delete-slider span {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   white-space: nowrap;
   color: #6b7280;
 }
 
-/* Media queries para mobile */
+/* ============================================
+   MEDIA QUERIES - RESPONSIVIDADE COMPLETA
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .main-container {
+    padding: 1.5rem;
+  }
+  
+  .gerenciamento-stats {
+    flex-direction: column;
+  }
+  
+  .status-group {
+    width: 100%;
+  }
+  
+  #nextTourCard {
+    width: 100%;
+  }
+}
+
+/* Tablet pequeno e mobile grande */
 @media (max-width: 768px) {
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.25);
-    pointer-events: none;
-    z-index: 0;
+  html, body {
+    background: #f4f7f9 !important;
+    background-image: url('../imagem/assets/fundo rj.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    background-attachment: scroll !important;
+    color: #0b3c6d !important;
   }
 
-  .main-container {
-    position: relative;
-    z-index: 1;
-    padding: 1rem;
+  .main-container,
+  .rio-notice-text,
+  .blurry-card {
+    background: #ffffffcc !important;
   }
 
   .gerenciamento-header {
     flex-direction: row;
-    flex-wrap: nowrap;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    position: relative;
   }
-
-  .gerenciamento-header .nav-left {
+  
+  .nav-left {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
-    flex: 1;
-    min-width: 0;
+    width: 100%;
+  }
+  
+  .gerenciamento-header h1 {
+    flex: 1 1 auto;
+    width: auto;
+    text-align: center;
+    margin: 0;
   }
 
-  .gerenciamento-header .nav-link {
-    margin-right: 0.75rem;
-    font-size: 0.9rem;
+  .hamburger {
+    display: block;
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    order: 0;
   }
-
+  
   .gerenciamento-nav {
     display: none;
-    width: 100%;
-  }
-
-  .gerenciamento-header .hamburger {
-    display: block;
-  }
-
-  .profile-menu {
-    flex: 0;
-    align-self: center;
-  }
-
-  .rio-notice-text {
-    padding: 1rem;
-  }
-
-  .gerenciamento-stats {
     flex-direction: column;
-  }
-
-  .gerenciamento-stats > div {
     width: 100%;
-    margin-bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .gerenciamento-nav.open {
+    display: flex;
+  }
+  
+  .gerenciamento-nav a {
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+  
+  .gerenciamento-nav a:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .profile-menu {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .filtro-reservas-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .filtro-reservas-grid button {
+    grid-column: auto;
+    width: 100%;
+  }
+  
+  /* Tabela em cards no mobile */
+  .rio-tour-table {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
-  /* CORREÇÃO: Visual em cards para mobile */
-  .rio-tour-table {
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
+  .rio-tour-table tr,
+  .rio-tour-table td,
+  .rio-tour-table th {
     background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .rio-tour-table thead {
@@ -797,18 +1066,17 @@ div[style*="overflow-x:auto"] {
   .rio-tour-table tbody {
     display: block;
   }
-
+  
   .rio-tour-table tr {
     display: block;
     margin-bottom: 1rem;
-    background: rgba(255, 255, 255, 0.85) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 0.75rem;
+    border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-
+  
   .rio-tour-table td {
     display: flex;
     justify-content: space-between;
@@ -816,70 +1084,239 @@ div[style*="overflow-x:auto"] {
     padding: 0.75rem 1rem;
     border: none;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    background: transparent !important;
   }
-
+  
   .rio-tour-table td:last-child {
     border-bottom: none;
   }
-
+  
   .rio-tour-table td::before {
     content: attr(data-label);
-    font-weight: 600;
+    font-weight: 700;
     color: #0b3c6d;
-    flex: 1;
-    margin-right: 0.5rem;
-  }
-
-  .rio-tour-table td button.btn-book {
-    padding: 0.3rem 0.8rem;
-    font-size: 0.8rem;
-  }
-
-  .rio-tour-table tr:focus,
-  .rio-tour-table tr.pressed {
-    outline: 2px solid rgba(11, 77, 139, 0.6);
-    box-shadow: 0 0 0 2px rgba(11, 77, 139, 0.2);
-  }
-
-  section > div {
-    overflow-x: hidden !important;
-  }
-}
-
-/* Ajustes para telas muito pequenas */
-@media (max-width: 480px) {
-  .gerenciamento-header h1 {
-    font-size: 1rem;
-  }
-  
-  .gerenciamento-stats > div > div {
-    font-size: 1.8rem;
-  }
-  
-  .modal-content {
-    padding: 0.75rem;
+    flex: 0 0 40%;
+    margin-right: 0.75rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
   
   .modal-actions {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
   }
   
-  .modal .btn-book {
-    width: 100%;
+  .modal-actions button {
+    flex: 1 1 calc(33.33% - 0.5rem);
+    min-width: 100px;
+    width: auto;
+  }
+  
+  .delete-slider {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .delete-slider span {
+    text-align: center;
   }
 }
 
-/* Destaque extra em telas grandes */
+/* Mobile pequeno */
+@media (max-width: 480px) {
+  .main-container {
+    padding: 1rem;
+  }
+  
+  .rio-notice-text {
+    padding: 1rem;
+  }
+  
+  .status-group {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .status-card {
+    padding: 0.75rem;
+  }
+  
+  .status-card > div {
+    font-size: 1.5rem;
+  }
+  
+  #nextTourCard {
+    padding: 0.75rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .modal-content h3 {
+    padding: 1rem;
+    font-size: 1.1rem;
+  }
+  
+  .rio-tour-table td {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .rio-tour-table td::before {
+    flex: auto;
+    margin-right: 0;
+  }
+  
+  .rio-tour-table td button.btn-book {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .btn-book,
+  #addReservation {
+    min-width: auto;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .filtro-reservas-grid button {
+    font-size: 0.9rem;
+    padding: 0.7rem;
+  }
+}
+
+/* Desktop grande */
 @media (min-width: 1200px) {
+  .main-container {
+    padding: 2.5rem;
+  }
+  
   .blurry-card,
-  .rio-notice-text,
-  .rio-tour-table {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+  .rio-notice-text {
+    padding: 2rem;
+  }
+  
+  .filtro-reservas-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .filtro-reservas-grid button {
+    grid-column: auto;
+    justify-self: end;
+  }
+  
+  .rio-tour-table th,
+  .rio-tour-table td {
+    padding: 1.25rem;
+  }
+  
+  .status-card > div {
+    font-size: 2.2rem;
+  }
+}
+
+/* Telas muito grandes (4K) */
+@media (min-width: 1920px) {
+  .main-container {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .rio-tour-table th,
+  .rio-tour-table td {
+    padding: 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .status-card > div {
+    font-size: 2.5rem;
+  }
+}
+
+/* Acessibilidade e foco */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Modais login/cadastro escondidos por padrão */
+.login-modal-overlay,
+.register-modal-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+  z-index: 2000 !important;
+}
+
+.login-modal-overlay.open,
+.register-modal-overlay.open {
+  display: flex !important;
+}
+
+/* Remover fundos sólidos que escondem imagem */
+.main-container,
+.gerenciamento-container,
+section,
+.rio-notice {
+  background: transparent !important;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Força o dropdown de perfil em desktop (exibir em .open) e esconder em mobile  */
+.profile-dropdown {
+  display: none !important;
+}
+
+.profile-menu.open .profile-dropdown {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 900px) {
+  .profile-menu .profile-dropdown {
+    display: none !important;
+  }
+}
+
+@media (min-width: 901px) {
+  .profile-menu .profile-dropdown {
+    display: none;
   }
 
-  .rio-tour-table {
-    background: rgba(255, 255, 255, 0.98) !important;
+  .profile-menu.open .profile-dropdown {
+    display: block !important;
   }
 }
