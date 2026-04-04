@@ -8,23 +8,22 @@
     <title>Gerenciamento de Reservas</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/Gerenciamento.css">
 </head>
-<body>
+<body class="gerenciamento-page">
     <header class="gerenciamento-header">
         <div class="nav-left">
-            <h1 style="margin: 0; font-size: 1.2rem; color: #fff;">Gerenciamento</h1>
+            <h1 style="margin: 0; font-size: 1.2rem; color: #fff;">Reservas</h1>
             <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
                 <span></span><span></span><span></span>
             </button>
             <nav class="gerenciamento-nav" id="gerenciamentoNav">
                 <a href="../index.html" class="nav-link">Principal</a>
-                <a href="Gerenciamento.html" class="nav-link">Reservas</a>
-                <a href="Gerenciamento.html" class="nav-link">Gerenciamento</a>
-                <a href="Gerenciamento.html" class="nav-link">Financeiro</a>
-                <a href="Gerenciamento.html" class="nav-link">Contas</a>
+                <a href="#" class="nav-link" data-section="reservas">Reservas</a>
+                <a href="#" class="nav-link" data-section="gerenciamento">Gerenciamento da página</a>
+                <a href="#" class="nav-link" data-section="financeiro">Financeiro</a>
+                <a href="#" class="nav-link" data-section="contas">Contas</a>
             </nav>
         </div>
 
@@ -35,7 +34,7 @@
                 <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
                 <a href="#" class="profile-item" data-profile-action="account">Minha Conta</a>
                 <a href="#" class="profile-item" data-profile-action="logout">Sair</a>
-                <a href="#" class="profile-item profile-item--admin" data-profile-action="manage" data-i18n="profile_manage" style="display:none;">Gerenciamento</a>
+                <a href="#" class="profile-item profile-item--admin" data-profile-action="manage" data-i18n="profile_manage" style="display:none;">Gerenciamento da página</a>
             </div>
         </div>
     </header>
@@ -56,12 +55,12 @@
     </div>
 
     <main class="main-container">
-        <section class="rio-notice" style="padding-top: 2rem;">
+        <section id="reservationsStatsSection" class="rio-notice reservas-section" style="padding-top: 2rem;">
             <div class="rio-notice-text blurry-card">
                 <h2 class="rio-notice-title">Gerenciamento de Reservas</h2>
-                <div class="gerenciamento-stats" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
-                    <div class="status-group" style="display:flex; gap:1rem; width:100%; flex-wrap:wrap;">
-                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:1;"> 
+                <div class="gerenciamento-stats" style="display:flex; gap:1rem; flex-wrap:wrap; overflow-x:hidden; margin-top:1rem;">
+                    <div class="status-group" style="display:flex; gap:1rem; width:100%; flex-wrap:wrap; overflow-x:hidden;">
+                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:0 0 120px;"> 
                             <strong>Pendente</strong>
                             <div id="statPending" style="font-size:1.4rem; font-weight:800;">0</div>
                         </div>
@@ -84,7 +83,7 @@
             </div>
         </section>
 
-        <section style="margin-top: 2rem;">
+        <section id="reservationsTableSection" class="reservas-section" style="margin-top: 2rem;">
             <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
                 <strong>Filtros</strong>
                 <div class="filtro-reservas-grid" style="margin-top:0.75rem;">
@@ -143,6 +142,108 @@
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <section id="accountsSection" style="display:none; margin-top: 2rem;">
+            <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
+                <div id="countryChartContainer" style="margin-top:0.5rem; color:#374151; display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+                    <div id="countryPie" style="width:150px; height:150px; border-radius:50%; background: conic-gradient(#e53e3e 0deg 0deg, #3182ce 0deg 0deg, #38a169 0deg 0deg, #dd6b20 0deg 0deg);"></div>
+                    <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="rio-tour-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>E-mail</th>
+                            <th>Nome</th>
+                            <th>Sobrenome</th>
+                            <th>Celular</th>
+                            <th>Role</th>
+                            <th>País</th>
+                            <th>Gênero</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accountsBody">
+                        <tr><td colspan="9" style="padding:0.75rem;">Clique em "Contas" para carregar os registros.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="rolesManager" style="margin-top:1.5rem; background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem;">
+                <strong>Gerenciamento de Níveis de Acesso</strong>
+                <div style="margin-top:0.75rem; display:flex; gap:0.5rem; align-items:center;">
+                    <label style="display:block; margin-bottom:0.5rem; color:#1f2937; font-weight:700;">Perfil de Acesso:</label>
+                    <button id="addRoleBtn" class="btn-book" type="button" style="background:#18b015;color:#fff;">Adicionar nível de acesso</button>
+                </div>
+                <div style="margin-top:0.75rem;">
+                    <select id="roleSelect" style="width:100%; max-width:320px; padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;"></select>
+                </div>
+                <div id="roleCheckboxes" style="margin-top:0.75rem; color:#1f2937;">
+                    <strong>Permissões</strong><br />
+                    <label><input type="checkbox" id="roleCheckReservas" /> Gerenciar Reservas</label><br />
+                    <label><input type="checkbox" id="roleCheckContas" /> Gerenciar Contas</label><br />
+                    <label><input type="checkbox" id="roleCheckPerfis" /> Gerenciar Perfis</label><br />
+                    <label><input type="checkbox" id="roleCheckSelfEdit" /> Alterar próprias informações</label><br />
+                    <label><input type="checkbox" id="roleCheckOtherEdit" /> Alterar informações de outros perfis</label><br />
+                    <label><input type="checkbox" id="roleCheckConsultas" /> Realizar consultas</label><br />
+                    <label><input type="checkbox" id="roleCheckCarregarReservas" /> Carregar todas as reservas</label>
+                </div>
+
+                <div style="margin-top:1rem; color:#1f2937;">
+                    <strong>Abas visíveis</strong><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Principal" /> Principal</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Reservas" /> Reservas</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Gerenciamento" /> Gerenciamento</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Financeiro" /> Financeiro</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Contas" /> Contas</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Minhas Reservas" /> Minhas Reservas</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Meus Dados" /> Meus Dados</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="SOBRE" /> Sobre</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="CONTATO" /> Contato</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="AJUDA" /> Ajuda</label>
+                </div>
+
+                <div style="margin-top:1rem; color:#1f2937;">
+                    <strong>Páginas permitidas</strong><br />
+                    <label><input type="checkbox" class="page-perm" data-page="Principal" /> Principal</label><br />
+                    <label><input type="checkbox" class="page-perm" data-page="Gerenciamento" /> Gerenciamento</label>
+                </div>
+
+                <div style="margin-top:0.75rem;">
+                    <button id="saveRolesConfig" class="btn-book" type="button">Salvar níveis</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="pageManagementSection" style="display:none; margin-top:2rem;">
+            <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
+                <!-- Cabeçalho de gerenciamento removido conforme solicitação -->
+            </div>
+
+            <div style="overflow-x:auto; margin-bottom: 1.25rem;">
+                <h3 style="margin:0 0 0.5rem; font-size:1rem;">Tours da Página</h3>
+                <table class="rio-tour-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tour</th>
+                            <th>Idiomas</th>
+                            <th>Encontro</th>
+                            <th>Identificação</th>
+                            <th>Link</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tourManagementBody">
+                        <tr><td colspan="8" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
         </section>
     </main>
 
@@ -230,6 +331,103 @@
               </form>
             </div>
         </div>
+    </div>
+
+    <!-- Modal de edição de tour da página -->
+    <div id="tourEditModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tourModalTitle" style="z-index:5000;">
+      <div class="modal-content">
+        <h3 id="tourModalTitle">Editar Tour</h3>
+        <div class="modal-body">
+          <form id="tourEditForm">
+            <p><strong>ID:</strong> <span id="tourModalId">--</span></p>
+            <label>
+              Nome
+              <input type="text" id="tourModalName" required />
+            </label>
+            <fieldset>
+              <legend>Idiomas</legend>
+              <div class="checkbox-row">
+                <label><input type="checkbox" id="tourModalLanguagePt" value="Português" /> Português</label>
+                <label><input type="checkbox" id="tourModalLanguageEn" value="Inglês" /> Inglês</label>
+                <label><input type="checkbox" id="tourModalLanguageEs" value="Espanhol" /> Espanhol</label>
+              </div>
+            </fieldset>
+            <label>
+              Encontro
+              <input type="text" id="tourModalMeeting" />
+            </label>
+            <label>
+              Identificação
+              <input type="text" id="tourModalIdentification" />
+            </label>
+            <label>
+              Link
+              <input type="url" id="tourModalLink" placeholder="https://..." />
+            </label>
+            <label>
+              Valor
+              <input type="number" id="tourModalValue" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label>
+              Status
+              <select id="tourModalStatus">
+                <option value="Ativo">Ativo</option>
+                <option value="Pausado">Pausado</option>
+              </select>
+            </label>
+            <div class="modal-actions">
+              <button type="button" id="tourModalPause" class="btn-book" style="background:#f59e0b; color:#fff;">Pausar</button>
+              <button type="button" id="tourModalDelete" class="btn-book btn-danger">Excluir</button>
+              <button type="button" id="tourModalCancel" class="btn-book">Cancelar</button>
+              <button type="button" id="tourModalSave" class="btn-book">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de edição de perfil de acesso -->
+    <div id="accountModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" style="z-index:5000;">
+      <div class="modal-content">
+        <h3 id="accountModalTitle">Gerenciar Perfil de Acesso</h3>
+        <div class="modal-body">
+          <form id="accountForm">
+            <label>
+              E-mail (não editável)
+              <input type="email" id="accountEmail" readonly />
+            </label>
+            <label>
+              Nome
+              <input type="text" id="accountNome" />
+            </label>
+            <label>
+              Sobrenome
+              <input type="text" id="accountSobrenome" />
+            </label>
+            <label>
+              Celular
+              <input type="text" id="accountCelular" />
+            </label>
+            <label>
+              País de Origem
+              <input type="text" id="accountPaisOrigem" placeholder="Brasil" />
+            </label>
+            <label>
+              Role
+              <select id="accountRole">
+                <option value="cliente_user">cliente_user</option>
+                <option value="admin">admin</option>
+                <option value="super_admin">super_admin</option>
+              </select>
+            </label>
+            <div class="modal-actions">
+              <button type="button" id="accountDelete" class="btn-book btn-danger">Excluir Perfil</button>
+              <button type="button" id="accountCancel" class="btn-book">Cancelar</button>
+              <button type="button" id="accountSave" class="btn-book">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <script src="../js/Riodejaneiro.js"></script>

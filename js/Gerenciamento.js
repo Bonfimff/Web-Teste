@@ -1,6 +1,731 @@
 // version 1.0
 
+const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+// Em ambiente local, tenta API local primeiro e depois endpoints públicos.
+// Em produção, tenta os endpoints públicos e mantém localhost como fallback de debug.
+const API_ENDPOINTS = isLocalHost
+  ? [
+      'https://api-tour.exksvol.com',
+      'https://api.exksvol.com',
+      'http://127.0.0.1:5000',
+      'http://localhost:5000'
+    ]
+  : [
+      'https://api-tour.exksvol.com',
+      'https://api.exksvol.com',
+      'http://127.0.0.1:5000',
+      'http://localhost:5000'
+    ];
+
+const fetchWithApiFallback = async (path, options = {}) => {
+  let lastError = null;
+  let lastResponse = null;
+
+  for (const base of API_ENDPOINTS) {
+    try {
+      const response = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, options);
+      if (response.ok) {
+        return response;
+      }
+
+      lastResponse = response;
+      console.warn('Endpoint respondeu com erro HTTP, tentando próximo:', {
+        base,
+        status: response.status,
+        statusText: response.statusText,
+        path
+      });
+    } catch (error) {
+      lastError = error;
+      console.warn('Falha ao conectar endpoint:', base, error);
+    }
+  }
+
+  if (lastResponse) {
+    return lastResponse;
+  }
+
+  const attempted = API_ENDPOINTS.join(', ');
+  throw lastError || new Error(`Nenhum endpoint da API respondeu. Endpoints testados: ${attempted}`);
+};
+
 let pendingUpdateId = null; // id do agendamento que está entrando no modo editar
+let currentlyEditingAccount = null; // id do usuário de acesso que está sendo editado
+let selectedRoleName = null; // role atual selecionada no painel de níveis
+let currentRolesConfig = {}; // guarda as permissões atuais carregadas
+let currentUserPermissions = null; // permissões do usuário logado
+let currentReservations = []; // lista de reservas carregadas para gerenciamento da página
+
+const normalizeRoleName = (role) => {
+  const normalized = String(role || 'cliente_user').toLowerCase();
+  return normalized === 'user' ? 'cliente_user' : normalized;
+};
+
+const getLocalPageReservations = () => {
+  if (typeof window.getReservations !== 'function') return [];
+
+  const stored = window.getReservations() || [];
+  const updated = stored.map((res, idx) => {
+    const whenValue = res.when ? new Date(res.when) : null;
+    const dateValue = res.data || (whenValue && !Number.isNaN(whenValue.getTime())
+      ? `${String(whenValue.getDate()).padStart(2, '0')}/${String(whenValue.getMonth() + 1).padStart(2, '0')}/${whenValue.getFullYear()}`
+      : '');
+    const timeValue = res.hora || (whenValue && !Number.isNaN(whenValue.getTime())
+      ? `${String(whenValue.getHours()).padStart(2, '0')}:${String(whenValue.getMinutes()).padStart(2, '0')}`
+      : '');
+    const localId = res.id ? String(res.id) : (res.localId ? res.localId : `local-${idx}-${String(whenValue ? whenValue.getTime() : Date.now())}`);
+
+    return {
+      ...res,
+      id: localId,
+      localId: localId,
+      tour: res.tour || '',
+      status: String(res.status || 'Pendente'),
+      data: dateValue,
+      hora: timeValue,
+      idioma: res.language || res.idioma || '',
+      modalidade: res.modality || res.modalidade || 'free',
+      guia: res.guide || res.guia || '',
+      qtd: res.quantity || res.quantas_pessoas || res.qtd || res.qtd_pessoas || 1
+    };
+  });
+
+  // Persist IDs for deterministic local updates
+  if (typeof window.setReservations === 'function') {
+    window.setReservations(updated);
+  }
+
+  return updated;
+};
+
+const getCurrentReservationsForManagement = () => {
+  const local = getLocalPageReservations();
+  const merged = [...local, ...currentReservations];
+
+  // Dedupe by id
+  const byId = {};
+  merged.forEach(r => {
+    if (!r || !r.id) return;
+    byId[String(r.id)] = r;
+  });
+
+  return Object.values(byId);
+};
+
+const getStoredCurrentRolePermissions = () => {
+  try {
+    const raw = localStorage.getItem('currentRolePermissions');
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const getEffectivePermissionsForRole = (roleName) => {
+  const role = normalizeRoleName(roleName || localStorage.getItem('userRole') || 'cliente_user');
+  const stored = getStoredCurrentRolePermissions();
+  return stored || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+};
+
+const formatRoleLabel = (roleName) => {
+  const role = normalizeRoleName(roleName);
+  if (role === 'super_admin') return 'Super Admin';
+  if (role === 'admin') return 'Admin';
+  if (role === 'cliente_user') return 'Cliente';
+  return role;
+};
+
+const updateProfileMenuByPermissions = (perms) => {
+  const profileDropdown = document.querySelector('.profile-dropdown');
+  if (!profileDropdown) return;
+
+  const userName = localStorage.getItem('userName') || localStorage.getItem('userEmail') || 'Usuário';
+  const userRole = localStorage.getItem('userRole') || 'cliente_user';
+  const tabs = Array.isArray(perms?.tabs) ? perms.tabs : [];
+
+  const canShowMyReservations = tabs.includes('Minhas Reservas');
+  const canShowMyData = tabs.includes('Meus Dados');
+
+  profileDropdown.innerHTML = `
+    <div class="profile-user-info" style="padding:8px 12px; border-bottom:1px solid #e5e7eb;">
+      <div style="font-weight:700; color:#111827;">${userName}</div>
+      <div style="font-size:0.8rem; color:#6b7280;">Nível de acesso: ${formatRoleLabel(userRole)}</div>
+    </div>
+    ${canShowMyReservations ? '<a href="#" class="profile-item" data-profile-action="my-reservations">Minhas Reservas</a>' : ''}
+    ${canShowMyData ? '<a href="#" class="profile-item" data-profile-action="my-data">Meus Dados</a>' : ''}
+    <a href="#" class="profile-item" data-profile-action="logout">Sair</a>
+  `;
+};
+
+const applyAccessControls = (perms) => {
+  const tabs = Array.isArray(perms?.tabs) ? perms.tabs : [];
+  const pages = Array.isArray(perms?.pages) ? perms.pages : [];
+
+  // controla visibilidade da nav principal (somente as abas permitidas)
+  document.querySelectorAll('.gerenciamento-nav .nav-link').forEach(link => {
+    const section = link.dataset.section;
+    const map = {
+      reservas: 'Reservas',
+      contas: 'Contas',
+      gerenciamento: 'Gerenciamento',
+      financeiro: 'Financeiro'
+    };
+
+    // esconde links fora do escopo de gerenciamento (ex: Principal)
+    if (!section || !map[section]) {
+      link.style.display = 'none';
+      return;
+    }
+
+    const tabName = map[section];
+    link.style.display = tabs.includes(tabName) ? '' : 'none';
+  });
+
+  // Seções do painel
+  const pageManagement = document.getElementById('pageManagementSection');
+  const reservationsStats = document.getElementById('reservationsStatsSection');
+  const mainSection = document.getElementById('reservationsTableSection');
+  const accountsSection = document.getElementById('accountsSection');
+
+  // Nao forca exibicao aqui para nao conflitar com mostrarSecao().
+  // Apenas garante ocultacao quando a permissao nao existe.
+  if (pageManagement && !pages.includes('Gerenciamento')) {
+    pageManagement.style.display = 'none';
+  }
+  if (mainSection && !pages.includes('Principal')) {
+    mainSection.style.display = 'none';
+  }
+  if (accountsSection && !(tabs.includes('Contas') && perms.manageContas)) {
+    accountsSection.style.display = 'none';
+  }
+  if (reservationsStats && !(tabs.includes('Reservas') && perms.manageReservas)) {
+    reservationsStats.style.display = 'none';
+  }
+
+  // Abas auxiliares (minhas reservas, meus dados, sobre, contato, ajuda)
+  const submenuMap = [
+    { key: 'Minhas Reservas', selector: 'a[data-profile-action="my-reservations"]' },
+    { key: 'Meus Dados', selector: 'a[data-profile-action="my-data"]' },
+    { key: 'SOBRE', selector: '[data-i18n="nav_about"]' },
+    { key: 'CONTATO', selector: '[data-i18n="nav_contact"]' },
+    { key: 'AJUDA', selector: '[data-i18n="nav_help"]' }
+  ];
+
+  submenuMap.forEach(({ key, selector }) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    el.style.display = tabs.includes(key) ? '' : 'none';
+  });
+
+  // Permissões de recursos funcionais (manage*, etc)
+  if (!perms.manageReservas) {
+    document.querySelectorAll('.btn-reserve, .btn-edit-reservation, .btn-cancel-reservation').forEach(el => el?.remove?.());
+  }
+  if (!perms.manageContas) {
+    document.querySelectorAll('.btn-edit-account, .btn-delete-account').forEach(el => el?.remove?.());
+  }
+  if (!perms.managePerfis) {
+    // Se não pode gerenciar perfis, esconda a seção de níveis e formulários de role
+    document.querySelectorAll('.role-management-panel, #rolePermissionsSection, #rolesManager').forEach(el => { if (el) el.style.display = 'none'; });
+  }
+
+  // Controle de edição
+  if (!perms.manageSelfEdit) {
+    document.querySelectorAll('.btn-edit-self').forEach(el => { if (el) el.style.display = 'none'; });
+  }
+  if (!perms.manageOtherEdit) {
+    document.querySelectorAll('.btn-edit-other').forEach(el => { if (el) el.style.display = 'none'; });
+  }
+  if (!perms.manageConsultas) {
+    document.querySelectorAll('.filtro-reservas-grid, #searchReservas').forEach(el => { if (el) el.style.display = 'none'; });
+  }
+
+  if (!perms.loadAllReservas) {
+    // exibe apenas reservas do usuário se o recurso não estiver disponível
+    const rows = document.querySelectorAll('#reservationsTable tbody tr');
+    const userEmail = localStorage.getItem('userEmail');
+    if (userEmail) {
+      rows.forEach(row => {
+        const emailCell = row.querySelector('td[data-label="Email"]');
+        if (emailCell && emailCell.textContent.trim().toLowerCase() !== userEmail.toLowerCase()) {
+          row.style.display = 'none';
+        }
+      });
+    }
+  }
+
+  // Atualiza o menu de usuário para exibir apenas dados/acoes permitidas.
+  updateProfileMenuByPermissions(perms);
+};
+
+const getPageTours = () => {
+  try {
+    const data = JSON.parse(localStorage.getItem('pageTours') || '[]');
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+};
+
+const setPageTours = (tours) => {
+  try {
+    localStorage.setItem('pageTours', JSON.stringify(Array.isArray(tours) ? tours : []));
+  } catch {
+    // ignore
+  }
+};
+
+const normalizeTourStatus = (status) => {
+  const raw = String(status || 'ativo').trim().toLowerCase();
+  if (raw === 'pausado') return 'Pausado';
+  if (raw === 'inativo') return 'Inativo';
+  return 'Ativo';
+};
+
+const mapBackendTourToPageTour = (tour) => {
+  return {
+    id: String(tour?.id ?? ''),
+    name: tour?.nome_tour || tour?.name || '',
+    languages: tour?.idiomas || tour?.languages || '',
+    meeting: tour?.encontro || tour?.meeting || '',
+    identification: tour?.identificacao || tour?.identification || '',
+    link: tour?.link_tour || tour?.link || '',
+    value: tour?.valor ?? tour?.value ?? 0,
+    status: normalizeTourStatus(tour?.estado || tour?.status)
+  };
+};
+
+const fetchPageToursFromBackend = async () => {
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail) return null;
+
+  try {
+    const response = await fetchWithApiFallback(`/get_tours_pagina?email=${encodeURIComponent(currentUserEmail)}`);
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      console.warn('Falha ao carregar tours_pagina do backend, usando fallback local:', response.status, detail);
+      return null;
+    }
+
+    const payload = await response.json();
+    if (!Array.isArray(payload)) {
+      return null;
+    }
+
+    const mapped = payload.map(mapBackendTourToPageTour);
+    setPageTours(mapped);
+    return mapped;
+  } catch (error) {
+    console.warn('Erro ao buscar tours_pagina. Fallback local será usado.', error);
+    return null;
+  }
+};
+
+const formatTourValueBRL = (value) => {
+  const numeric = Number(value);
+  const safeNumber = Number.isFinite(numeric) ? numeric : 0;
+  return safeNumber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
+let currentlyEditingTourId = null;
+
+const parseTourLanguages = (value) => {
+  if (!value) return [];
+  return value
+    .split(/[,;]+/) 
+    .map(part => part.trim())
+    .filter(Boolean);
+};
+
+const setTourModalLanguages = (value) => {
+  const selected = parseTourLanguages(value);
+  document.getElementById('tourModalLanguagePt').checked = selected.includes('Português');
+  document.getElementById('tourModalLanguageEn').checked = selected.includes('Inglês');
+  document.getElementById('tourModalLanguageEs').checked = selected.includes('Espanhol');
+};
+
+const getTourModalLanguages = () => {
+  return ['tourModalLanguagePt', 'tourModalLanguageEn', 'tourModalLanguageEs']
+    .map(id => document.getElementById(id))
+    .filter(el => el && el.checked)
+    .map(el => el.value)
+    .join(', ');
+};
+
+const openTourEditModal = (tourData) => {
+  const modal = document.getElementById('tourEditModal');
+  if (!modal) return;
+
+  currentlyEditingTourId = tourData.id;
+
+  document.getElementById('tourModalId').textContent = tourData.id || '--';
+  document.getElementById('tourModalName').value = tourData.name || '';
+  setTourModalLanguages(tourData.languages || tourData.idiomas || '');
+  document.getElementById('tourModalMeeting').value = tourData.meeting || tourData.encontro || '';
+  document.getElementById('tourModalIdentification').value = tourData.identification || tourData.identificacao || '';
+  document.getElementById('tourModalLink').value = tourData.link || tourData.link_tour || '';
+  document.getElementById('tourModalValue').value = tourData.value != null ? tourData.value : tourData.valor != null ? tourData.valor : '';
+  document.getElementById('tourModalStatus').value = tourData.status || tourData.estado || 'Ativo';
+
+  const pauseButton = document.getElementById('tourModalPause');
+  if (pauseButton) {
+    pauseButton.textContent = (tourData.status || tourData.estado || 'Ativo') === 'Pausado' ? 'Retomar' : 'Pausar';
+  }
+
+  modal.classList.remove('hidden');
+};
+
+const closeTourEditModal = () => {
+  const modal = document.getElementById('tourEditModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  currentlyEditingTourId = null;
+};
+
+const toggleTourPauseFromModal = () => {
+  if (!currentlyEditingTourId) return;
+  const tours = getPageTours();
+  const updatedTours = tours.map(t => {
+    if (String(t.id) !== String(currentlyEditingTourId)) return t;
+    const nextStatus = ((t.status || 'Ativo').toLowerCase() === 'pausado') ? 'Ativo' : 'Pausado';
+    return { ...t, status: nextStatus };
+  });
+  setPageTours(updatedTours);
+  const updatedTour = updatedTours.find(t => String(t.id) === String(currentlyEditingTourId));
+  const statusSelect = document.getElementById('tourModalStatus');
+  const pauseButton = document.getElementById('tourModalPause');
+  if (statusSelect && updatedTour) statusSelect.value = updatedTour.status || 'Ativo';
+  if (pauseButton && updatedTour) {
+    pauseButton.textContent = (updatedTour.status || 'Ativo') === 'Pausado' ? 'Retomar' : 'Pausar';
+  }
+  carregarToursGerenciamento();
+};
+
+const deleteTourFromModal = () => {
+  if (!currentlyEditingTourId) return;
+  const tours = getPageTours();
+  const tourToDelete = tours.find(t => String(t.id) === String(currentlyEditingTourId));
+  if (!tourToDelete) return;
+  if (!confirm(`Excluir tour "${tourToDelete.name || tourToDelete.id}"?`)) return;
+  const updatedTours = tours.filter(t => String(t.id) !== String(currentlyEditingTourId));
+  setPageTours(updatedTours);
+  closeTourEditModal();
+  carregarToursGerenciamento();
+};
+
+const saveTourEditModal = async () => {
+  const id = currentlyEditingTourId;
+  if (!id) return;
+
+  const name = document.getElementById('tourModalName').value.trim();
+  const languages = getTourModalLanguages();
+  const meeting = document.getElementById('tourModalMeeting').value.trim();
+  const identification = document.getElementById('tourModalIdentification').value.trim();
+  const link = document.getElementById('tourModalLink').value.trim();
+  const value = parseFloat(document.getElementById('tourModalValue').value);
+  const status = document.getElementById('tourModalStatus').value;
+  const adminEmail = localStorage.getItem('userEmail') || '';
+
+  const payload = {
+    id,
+    nome_tour: name,
+    idiomas: languages,
+    encontro: meeting,
+    identificacao: identification,
+    link_tour: link,
+    valor: Number.isFinite(value) ? value : 0,
+    estado: status,
+    admin_email: adminEmail
+  };
+
+  try {
+    const response = await fetchWithApiFallback('/update_tour_pagina', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      alert(`Falha ao atualizar tour: ${errorData.message || response.statusText}`);
+      return;
+    }
+
+    const tours = getPageTours();
+    const updatedTours = tours.map(t => {
+      if (String(t.id) === String(id)) {
+        return {
+          ...t,
+          name,
+          languages,
+          meeting,
+          identification,
+          link,
+          value: Number.isFinite(value) ? value : (t.value ?? 0),
+          status
+        };
+      }
+      return t;
+    });
+
+    setPageTours(updatedTours);
+    closeTourEditModal();
+    carregarToursGerenciamento();
+    alert('Tour atualizado com sucesso.');
+  } catch (error) {
+    console.error('Erro ao salvar tour:', error);
+    alert('Erro ao salvar tour. Verifique sua conexão e tente novamente.');
+  }
+};
+
+const carregarToursGerenciamento = async () => {
+  const remoteTours = await fetchPageToursFromBackend();
+  const tours = Array.isArray(remoteTours) ? remoteTours : getPageTours();
+  const tableBody = document.getElementById('tourManagementBody');
+  if (!tableBody) return;
+
+  if (!tours.length) {
+    tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = '';
+
+  tours.forEach((tour, idx) => {
+    const row = document.createElement('tr');
+    row.dataset.id = tour.id || `tour-${idx}`;
+    const hasLink = Boolean(String(tour.link || '').trim());
+    const linkHtml = hasLink
+      ? `<a href="${tour.link}" target="_blank" rel="noopener noreferrer">Abrir link</a>`
+      : '-';
+
+    row.innerHTML = `
+      <td data-label="ID">${tour.id || `tour-${idx}`}</td>
+      <td data-label="Tour">${tour.name || '-'}</td>
+      <td data-label="Idiomas">${tour.languages || '-'}</td>
+      <td data-label="Encontro">${tour.meeting || '-'}</td>
+      <td data-label="Identificação">${tour.identification || '-'}</td>
+      <td data-label="Link">${linkHtml}</td>
+      <td data-label="Valor">${formatTourValueBRL(tour.value)}</td>
+      <td data-label="Status">${tour.status || 'Ativo'}</td>
+    `;
+
+    row.addEventListener('dblclick', () => openTourEditModal(tour));
+    tableBody.appendChild(row);
+  });
+};
+
+const DEFAULT_ROLE_PERMISSIONS = {
+  cliente_user: {
+    manageReservas: false,
+    manageContas: false,
+    managePerfis: false,
+    pages: ['Principal', 'Reservas'],
+    tabs: ['Principal', 'Reservas']
+  },
+  admin: {
+    manageReservas: true,
+    manageContas: true,
+    managePerfis: false,
+    manageSelfEdit: true,
+    manageOtherEdit: true,
+    manageConsultas: true,
+    loadAllReservas: true,
+    pages: ['Principal', 'Gerenciamento'],
+    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
+  },
+  super_admin: {
+    manageReservas: true,
+    manageContas: true,
+    managePerfis: true,
+    manageSelfEdit: true,
+    manageOtherEdit: true,
+    manageConsultas: true,
+    loadAllReservas: true,
+    pages: ['Principal', 'Gerenciamento'],
+    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
+  }
+};
+
+const updateCountryPie = (accounts) => {
+  const pie = document.getElementById('countryPie');
+  const legend = document.getElementById('countryLegend');
+  if (!pie || !legend) return;
+
+  const clientAccounts = accounts.filter(user => (user.role || '').trim() === 'cliente_user');
+  const counts = clientAccounts.reduce((acc, user) => {
+    const country = (user.pais_origem || 'Desconhecido').trim() || 'Desconhecido';
+    acc[country] = (acc[country] || 0) + 1;
+    return acc;
+  }, {});
+
+  const total = Object.values(counts).reduce((sum, v) => sum + v, 0) || 1;
+  const colors = ['#e53e3e', '#3182ce', '#38a169', '#dd6b20', '#805ad5', '#2b6cb0', '#d69e2e', '#9f7aea', '#3182ce', '#f6ad55'];
+
+  const gradients = Object.entries(counts).map(([country, count], index) => {
+    const targetPct = (count / total) * 100;
+    return {
+      country,
+      color: colors[index % colors.length],
+      targetPct,
+      value: 0
+    };
+  });
+
+  const pieDuration = 1200;
+  const startTime = performance.now();
+
+  const animate = (time) => {
+    const progress = Math.min((time - startTime) / pieDuration, 1);
+    let currentOffset = 0;
+
+    const parts = gradients.map((entry) => {
+      entry.value = entry.targetPct * progress;
+      const startAngle = (currentOffset / 100) * 360;
+      const endAngle = ((currentOffset + entry.value) / 100) * 360;
+      currentOffset += entry.value;
+      return `${entry.color} ${startAngle}deg ${endAngle}deg`;
+    });
+
+    pie.style.background = `conic-gradient(${parts.join(', ')})`;
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  };
+
+  requestAnimationFrame(animate);
+
+  legend.innerHTML = Object.entries(counts)
+    .map(([country, count], index) => {
+      const pct = ((count / total) * 100).toFixed(1);
+      const color = colors[index % colors.length];
+      return `<div style="display:flex;align-items:center;margin-bottom:0.25rem;"><span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;margin-right:0.5rem;"></span><strong>${country}</strong>: <span class="country-pct" data-target="${pct}">0.0</span>% (${count})</div>`;
+    })
+    .join('');
+
+  const duration = 900;
+  const start = performance.now();
+  const pctElems = Array.from(legend.querySelectorAll('.country-pct'));
+
+  const step = (timestamp) => {
+    const elapsed = timestamp - start;
+    const progress = Math.min(elapsed / duration, 1);
+
+    pctElems.forEach((el) => {
+      const target = parseFloat(el.getAttribute('data-target')) || 0;
+      const value = (target * progress).toFixed(1);
+      el.textContent = value;
+    });
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  };
+  requestAnimationFrame(step);
+};
+
+const populateRoleSelect = (roles) => {
+  const roleSelect = document.getElementById('roleSelect');
+  if (!roleSelect) return;
+
+  roleSelect.innerHTML = roles.map(role => `<option value="${role}">${role}</option>`).join('');
+  roleSelect.addEventListener('change', () => {
+    selectRole(roleSelect.value);
+  });
+};
+
+const selectRole = (role) => {
+  const roleSelect = document.getElementById('roleSelect');
+  if (!roleSelect) return;
+
+  roleSelect.value = role;
+  const perms = currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || { manageReservas: false, manageContas: false, managePerfis: false, pages: [], tabs: [] };
+
+  const roleCheckReservas = document.getElementById('roleCheckReservas');
+  const roleCheckContas = document.getElementById('roleCheckContas');
+  const roleCheckPerfis = document.getElementById('roleCheckPerfis');
+  const roleCheckSelfEdit = document.getElementById('roleCheckSelfEdit');
+  const roleCheckOtherEdit = document.getElementById('roleCheckOtherEdit');
+  const roleCheckConsultas = document.getElementById('roleCheckConsultas');
+  const roleCheckCarregarReservas = document.getElementById('roleCheckCarregarReservas');
+
+  if (roleCheckReservas) roleCheckReservas.checked = perms.manageReservas;
+  if (roleCheckContas) roleCheckContas.checked = perms.manageContas;
+  if (roleCheckPerfis) roleCheckPerfis.checked = perms.managePerfis;
+  if (roleCheckSelfEdit) roleCheckSelfEdit.checked = perms.manageSelfEdit;
+  if (roleCheckOtherEdit) roleCheckOtherEdit.checked = perms.manageOtherEdit;
+  if (roleCheckConsultas) roleCheckConsultas.checked = perms.manageConsultas;
+  if (roleCheckCarregarReservas) roleCheckCarregarReservas.checked = perms.loadAllReservas;
+
+  Array.from(document.querySelectorAll('.page-perm')).forEach((el) => {
+    el.checked = (perms.pages || []).includes(el.dataset.page);
+  });
+
+  Array.from(document.querySelectorAll('.tab-perm')).forEach((el) => {
+    el.checked = (perms.tabs || []).includes(el.dataset.tab);
+  });
+
+  selectedRoleName = role;
+};
+
+const updateSelectedRoleConfig = () => {
+  if (!selectedRoleName) return;
+
+  const manageReservas = !!document.getElementById('roleCheckReservas')?.checked;
+  const manageContas = !!document.getElementById('roleCheckContas')?.checked;
+  const managePerfis = !!document.getElementById('roleCheckPerfis')?.checked;
+  const manageSelfEdit = !!document.getElementById('roleCheckSelfEdit')?.checked;
+  const manageOtherEdit = !!document.getElementById('roleCheckOtherEdit')?.checked;
+  const manageConsultas = !!document.getElementById('roleCheckConsultas')?.checked;
+  const loadAllReservas = !!document.getElementById('roleCheckCarregarReservas')?.checked;
+
+  const pageChecks = Array.from(document.querySelectorAll('.page-perm'));
+  const tabChecks = Array.from(document.querySelectorAll('.tab-perm'));
+
+  const pages = pageChecks.filter(c => c.checked).map(c => c.dataset.page);
+  const tabs = tabChecks.filter(c => c.checked).map(c => c.dataset.tab);
+
+  currentRolesConfig[selectedRoleName] = {
+    manageReservas,
+    manageContas,
+    managePerfis,
+    manageSelfEdit,
+    manageOtherEdit,
+    manageConsultas,
+    loadAllReservas,
+    pages,
+    tabs
+  };
+};
+
+const setupRoleCheckboxHandlers = () => {
+  [
+    'roleCheckReservas',
+    'roleCheckContas',
+    'roleCheckPerfis',
+    'roleCheckSelfEdit',
+    'roleCheckOtherEdit',
+    'roleCheckConsultas',
+    'roleCheckCarregarReservas'
+  ].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      updateSelectedRoleConfig();
+    });
+  });
+
+  Array.from(document.querySelectorAll('.page-perm')).forEach((el) => {
+    el.addEventListener('change', updateSelectedRoleConfig);
+  });
+
+  Array.from(document.querySelectorAll('.tab-perm')).forEach((el) => {
+    el.addEventListener('change', updateSelectedRoleConfig);
+  });
+};
 
 // ********************************************************************
 // função get_agendamentos (fetch do backend)
@@ -8,6 +733,41 @@ let pendingUpdateId = null; // id do agendamento que está entrando no modo edit
 const carregarAgendamentosDoBanco = async () => {
   const tableBodyElement = document.getElementById('reservationsBody');
   if (!tableBodyElement) return;
+
+  const userEmail = localStorage.getItem('userEmail');
+  if (!userEmail) {
+    tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Sessao expirada. Faca login novamente.</td></tr>';
+    return;
+  }
+
+  const role = normalizeRoleName(localStorage.getItem('userRole'));
+  currentUserPermissions = currentUserPermissions || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+
+  if (!currentUserPermissions.manageReservas) {
+    tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Verificando permissão no servidor...</td></tr>';
+
+    try {
+      const response = await fetchWithApiFallback(`/check_permission?email=${encodeURIComponent(userEmail)}&permission=manageReservas`);
+      if (!response.ok) {
+        const reasonData = await response.json().catch(() => ({}));
+        tableBodyElement.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Acesso negado no servidor: ${reasonData.reason || reasonData.message || 'sem razão'}.</td></tr>`;
+        return;
+      }
+
+      const result = await response.json();
+      if (!result.allowed) {
+        tableBodyElement.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Acesso negado ao Gerenciamento de reservas: ${result.reason || 'não autorizado'}.</td></tr>`;
+        return;
+      }
+
+      // Se servidor permitir, atualize permissão local para evitar rechecagem repetida
+      currentUserPermissions.manageReservas = true;
+    } catch (error) {
+      console.warn('Falha ao verificar permissão no servidor:', error);
+      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Erro de verificação de permissões. Tente novamente mais tarde.</td></tr>';
+      return;
+    }
+  }
 
   // filtros aplicados na própria tabela de backend
   const filterFrom = document.getElementById('filterFrom');
@@ -22,23 +782,24 @@ const carregarAgendamentosDoBanco = async () => {
   const statusFilter = filterStatus?.value || 'all';
   const modalityFilter = filterModality?.value || 'all';
 
-  const userEmail = localStorage.getItem('userEmail');
-  if (!userEmail) {
-    alert('Sessão expirada. Por favor, faça login novamente.');
-    window.location.href = 'login.html';
-    return;
-  }
-
   try {
-    const response = await fetch(`https://api-tour.exksvol.com/get_agendamentos?email=${encodeURIComponent(userEmail)}`);
+    const response = await fetchWithApiFallback(`/get_agendamentos?email=${encodeURIComponent(userEmail)}`);
 
     if (response.status === 403) {
       alert('Erro: Você não tem permissão de Administrador para ver esta página.');
+      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Sem permissão para visualizar reservas.</td></tr>';
       return;
     }
 
     if (!response.ok) {
-      console.error('Erro ao buscar agendamentos', response.status);
+      const errorText = await response.text().catch(() => '');
+      console.error('Erro ao buscar agendamentos', {
+        status: response.status,
+        statusText: response.statusText,
+        detail: errorText
+      });
+      alert(`Falha ao carregar reservas (${response.status}).`);
+      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Falha ao carregar reservas do banco de dados.</td></tr>';
       return;
     }
 
@@ -70,6 +831,9 @@ const carregarAgendamentosDoBanco = async () => {
       tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Nenhuma reserva encontrada.</td></tr>';
     }
 
+    // Salva reservas para uso na aba Gerenciamento da página
+    currentReservations = filtered.slice();
+
     // Exibir registros mais recentes primeiro (id maior primeiro)
     filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
 
@@ -95,13 +859,18 @@ const carregarAgendamentosDoBanco = async () => {
         <td data-label="Status"><span class="status-badge ${statusClass}">${statusValue}</span></td>
       `;
 
-      row.addEventListener('click', () => {
-        console.log('Editando agendamento:', ag.id);
-      });
+      if (currentUserPermissions?.manageReservas) {
+        row.addEventListener('click', () => {
+          console.log('Editando agendamento:', ag.id);
+          openEditModalFromBackend(ag);
+        });
 
-      row.addEventListener('dblclick', () => {
-        openEditModalFromBackend(ag);
-      });
+        row.addEventListener('dblclick', () => {
+          openEditModalFromBackend(ag);
+        });
+      } else {
+        row.style.cursor = 'not-allowed';
+      }
 
       tableBodyElement.appendChild(row);
     });
@@ -190,6 +959,7 @@ const carregarAgendamentosDoBanco = async () => {
     if (nextTourDetails) {
       nextTourDetails.classList.remove('open');
       nextTourDetails.setAttribute('aria-hidden', 'true');
+      nextTourDetails.style.display = 'none';
 
       let tourListContainer = nextTourDetails.querySelector('.next-tour-entries');
       if (!tourListContainer) {
@@ -226,21 +996,730 @@ const carregarAgendamentosDoBanco = async () => {
     }
 
     if (nextToggle && nextDetails) {
+      nextToggle.onclick = null;
       nextToggle.addEventListener('click', () => {
         const expanded = nextDetails.classList.toggle('open');
         nextDetails.setAttribute('aria-hidden', String(!expanded));
         nextToggle.setAttribute('aria-expanded', String(expanded));
         nextToggle.classList.toggle('open', expanded);
+        nextDetails.style.display = expanded ? 'block' : 'none';
+        nextToggle.textContent = expanded ? '▴' : '▾';
       });
     }
 
+    carregarGerenciamentoPagina();
     console.log('Tabela atualizada com sucesso!');
   } catch (error) {
     console.error('Erro de conexão ao carregar tabela:', error);
+    const detail = (error && error.message) ? ` Detalhe: ${error.message}` : '';
+    tableBodyElement.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Erro de conexão com a API ao carregar reservas.${detail}</td></tr>`;
   }
 };
 
+const hideAllSections = () => {
+  const reservations = document.querySelectorAll('.reservas-section');
+  const accounts = document.getElementById('accountsSection');
+  const pageManagement = document.getElementById('pageManagementSection');
+
+  reservations.forEach((el) => { if (el) el.style.display = 'none'; });
+  if (accounts) accounts.style.display = 'none';
+  if (pageManagement) pageManagement.style.display = 'none';
+};
+
+const mostrarSecao = (secao) => {
+  hideAllSections();
+
+  const reservations = document.querySelectorAll('.reservas-section');
+  const reservationStats = document.getElementById('reservationsStatsSection');
+  const reservationTable = document.getElementById('reservationsTableSection');
+  const accounts = document.getElementById('accountsSection');
+  const pageManagement = document.getElementById('pageManagementSection');
+
+  reservations.forEach((el) => {
+    if (el) el.style.display = secao === 'reservas' ? 'block' : 'none';
+  });
+
+  if (reservationStats) {
+    reservationStats.style.display = secao === 'reservas' ? 'block' : 'none';
+  }
+  if (reservationTable) {
+    reservationTable.style.display = secao === 'reservas' ? 'block' : 'none';
+  }
+
+  if (accounts) {
+    accounts.style.display = secao === 'contas' ? 'block' : 'none';
+  }
+
+  if (pageManagement) {
+    pageManagement.style.display = secao === 'gerenciamento' ? 'block' : 'none';
+  }
+
+  if (secao !== 'reservas' && secao !== 'contas' && secao !== 'gerenciamento') {
+    console.warn('Secão desconhecida:', secao);
+  }
+
+  const links = document.querySelectorAll('.gerenciamento-nav .nav-link[data-section]');
+  links.forEach((link) => {
+    if (link.dataset.section === secao) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+
+  const titleMap = {
+    reservas: 'Reservas',
+    contas: 'Contas',
+    perfis: 'Gerenciamento da página',
+    gerenciamento: 'Gerenciamento da página'
+  };
+
+  const titleEle = document.querySelector('.gerenciamento-header h1');
+  if (titleEle) {
+    titleEle.textContent = titleMap[secao] || 'Reservas';
+  }
+
+  // Verifica permissão para seção solicitada
+  if (!currentUserPermissions) {
+    const role = normalizeRoleName(localStorage.getItem('userRole'));
+    currentUserPermissions = DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+  }
+
+  const sectionToTab = {
+    reservas: 'Reservas',
+    contas: 'Contas',
+    gerenciamento: 'Gerenciamento'
+  };
+
+  const allowedTabs = currentUserPermissions.tabs || [];
+  const requestedTab = sectionToTab[secao] || 'Reservas';
+
+  if (!allowedTabs.includes(requestedTab)) {
+    alert('Acesso negado à seção solicitada com seu nível de acesso.');
+    const fallbackTab = allowedTabs[0] || 'Principal';
+    if (fallbackTab === 'Reservas') {
+      mostrarSecao('reservas');
+    } else if (fallbackTab === 'Contas') {
+      mostrarSecao('contas');
+    } else if (fallbackTab === 'Gerenciamento') {
+      mostrarSecao('gerenciamento');
+    }
+    return;
+  }
+
+  if (secao === 'gerenciamento') {
+    carregarGerenciamentoPagina();
+    carregarToursGerenciamento();
+  }
+};
+
+const toggleReservaPausada = async (id, currentStatus) => {
+  const newStatus = currentStatus === 'Pausado' ? 'Confirmado' : 'Pausado';
+  const currentUserEmail = localStorage.getItem('userEmail');
+
+  if (String(id).startsWith('local-') && typeof window.getReservations === 'function' && typeof window.setReservations === 'function') {
+    const raw = window.getReservations();
+    const updated = raw.map((res) => {
+      if (String(res.id) === String(id) || String(res.localId) === String(id)) {
+        return { ...res, status: newStatus, id: String(id), localId: String(id) };
+      }
+      return res;
+    });
+
+    window.setReservations(updated);
+    carregarGerenciamentoPagina();
+    return;
+  }
+
+  try {
+    const response = await fetchWithApiFallback('/update_agendamento', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: newStatus, admin_email: currentUserEmail })
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Erro ao atualizar status: ${text}`);
+    }
+
+    carregarAgendamentosDoBanco();
+    carregarGerenciamentoPagina();
+  } catch (error) {
+    console.error(error);
+    alert('Não foi possível atualizar o status da reserva.');
+  }
+};
+
+const excluirReservaAgendamento = async (id) => {
+  if (!confirm('Tem certeza que deseja excluir esta reserva?')) return;
+  const currentUserEmail = localStorage.getItem('userEmail');
+
+  if (String(id).startsWith('local-') && typeof window.getReservations === 'function' && typeof window.setReservations === 'function') {
+    const raw = window.getReservations();
+    const updated = raw.filter((res) => String(res.id) !== String(id) && String(res.localId) !== String(id));
+    window.setReservations(updated);
+    carregarGerenciamentoPagina();
+    return;
+  }
+
+  try {
+    const response = await fetchWithApiFallback('/delete_agendamento', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, admin_email: currentUserEmail })
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Erro ao excluir reserva: ${text}`);
+    }
+
+    carregarAgendamentosDoBanco();
+    carregarGerenciamentoPagina();
+  } catch (error) {
+    console.error(error);
+    alert('Não foi possível excluir a reserva.');
+  }
+};
+
+const carregarGerenciamentoPagina = () => {
+  const tableBody = document.getElementById('pageManagementBody');
+  if (!tableBody) return;
+
+  const reservations = getCurrentReservationsForManagement();
+  if (!reservations.length) {
+    tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Nenhuma reserva disponível para gerenciamento.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = '';
+
+  reservations.forEach((ag) => {
+    const row = document.createElement('tr');
+    row.setAttribute('data-id', ag.id);
+
+    const statusValue = (ag.status || 'Pendente').toString();
+    const inPause = statusValue.toLowerCase() === 'pausado';
+
+    row.innerHTML = `
+      <td data-label="ID">${ag.id || '-'}</td>
+      <td data-label="Tour">${ag.tour || '-'}</td>
+      <td data-label="Status">${statusValue}</td>
+      <td data-label="Data">${ag.data || '-'}</td>
+      <td data-label="Hora">${ag.hora || '-'}</td>
+      <td data-label="Pessoas">${ag.qtd ?? ag.qtd_pessoas ?? '-'}</td>
+      <td data-label="Ações">-</td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+};
+
+const carregarContasDoBanco = async () => {
+  const tableBody = document.getElementById('accountsBody');
+  if (!tableBody) return;
+
+  const role = normalizeRoleName(localStorage.getItem('userRole') || 'cliente_user');
+  currentUserPermissions = currentUserPermissions || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+
+  if (!currentUserPermissions.manageContas) {
+    tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Sem permissão para visualizar tabela de acessos.</td></tr>';
+    const rolesManager = document.getElementById('rolesManager');
+    if (rolesManager) rolesManager.style.display = 'none';
+    return;
+  }
+
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail) {
+    alert('Sessão expirada. Faça login novamente.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Carregando contas...</td></tr>';
+
+  try {
+    const response = await fetchWithApiFallback(`/get_acessos?email=${encodeURIComponent(currentUserEmail)}`);
+
+    if (response.status === 403) {
+      tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Acesso negado — somente admin/super_admin.</td></tr>';
+      return;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.error('Erro ao buscar acessos', response.status, response.statusText, errorText);
+      tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Erro ao carregar contas.</td></tr>';
+      return;
+    }
+
+    const accounts = await response.json();
+    if (!Array.isArray(accounts) || !accounts.length) {
+      tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Nenhuma conta encontrada.</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    accounts.forEach((account) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td data-label="ID">${account.id}</td>
+        <td data-label="E-mail">${account.email}</td>
+        <td data-label="Nome">${account.nome}</td>
+        <td data-label="Sobrenome">${account.sobrenome}</td>
+        <td data-label="Celular">${account.celular}</td>
+        <td data-label="Role">${account.role}</td>
+        <td data-label="País">${account.pais_origem}</td>
+        <td data-label="Gênero">${account.genero}</td>
+        <td data-label="Ações">
+          <button class="btn-book btn-edit-account" type="button">Editar</button>
+          <button class="btn-book btn-danger btn-delete-account" type="button">Excluir</button>
+        </td>
+      `;
+
+      const editBtn = row.querySelector('.btn-edit-account');
+      const deleteBtn = row.querySelector('.btn-delete-account');
+      const canEditOthers = !!currentUserPermissions.manageOtherEdit;
+
+      if (!canEditOthers) {
+        if (editBtn) {
+          editBtn.disabled = true;
+          editBtn.title = 'Sem permissão para alterar outros perfis';
+          editBtn.style.opacity = '0.5';
+          editBtn.style.cursor = 'not-allowed';
+        }
+        if (deleteBtn) {
+          deleteBtn.disabled = true;
+          deleteBtn.title = 'Sem permissão para excluir outros perfis';
+          deleteBtn.style.opacity = '0.5';
+          deleteBtn.style.cursor = 'not-allowed';
+        }
+      } else {
+        editBtn?.addEventListener('click', () => {
+          openAccountModal(account);
+        });
+
+        deleteBtn?.addEventListener('click', async () => {
+          if (!confirm(`Excluir conta ${account.email}?`)) return;
+
+          const deleteResp = await fetchWithApiFallback('/delete_user', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_email: currentUserEmail, id: account.id })
+          });
+
+          if (!deleteResp.ok) {
+            const errorText = await deleteResp.text().catch(() => '');
+            alert(`Falha ao excluir usuário: ${deleteResp.status} ${errorText}`);
+            return;
+          }
+
+          alert('Conta excluída com sucesso.');
+          carregarContasDoBanco();
+        });
+      }
+
+      tableBody.appendChild(row);
+    });
+
+    // Atualiza gráfico de países com base no cadastro de contas
+    updateCountryPie(accounts);
+
+    // Apenas quem pode gerenciar perfis deve visualizar/editar níveis de acesso.
+    if (currentUserPermissions.managePerfis) {
+      carregarNiveisDeAcesso();
+    } else {
+      const rolesManager = document.getElementById('rolesManager');
+      if (rolesManager) rolesManager.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Erro ao carregar contas:', error);
+    tableBody.innerHTML = `<tr><td colspan="9" style="padding:0.75rem;">Erro de conexão: ${error.message || error}</td></tr>`;
+  }
+};
+
+const renderRolesTable = (permissions) => {
+  // Não usa mais tabela options internas (apenas select + checkboxes)
+  currentRolesConfig = permissions;
+};
+
+const renderRoleDetails = (role, perms) => {
+  // Não necessário; o select + checkboxes são usados em vez de painel separado.
+};
+
+const carregarNiveisDeAcesso = async () => {
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail) {
+    alert('Sessão expirada. Faça login novamente.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try {
+    const response = await fetchWithApiFallback(`/get_role_permissions?email=${encodeURIComponent(currentUserEmail)}`);
+    if (response.status === 403) {
+      console.warn('Acesso negado para get_role_permissions, usando padrão local.');
+      currentRolesConfig = DEFAULT_ROLE_PERMISSIONS;
+    } else if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.error('Erro ao buscar níveis de acesso', response.status, response.statusText, errorText);
+      currentRolesConfig = DEFAULT_ROLE_PERMISSIONS;
+    } else {
+      const payload = await response.json();
+      const permissions = payload?.permissions || {};
+      currentRolesConfig = Object.keys(permissions).length ? permissions : DEFAULT_ROLE_PERMISSIONS;
+    }
+
+    populateRoleSelect(Object.keys(currentRolesConfig));
+    const role = normalizeRoleName(localStorage.getItem('userRole') || 'cliente_user');
+  currentUserPermissions = currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+
+  applyAccessControls(currentUserPermissions);
+
+  if (!Array.isArray(currentUserPermissions.pages) || !currentUserPermissions.pages.includes('Gerenciamento')) {
+    alert('Seu nível de acesso não permite abrir esta página.');
+    window.location.href = '../index.html';
+    return;
+  }
+
+  selectRole(Object.keys(currentRolesConfig)[0] || 'cliente_user');
+  } catch (error) {
+    console.error('Erro ao carregar níveis de acesso:', error);
+    rolesBody.innerHTML = `<tr><td colspan="4" style="padding:0.75rem;">Erro de conexão: ${error.message || error}</td></tr>`;
+  }
+};
+
+const salvarNiveisDeAcesso = async () => {
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail) {
+    alert('Sessão expirada. Faça login novamente.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const mapped = { ...currentRolesConfig };
+
+  try {
+    const response = await fetchWithApiFallback('/set_role_permissions', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: currentUserEmail, permissions: mapped })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      alert(`Falha ao salvar níveis: ${response.status} ${errorText}`);
+      return;
+    }
+
+    const data = await response.json();
+    alert('Níveis de acesso salvos com sucesso.');
+    if (data.permissions) {
+      carregarNiveisDeAcesso();
+    }
+  } catch (error) {
+    console.error('Erro ao salvar níveis de acesso:', error);
+    alert('Erro ao salvar níveis de acesso.');
+  }
+};
+
+const resetarNiveisDeAcesso = async () => {
+  const defaultPermissions = {
+    cliente_user: { manageReservas: false, manageContas: false, managePerfis: false },
+    admin: { manageReservas: true, manageContas: true, managePerfis: false },
+    super_admin: { manageReservas: true, manageContas: true, managePerfis: true }
+  };
+
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail) {
+    alert('Sessão expirada. Faça login novamente.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try {
+    const response = await fetchWithApiFallback('/set_role_permissions', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: currentUserEmail, permissions: defaultPermissions })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      alert(`Falha ao resetar níveis: ${response.status} ${errorText}`);
+      return;
+    }
+
+    alert('Níveis resetados para padrão.');
+    carregarNiveisDeAcesso();
+  } catch (error) {
+    console.error('Erro ao resetar níveis de acesso:', error);
+    alert('Erro ao resetar níveis de acesso.');
+  }
+};
+
+// roleToPerms / permsToRole usadps no modal de edição de perfil
+const roleToPerms = (role) => {
+  const base = currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || {
+    manageReservas: false,
+    manageContas: false,
+    managePerfis: false,
+    manageSelfEdit: false,
+    manageOtherEdit: false,
+    manageConsultas: false,
+    loadAllReservas: false,
+    pages: [],
+    tabs: []
+  };
+  return base;
+};
+
+const permsToRole = (perms) => {
+  if (perms.manageReservas && perms.manageContas && perms.managePerfis) {
+    return 'super_admin';
+  }
+  if (perms.manageReservas && perms.manageContas) {
+    return 'admin';
+  }
+  return 'cliente_user';
+};
+
+const openAccountModal = (account) => {
+  currentlyEditingAccount = account;
+  const accountModal = document.getElementById('accountModal');
+  const emailInput = document.getElementById('accountEmail');
+  const nomeInput = document.getElementById('accountNome');
+  const sobrenomeInput = document.getElementById('accountSobrenome');
+  const celularInput = document.getElementById('accountCelular');
+  const roleInput = document.getElementById('accountRole');
+  const permReservations = document.getElementById('permReservations');
+  const permAccounts = document.getElementById('permAccounts');
+  const permProfiles = document.getElementById('permProfiles');
+
+  if (!accountModal || !emailInput) return;
+
+  emailInput.value = account.email || '';
+  nomeInput.value = account.nome || '';
+  sobrenomeInput.value = account.sobrenome || '';
+  celularInput.value = account.celular || '';
+  const paisOrigemInput = document.getElementById('accountPaisOrigem');
+  if (paisOrigemInput) paisOrigemInput.value = account.pais_origem || account.pais_origem || '';
+  roleInput.value = account.role || 'cliente_user';
+
+  const perms = roleToPerms(account.role || 'cliente_user');
+  if (permReservations) permReservations.checked = perms.manageReservas;
+  if (permAccounts) permAccounts.checked = perms.manageContas;
+  if (permProfiles) permProfiles.checked = perms.managePerfis;
+
+  accountModal.classList.remove('hidden');
+};
+
+const closeAccountModal = () => {
+  const accountModal = document.getElementById('accountModal');
+  if (accountModal) accountModal.classList.add('hidden');
+  currentlyEditingAccount = null;
+};
+
+const setupAccountModalEvents = () => {
+  const accountCancel = document.getElementById('accountCancel');
+  const accountSave = document.getElementById('accountSave');
+  const accountDelete = document.getElementById('accountDelete');
+
+  if (accountCancel) {
+    accountCancel.addEventListener('click', () => {
+      closeAccountModal();
+    });
+  }
+
+  if (accountSave) {
+    accountSave.addEventListener('click', async () => {
+      if (!currentlyEditingAccount) return;
+
+      const email = document.getElementById('accountEmail')?.value;
+      const nome = document.getElementById('accountNome')?.value.trim();
+      const sobrenome = document.getElementById('accountSobrenome')?.value.trim();
+      const celular = document.getElementById('accountCelular')?.value.trim();
+      const roleManual = document.getElementById('accountRole')?.value;
+      const manageReservas = document.getElementById('permReservations')?.checked;
+      const manageContas = document.getElementById('permAccounts')?.checked;
+      const managePerfis = document.getElementById('permProfiles')?.checked;
+
+      const inferredRole = permsToRole({manageReservas, manageContas, managePerfis});
+      const role = roleManual || inferredRole;
+
+      const paisOrigem = document.getElementById('accountPaisOrigem')?.value.trim();
+      const currentUserEmail = localStorage.getItem('userEmail');
+      const payload = {
+        email,
+        admin_email: currentUserEmail,
+        nome,
+        sobrenome,
+        celular,
+        pais_origem: paisOrigem || undefined,
+        role
+      };
+
+      const response = await fetchWithApiFallback('/update_user', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        alert(`Falha ao atualizar perfil: ${response.status} ${errorText}`);
+        return;
+      }
+
+      alert('Perfil atualizado com sucesso.');
+      closeAccountModal();
+      carregarContasDoBanco();
+    });
+  }
+
+  if (accountDelete) {
+    accountDelete.addEventListener('click', async () => {
+      if (!currentlyEditingAccount) return;
+      if (!confirm(`Excluir perfil ${currentlyEditingAccount.email}?`)) return;
+
+      const currentUserEmail = localStorage.getItem('userEmail');
+      if (!currentUserEmail) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const response = await fetchWithApiFallback('/delete_user', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_email: currentUserEmail, id: currentlyEditingAccount.id })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        alert(`Falha ao excluir perfil: ${response.status} ${errorText}`);
+        return;
+      }
+
+      alert('Perfil excluído com sucesso.');
+      closeAccountModal();
+      carregarContasDoBanco();
+    });
+  }
+
+  const tourModalCancel = document.getElementById('tourModalCancel');
+  const tourModalSave = document.getElementById('tourModalSave');
+  if (tourModalCancel) {
+    tourModalCancel.addEventListener('click', () => {
+      closeTourEditModal();
+    });
+  }
+
+  const tourModalPause = document.getElementById('tourModalPause');
+  if (tourModalPause) {
+    tourModalPause.addEventListener('click', () => {
+      toggleTourPauseFromModal();
+    });
+  }
+
+  const tourModalDelete = document.getElementById('tourModalDelete');
+  if (tourModalDelete) {
+    tourModalDelete.addEventListener('click', () => {
+      deleteTourFromModal();
+    });
+  }
+
+  if (tourModalSave) {
+    tourModalSave.addEventListener('click', () => {
+      saveTourEditModal();
+    });
+  }
+};
+
+const attachSectionLinks = () => {
+  const sectionLinks = document.querySelectorAll('.gerenciamento-nav .nav-link');
+  sectionLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const rawSection = (link.dataset.section || link.textContent.trim()).toLowerCase();
+      let section = 'reservas';
+
+      if (rawSection === 'contas' || rawSection === 'conta') {
+        section = 'contas';
+      } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
+        section = 'gerenciamento';
+      }
+
+      console.log('[Gerenciamento] Seção escolhida:', rawSection, '->', section);
+
+      const requiredTab = section === 'reservas' ? 'Reservas'
+        : section === 'contas' ? 'Contas'
+        : section === 'gerenciamento' ? 'Gerenciamento'
+        : null;
+
+      if (requiredTab && !(currentUserPermissions?.tabs || []).includes(requiredTab)) {
+        alert('Acesso bloqueado para esta aba com base no seu nível de acesso.');
+        return;
+      }
+
+      if (section === 'contas') {
+        mostrarSecao('contas');
+        carregarContasDoBanco();
+        carregarNiveisDeAcesso();
+      } else if (section === 'gerenciamento') {
+        mostrarSecao('gerenciamento');
+        carregarAgendamentosDoBanco();
+      } else {
+        mostrarSecao('reservas');
+        carregarAgendamentosDoBanco();
+      }
+    });
+  });
+};
+
+const setupRolesControls = () => {
+  const openRolesManagerBtn = document.getElementById('openRolesManager');
+  if (openRolesManagerBtn) {
+    openRolesManagerBtn.addEventListener('click', () => {
+      mostrarSecao('perfis');
+      carregarNiveisDeAcesso();
+    });
+  }
+
+  const saveRolesBtn = document.getElementById('saveRolesConfig');
+  if (saveRolesBtn) {
+    saveRolesBtn.addEventListener('click', salvarNiveisDeAcesso);
+  }
+
+  const addRoleBtn = document.getElementById('addRoleBtn');
+  if (addRoleBtn) {
+    addRoleBtn.addEventListener('click', () => {
+      const roleName = prompt('Novo nível de acesso (role name):');
+      if (!roleName) return;
+      const normalized = String(roleName).trim();
+      if (!normalized) return;
+      if (currentRolesConfig[normalized]) {
+        alert('Role já existe.');
+        return;
+      }
+
+      currentRolesConfig[normalized] = { manageReservas: false, manageContas: false, managePerfis: false };
+      populateRoleSelect(Object.keys(currentRolesConfig));
+      selectRole(normalized);
+    });
+  }
+
+  setupRoleCheckboxHandlers();
+};
+
+
 const openEditModalFromBackend = (ag) => {
+  if (!currentUserPermissions?.manageReservas) {
+    console.warn('Permissão negada para editar reservas:', ag?.id);
+    return;
+  }
+
   // Abre o modal de edição usando os dados retornados do backend
   const modal = document.getElementById('reservationModal');
   if (!modal) return;
@@ -320,6 +1799,7 @@ const initReservationManagement = () => {
   const filterTo = document.getElementById('filterTo');
   const filterTour = document.getElementById('filterTour');
   const filterStatus = document.getElementById('filterStatus');
+  const filterModality = document.getElementById('filterModality');
   const addReservationBtn = document.getElementById('addReservation');
   const modal = document.getElementById('reservationModal');
   const modalTour = document.getElementById('modalTour');
@@ -369,18 +1849,8 @@ const initReservationManagement = () => {
     return { from, to, status, tour, modality };
   };
 
-  // Default filter start date to today
-  if (filterFrom && !filterFrom.value) {
-    const today = new Date();
-    filterFrom.value = today.toISOString().slice(0, 10);
-  }
-
-  // Default filter end date to 2 months from today
-  if (filterTo && !filterTo.value) {
-    const twoMonths = new Date();
-    twoMonths.setMonth(twoMonths.getMonth() + 2);
-    filterTo.value = twoMonths.toISOString().slice(0, 10);
-  }
+  // Não aplica filtro de data automático na abertura.
+  // O usuário define o período manualmente quando desejar.
 
   // Ensure default filter options are set
   if (filterStatus) filterStatus.value = 'all';
@@ -489,13 +1959,13 @@ const initReservationManagement = () => {
     modalDate.value = when.toISOString().slice(0, 10);
     modalTime.value = when.toTimeString().slice(0, 5);
 
-    modalLanguage.value = reservation.language || '';
-    modalModality.value = reservation.modality || 'free';
-    modalPhone.value = reservation.phone || '';
+    modalLanguage.value = reservation.language || reservation.idioma || '';
+    modalModality.value = reservation.modality || reservation.modalidade || 'free';
+    modalPhone.value = reservation.phone || reservation.celular || '';
     modalEmail.value = reservation.email || '';
     modalName.value = reservation.name || reservation.nome || '';
-    modalGuide.value = reservation.guide || '';
-    modalQuantity.value = reservation.quantity || 1;
+    modalGuide.value = reservation.guide || reservation.guia || '';
+    modalQuantity.value = reservation.quantity || reservation.qtd || reservation.qtd_pessoas || 1;
     modalStatus.value = reservation.status || 'Pendente';
 
     modal.classList.remove('hidden');
@@ -545,6 +2015,7 @@ const initReservationManagement = () => {
       return;
     }
 
+    const currentUserEmail = localStorage.getItem('userEmail');
     const novaReserva = {
       tour: modalTour.value.trim(),
       data: dateStr,
@@ -557,7 +2028,8 @@ const initReservationManagement = () => {
       nome: modalName?.value.trim() || 'Admin Manual',
       celular: modalPhone.value.trim() || '',
       email: modalEmail?.value.trim() || '',
-      status: modalStatus?.value || 'Pendente'
+      status: modalStatus?.value || 'Pendente',
+      admin_email: currentUserEmail || ''
     };
 
     console.log('Enviando dados:', novaReserva);
@@ -568,7 +2040,7 @@ const initReservationManagement = () => {
     }
 
     try {
-      const response = await fetch(`https://api-tour.exksvol.com/${isEdit ? 'update_agendamento' : 'add_agendamento'}`, {
+      const response = await fetchWithApiFallback(`/${isEdit ? 'update_agendamento' : 'add_agendamento'}`, {
         method: isEdit ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -629,12 +2101,13 @@ const initReservationManagement = () => {
     // Preferencialmente deletar do backend se houver id do registro
     if (pendingUpdateId) {
       try {
-        const response = await fetch('https://api-tour.exksvol.com/delete_agendamento', {
+        const currentUserEmail = localStorage.getItem('userEmail');
+        const response = await fetchWithApiFallback('/delete_agendamento', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ id: pendingUpdateId })
+          body: JSON.stringify({ id: pendingUpdateId, admin_email: currentUserEmail })
         });
 
         if (!response.ok) {
@@ -949,8 +2422,25 @@ const initReservationManagement = () => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  const role = localStorage.getItem('userRole');
+  currentUserPermissions = getEffectivePermissionsForRole(role);
+
+  if (!currentUserPermissions?.manageReservas) {
+    alert('Acesso negado: sua conta não possui permissão para gerenciar reservas.');
+    window.location.href = '/';
+    return;
+  }
+
+  applyAccessControls(currentUserPermissions);
+
   if (document.getElementById('reservationsBody')) {
     initReservationManagement();
+    attachSectionLinks();
+    setupAccountModalEvents();
+    setupRolesControls();
+
+    // Inicialmente carregamos apenas a aba de reservas (sem pré-carregar contas ou gerenciamento)
+    mostrarSecao('reservas');
     carregarAgendamentosDoBanco();
   }
 
@@ -1037,19 +2527,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
     mainView.innerHTML = nav.innerHTML;
 
-    const accountEntry = document.createElement('button');
-    accountEntry.type = 'button';
-    accountEntry.className = 'mobile-menu-launcher';
-    accountEntry.textContent = 'Conta';
-    accountEntry.addEventListener('click', (event) => {
-      event.stopPropagation();
-      mobileMenuState.view = 'user';
-      updateMobileMenuView();
-    });
-    mainView.insertBefore(accountEntry, mainView.firstChild);
-
     mainView.querySelectorAll('a').forEach((link) => {
-      link.addEventListener('click', () => {
+      link.addEventListener('click', (event) => {
+        const rawSection = (link.dataset.section || link.textContent.trim()).toLowerCase();
+
+        if (rawSection === 'contas' || rawSection === 'conta') {
+          mostrarSecao('contas');
+          carregarContasDoBanco();
+        } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
+          mostrarSecao('gerenciamento');
+          carregarAgendamentosDoBanco();
+        } else {
+          mostrarSecao('reservas');
+          carregarAgendamentosDoBanco();
+        }
+
         closeMobileMenu();
       });
     });
@@ -1088,7 +2580,21 @@ window.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', (event) => {
           event.preventDefault();
           const action = item.getAttribute('data-profile-action');
-          if (action === 'login') {
+          if (action === 'my-reservations') {
+            closeMobileMenu();
+            window.location.href = '../index.html';
+          } else if (action === 'my-data') {
+            closeMobileMenu();
+            window.location.href = '../index.html';
+          } else if (action === 'logout') {
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentRolePermissions');
+            closeMobileMenu();
+            window.location.href = '../index.html';
+          } else if (action === 'login') {
             closeMobileMenu();
             const loginLink = document.querySelector('[data-profile-action="login"]');
             if (loginLink) loginLink.click();
@@ -1213,24 +2719,41 @@ window.addEventListener('DOMContentLoaded', () => {
 
     profileMenu.querySelectorAll('.profile-item').forEach((item) => {
       item.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
         const action = item.getAttribute('data-profile-action');
-        if (action === 'account') {
-          event.preventDefault();
-          alert('Minha Conta (area de usuário)');
-        } else if (action === 'logout') {
-          event.preventDefault();
-          alert('Logout realizado');
+        if (action === 'my-reservations') {
+          window.location.href = '../index.html';
+          closeProfileMenu();
+          return;
         }
+
+        if (action === 'my-data') {
+          window.location.href = '../index.html';
+          closeProfileMenu();
+          return;
+        }
+
+        if (action === 'logout') {
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('authToken');
+          alert('Logout realizado. A página será recarregada.');
+          window.location.href = '../index.html';
+          return;
+        }
+
         closeProfileMenu();
       });
     });
   }
 
-  // Parallax-ish background movement: make the background adjust gradually while scrolling
-  // (keeps it centered while adding a subtle vertical shift).
+  // Parallax - lógica copiada de Riodejaneiro.js (fundo fixo + movimento suave)
   let scheduled = false;
   const updateBackground = () => {
-    const shift = window.scrollY * 0.2; // adjust multiplier for more/less movement
+    const shift = window.scrollY * 0.2;
     document.body.style.backgroundPosition = `center calc(50% + ${shift}px)`;
     scheduled = false;
   };
@@ -1240,4 +2763,5 @@ window.addEventListener('DOMContentLoaded', () => {
     scheduled = true;
     window.requestAnimationFrame(updateBackground);
   });
+
 });

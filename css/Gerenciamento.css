@@ -1,22 +1,71 @@
 /* version 1.1 - Responsivo Completo */
 
 /* Estilo para a página de gerenciamento de reservas */
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     width: 100%;
     min-height: 100vh;
     font-family: 'Montserrat', sans-serif;
-    
-    /* REMOVIDO O LINEAR-GRADIENT: Apenas a imagem direta */
-    background-image: url('../img/147185.jpg');
-    
+    background: transparent !important;
+    color: #fff;
+}
+
+.rio-page,
+.gerenciamento-page {
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 0;
+    background: transparent !important;
+    color: #fff;
+}
+
+/* Lógica de fundo copiada de Riodejaneiro.css */
+.rio-page::before,
+.gerenciamento-page::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-color: #02415a;
+    background-image: url('../imagem/assets/fundo rj.png');
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
     background-repeat: no-repeat;
-    
-    color: #333;
+    will-change: transform;
+}
+
+html,
+body,
+.rio-page,
+.gerenciamento-page {
+    background: transparent !important;
+    color: #fff;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+/* remove fundo fixo da página para lógica neutra */
+
+.main-container,
+.rio-page,
+.gerenciamento-page {
+    position: relative;
+    z-index: 1;
+}
+
+
+/* Mostrar legenda de página em telas pequenas */
+.gerenciamento-header h1 {
+  display: block;
 }
 
 /* Formulário de reserva: labels cinza */
@@ -69,12 +118,7 @@ html, body {
 }
 
 body {
-  background-image: url('../imagem/assets/fundo rj.png');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-  background-attachment: fixed;
-  background-color: rgba(12, 35, 64, 0.75);
+  background: transparent !important;
   color: #fff;
   position: relative;
   min-height: 100vh;
@@ -83,15 +127,10 @@ body {
 .rio-page,
 .gerenciamento-page,
 body {
-  background-image: url('../imagem/assets/fundo rj.png') !important;
-  background-repeat: no-repeat !important;
-  background-position: center center !important;
-  background-size: cover !important;
-  background-attachment: fixed !important;
-  background-color: transparent !important;
-  background-blend-mode: normal !important;
+  background: transparent !important;
   color: #f2f5f8;
 }
+
 
 /* Mobile menu container shared with Riodejaneiro */
 .mobile-menu-container {
@@ -184,6 +223,61 @@ body {
 .mobile-lang-list li {
   display: block;
   padding: 0.75rem 0.6rem;
+}
+
+@media (min-width: 1024px) {
+  #rolesManager strong {
+    color: #0f3a7a !important;
+  }
+
+  .gerenciamento-header h1 {
+    display: none !important;
+  }
+
+  .gerenciamento-nav .nav-link {
+    color: #d1d5db;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .gerenciamento-nav .nav-link.active {
+    color: #ffffff;
+    border-bottom-color: #0f3a7a;
+    font-weight: 700;
+  }
+
+  /* text colors for big screens */
+  #pageManagementSection h3,
+  .profile-user-info > div:first-child {
+    color: #0f3a7a !important;
+  }
+
+  .profile-user-info > div:nth-child(2) {
+    color: #6b7280 !important;
+  }
+
+  .filtro-reservas-grid {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+
+  .filtro-reservas-grid label {
+    flex: 1;
+    min-width: 160px;
+    margin: 0;
+  }
+
+  .filtro-reservas-grid #addReservation {
+    flex: 1 1 100%;
+    margin-top: 0.5rem;
+    align-self: stretch;
+  }
+}
+
+
+
   border-radius: 8px;
   color: #234160;
   text-decoration: none;
@@ -207,6 +301,144 @@ body {
 
 .mobile-lang-list li {
   cursor: pointer;
+}
+
+.filtro-reservas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.filtro-reservas-grid > label,
+.filtro-reservas-grid > button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filtro-reservas-grid > label {
+  min-height: 96px;
+}
+
+.filtro-reservas-grid > label input,
+.filtro-reservas-grid > label select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.filtro-reservas-grid > button {
+  align-self: end;
+}
+
+@media (max-width: 768px) {
+  .filtro-reservas-grid > label {
+    min-height: 60px;
+  }
+
+  .filtro-reservas-grid {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .gerenciamento-stats,
+  .status-group {
+    flex-wrap: wrap !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: auto !important;
+  }
+
+  .status-group,
+  .status-card {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+  }
+
+  .status-group {
+    gap: 0.25rem !important;
+    margin: 0 !important;
+  }
+
+  .status-card {
+    flex: 0 0 100px !important;
+    min-width: 100px !important;
+    padding: 0.45rem !important;
+    min-height: 60px !important;
+    margin-right: 0 !important;
+  }
+
+  .status-card strong {
+    font-size: 0.65rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .status-card > div {
+    font-size: clamp(1.2rem, 4vw, 1.4rem) !important;
+    font-weight: 800 !important;
+  }
+}
+
+#countryPie {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  background: conic-gradient(#e53e3e 0deg 90deg, #3182ce 90deg 180deg, #38a169 180deg 240deg, #dd6b20 240deg 360deg);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#countryPie:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes countryPieIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+#countryPie {
+  animation: countryPieIn 0.9s ease forwards;
+}
+
+#countryLegend {
+  font-size: 0.92rem;
+  max-width: 320px;
+  padding: 0.75rem 0.8rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.status-group {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.status-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  min-height: 110px;
+}
+
+.status-card strong,
+.status-card div {
+  width: 100%;
 }
 
 /* Header responsivo */
@@ -381,16 +613,6 @@ body {
   width: 100%;
 }
 
-/* Overlay para contraste */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-  z-index: -1;
-}
-
 /* Cards com efeito vidro */
 .blurry-card,
 .rio-notice-text,
@@ -442,10 +664,12 @@ body::before {
 }
 
 .status-card {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(8px);
+  background: transparent !important;
+  backdrop-filter: none !important;
   padding: 1rem;
-  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  box-shadow: none !important;
   flex: 1;
   min-width: 100px;
   border: 1px solid rgba(11, 77, 139, 0.15);
@@ -488,6 +712,19 @@ body::before {
   word-wrap: break-word !important;
   word-break: break-word !important;
   box-sizing: border-box;
+}
+
+.next-tour-details-panel {
+  display: none;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #374151;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.next-tour-details-panel.open {
+  display: block;
 }
 
 .profile-menu.open .profile-dropdown {
@@ -655,20 +892,9 @@ body::before {
   letter-spacing: 0.05em;
 }
 
-/* Garantir imagem de fundo também em mobile */
 @media (max-width: 768px) {
   html, body, .rio-page, .gerenciamento-page {
-    background-image: url('../imagem/assets/fundo rj.png') !important;
-    background-repeat: no-repeat !important;
-    background-position: center center !important;
-    background-size: cover !important;
-    background-attachment: scroll !important;
-    background-color: transparent !important;
-    background-blend-mode: normal !important;
-  }
-
-  body::before {
-    background: rgba(0, 0, 0, 0.35);
+    background: transparent !important;
   }
 }
 
@@ -811,20 +1037,39 @@ body::before {
   transition: border-color 0.2s;
 }
 
-/* Garantir largura uniforme para todos os campos do formulário */
-.modal-body label {
-  width: 100%;
-  min-width: 0;
-}
+  .modal-body fieldset {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 0;
+  }
 
-.modal-body .phone-input-wrapper,
-.modal-body .modal-actions {
-  width: 100%;
-}
+  .modal-body fieldset legend {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #0b3c6d;
+  }
 
-.modal-body input:focus,
-.modal-body select:focus {
-  outline: none;
+  #tourEditModal p strong {
+    color: #0b3c6d;
+  }
+
+  .modal-body .checkbox-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .modal-body .checkbox-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    font-weight: 400;
+  }
+
   border-color: #3b82f6;
 }
 
@@ -956,12 +1201,7 @@ body::before {
 /* Tablet pequeno e mobile grande */
 @media (max-width: 768px) {
   html, body {
-    background: #f4f7f9 !important;
-    background-image: url('../imagem/assets/fundo rj.png') !important;
-    background-repeat: no-repeat !important;
-    background-position: center center !important;
-    background-size: cover !important;
-    background-attachment: scroll !important;
+    background: transparent !important;
     color: #0b3c6d !important;
   }
 
@@ -1030,8 +1270,11 @@ body::before {
   
   .profile-menu {
     position: absolute;
-    top: 1rem;
+    top: 50%;
     right: 1rem;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
   }
   
   .filtro-reservas-grid {
