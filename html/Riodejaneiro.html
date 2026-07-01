@@ -1,95 +1,113 @@
+<!-- VersÃ£o 1.0 -->
 <!DOCTYPE html>
-<html lang="pt-br">
+ <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free Walking Tour · Rio de Janeiro</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#02415a">
+    <title> Tour no Rio de Janeiro</title>
+    <link rel="apple-touch-icon" href="../imagem/Rio de Janeiro/assets/Logo.png">
+    <link rel="icon" type="image/png" href="../imagem/Rio de Janeiro/assets/Logo.png">
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/Riodejaneiro.css">
 </head>
 <body>
-    <div class="main-container rio-page">
+    <div class="rio-page">
         <header>
-            <div class="nav-left">
-                <div class="lang-selector" id="langSelector">
-                    <button class="lang-btn" type="button" id="langBtn">
-                        <span class="flag flag-pt"></span> Português
+           
+                <div class="nav-left">
+                    <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                        <span></span><span></span><span></span>
                     </button>
-                    <ul class="lang-list" id="langList">
-                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
-                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
-                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
-                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
-                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
-                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
-                    </ul>
+                    <nav>
+                        <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
+                        <a href="#" data-footer-action="sobre" data-i18n="nav_about">SOBRE</a>
+                        <a href="#" data-footer-action="contato" data-i18n="nav_contact">CONTATO</a>
+                        <a href="#" data-footer-action="ajuda" data-i18n="nav_help">AJUDA</a>
+                    </nav>
                 </div>
-                <nav>
-                    <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
-                    <a href="../index.html#sobre" data-i18n="nav_about">SOBRE</a>
-                    <a href="../index.html#contato" data-i18n="nav_contact">CONTATO</a>
-                    <a href="../index.html#ajuda" data-i18n="nav_help">AJUDA</a>
-                </nav>
-            </div>
 
-            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+                <div class="header-spacer" aria-hidden="true"></div>
 
-            <div class="nav-right" id="navRight">
-                <div class="search-bar">
-                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
-                    <button type="button"><i class="fa fa-search"></i></button>
+                <div class="header-center">
+                    <div class="lang-selector" id="langSelector">
+                        <button class="lang-btn" type="button" id="langBtn">
+                            <span class="flag flag-pt"></span><span class="lang-label" data-i18n="lang_label">Português</span>
+                        </button>
+                        <ul class="lang-list" id="langList">
+                            <li data-lang="pt"><span class="flag flag-pt"></span><span class="lang-label">Português</span></li>
+                            <li data-lang="en"><span class="flag flag-en"></span><span class="lang-label">English</span></li>
+                            <li data-lang="fr"><span class="flag flag-fr"></span><span class="lang-label">Français</span></li>
+                            <li data-lang="es"><span class="flag flag-es"></span><span class="lang-label">Español</span></li>
+                            <li data-lang="it"><span class="flag flag-it"></span><span class="lang-label">Italiano</span></li>
+                            <li data-lang="zh"><span class="flag flag-zh"></span><span class="lang-label">中文(普通话)</span></li>
+                        </ul>
+                    </div>
                 </div>
-                <button class="btn-signup" data-i18n="login">LOGIN</button>
-            </div>
+
+                <div class="header-spacer" aria-hidden="true"></div>
+
+                <div class="profile-menu">
+                    <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-label="Conta"><i class="fa fa-user-circle"></i></button>
+                    <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
+                        <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
+                        <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
+                    </div>
+                </div>
+           
         </header>
+
+        <div class="mobile-menu-container" id="mobileMenuContainer" aria-hidden="true">
+            <div class="mobile-menu-panel">
+                <div class="mobile-menu-header">
+                    <button class="mobile-menu-back" id="mobileMenuBack" type="button" aria-label="Voltar">←</button>
+                    <span class="mobile-menu-title" id="mobileMenuTitle">Menu</span>
+                    <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Fechar">×</button>
+                </div>
+                <div class="mobile-menu-content">
+                    <div class="mobile-menu-view mobile-menu-main" data-view="main"></div>
+                    <div class="mobile-menu-view mobile-menu-lang" data-view="lang"></div>
+                    <div class="mobile-menu-view mobile-menu-user" data-view="user"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- HERO RIO -->
         <section class="rio-hero">
             <div class="rio-hero-overlay"></div>
             <div class="rio-hero-content">
-                <h1 class="rio-hero-title"><span data-i18n="hero_title"></span> <span data-i18n="city_preposition"></span><br><span class="rio-city-highlight" data-i18n="city_rio">Rio de Janeiro</span></h1>
-                <p class="rio-hero-location">Rio de Janeiro — Brasil</p>
-                <p class="rio-hero-desc" data-i18n="hero_desc_rio">Seja bem vindo à cidade Maravilhosa; o Rio dos amores e da beleza inconfundível te espera de braços abertos.</p>
+                <img src="../imagem/Rio de Janeiro/assets/Logo.png" alt="Logo Tour no Rio de Janeiro" class="rio-hero-logo" loading="eager" decoding="async">
+                <h1 class="rio-hero-title">Tour no<br><span class="rio-city-highlight">RIO DE JANEIRO</span></h1>
+                <span id="rioHeroDesc" data-i18n="hero_desc_rio" class="hero-desc-text">Seja bem vindo Ã  cidade Maravilhosa; o Rio dos amores e da beleza inconfundÃ­vel te espera de braÃ§os abertos.</span>
                 <a href="#tours" class="btn-book" data-i18n="btn_book">Conhecer Tours</a>
             </div>
         </section>
 
-        <!-- AVISO -->
-        <section class="rio-notice">
-            <div class="rio-notice-text">
-                <h2 class="rio-notice-title" data-i18n="notice_title">Informações Importantes</h2>
-                <p><i class="fa fa-circle-info"></i> <span data-i18n="notice_line1">Para participar de nosso Free Tour é necessário reservar sua vaga.</span></p>
-                <p><i class="fa fa-circle-info"></i> <span data-i18n="notice_line2">Seguimos todas as medidas sanitárias exigidas para este tipo de passeio.</span></p>
-                <p><i class="fa fa-circle-info"></i> <span data-i18n="notice_line3">Por favor estar atentos aos dias disponíveis no formulário de reserva.</span></p>
-                <p><i class="fa fa-circle-info"></i> <span data-i18n="notice_line4">Sua contribuição é a remuneração do guia, seja consciente.</span></p>
-                <p><i class="fa fa-circle-info"></i> Em caso de não poder comparecer ao tour, cancele sua reserva pelo <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.</p>
-                <button class="btn-proceed" type="button" data-i18n="btn_proceed">Prosseguir</button>
-            </div>
-        </section>
-
+    <div class="main-container">
         <!-- TOURS -->
         <section class="rio-tours" id="tours">
-            <h2 class="rio-section-title" data-i18n="tours_section_title">Nossas Experiências</h2>
+            <h2 class="rio-section-title" data-i18n="tours_section_title">Nossas ExperiÃªncias</h2>
             <div class="rio-section-divider"></div>
-            <h3 class="rio-section-subtitle" data-i18n="tours_free">Free Tours</h3>
 
             <div class="rio-tours-grid">
 
-                <!-- CENTRO HISTÓRICO -->
+                <!-- CENTRO HISTÃ“RICO -->
                 <article class="rio-tour-card">
                     <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/centro-historico-750.webp" alt="Centro Histórico do Rio" loading="lazy">
+                        <div class="rio-tour-slider" data-folder="CentroHistorico" aria-label="Slideshow Centro Histórico">
+                            <img class="rio-tour-slide active" src="../imagem/Rio de Janeiro/CentroHistorico/img1.webp" alt="Centro Histórico e Lapa do Rio" loading="lazy">
+                        </div>
                     </div>
                     <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Centro Histórico</h4>
+                        <h4 class="rio-tour-name">Centro HistÃ³rico e Lapa</h4>
                         <ul class="rio-tour-details">
-                            <li><i class="fa fa-calendar"></i> <strong data-i18n="label_dias">Dias:</strong> Segunda a Sábado às 10:30am</li>
+                            
                             <li><i class="fa fa-language"></i> <strong data-i18n="label_idiomas">Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Praça Cinelândia, em frente ao Theatro Municipal</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> PraÃ§a CinelÃ¢ndia, em frente ao Theatro Municipal</li>
                             <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
                         </ul>
                         <div class="rio-tour-actions">
@@ -102,18 +120,20 @@
                 <!-- SANTA TERESA -->
                 <article class="rio-tour-card">
                     <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/bonde_santa_teresa_govrj-750.webp" alt="Santa Teresa" loading="lazy">
+                        <div class="rio-tour-slider" data-folder="SantaTeresa" aria-label="Slideshow Santa Teresa">
+                            <img class="rio-tour-slide active" src="../imagem/Rio de Janeiro/SantaTeresa/img1.webp" alt="Santa Teresa & ExperiÃªncia GastronÃ´mica Carioca" loading="lazy">
+                        </div>
                     </div>
                     <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Santa Teresa</h4>
+                        <h4 class="rio-tour-name">Santa Teresa & ExperiÃªncia GastronÃ´mica Carioca</h4>
                         <ul class="rio-tour-details">
-                            <li><i class="fa fa-calendar"></i> <strong data-i18n="label_dias">Dias:</strong> Quarta às 15h e Domingo às 11:30am</li>
+                            
                             <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong data-i18n="label_encontro">Encontro:</strong> Largo dos Guimarães, em frente ao Cine Santa Teresa</li>
+                        <li><i class="fa fa-map-marker-alt"></i> <strong data-i18n="label_encontro">Encontro:</strong> PraÃ§a General OsÃ³rio, em frente Ã  estaÃ§Ã£o de metrÃ´</li>
                             <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
                         </ul>
                         <div class="rio-tour-actions">
-                            <a href="https://goo.gl/maps/7Ho6a1XUrmDGpSjNA" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://goo.gl/maps/65kNR3KaU4e2vYtn8" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
                             <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
                         </div>
                     </div>
@@ -122,15 +142,38 @@
                 <!-- PEDRA DO SAL -->
                 <article class="rio-tour-card">
                     <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/pedra-do-sal-2-750.webp" alt="Pedra do Sal" loading="lazy">
+                        <div class="rio-tour-slider" data-folder="PedraDoSal" aria-label="Slideshow Pedra do Sal">
+                            <img class="rio-tour-slide active" src="../imagem/Rio de Janeiro/PedraDoSal/img1.webp" alt="Pedra do Sal" loading="lazy">
+                        </div>
                     </div>
                     <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Pedra do Sal: Samba e Herança Afrobrasileira</h4>
+                        <h4 class="rio-tour-name">Pedra do Sal: Samba e HeranÃ§a Afrobrasileira</h4>
                         <ul class="rio-tour-details">
-                            <li><i class="fa fa-calendar"></i> <strong data-i18n="label_dias">Dias:</strong> Segundas e Sextas às 16h</li>
+                           
                             <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Museu de Arte do Rio (MAR) — Praça Mauá, 5 — Centro</li>
-                            <li><i class="fa fa-flag-checkered"></i> <strong data-i18n="label_finalizacao">Finalização:</strong> Pedra do Sal (17:30)</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Museu de Arte do Rio (MAR) â€” PraÃ§a MauÃ¡, 5 â€” Centro</li>
+                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
+                        </ul>
+                        <div class="rio-tour-actions">
+                            <a href="https://g.page/museuarterio?share" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
+                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- PEDRA DO SAL + EXPERIÃŠNCIA DE CARNAVAL -->
+                <article class="rio-tour-card">
+                    <div class="rio-tour-images">
+                        <div class="rio-tour-slider" data-folder="PedraDoSalCarnaval" aria-label="Slideshow Pedra do Sal e Carnaval">
+                            <img class="rio-tour-slide active" src="../imagem/Rio de Janeiro/PedraDoSalCarnaval/img1.webp" alt="Pedra do Sal + ExperiÃªncia de Carnaval" loading="lazy">
+                        </div>
+                    </div>
+                    <div class="rio-tour-info">
+                        <h4 class="rio-tour-name">Pedra do Sal + ExperiÃªncia de Carnaval</h4>
+                        <ul class="rio-tour-details">
+                           
+                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Museu de Arte do Rio (MAR) â€” PraÃ§a MauÃ¡, 5 â€” Centro</li>
                             <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
                         </ul>
                         <div class="rio-tour-actions">
@@ -143,14 +186,16 @@
                 <!-- COPACABANA E IPANEMA -->
                 <article class="rio-tour-card">
                     <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2022/5/6154b435ca6c9c0010a3dead/copacabana-750.webp" alt="Copacabana e Ipanema" loading="lazy">
+                        <div class="rio-tour-slider" data-folder="CopacabanaIpanema" aria-label="Slideshow Copacabana e Ipanema">
+                            <img class="rio-tour-slide active" src="../imagem/Rio de Janeiro/CopacabanaIpanema/img1.webp" alt="Copacabana e Ipanema" loading="lazy">
+                        </div>
                     </div>
                     <div class="rio-tour-info">
                         <h4 class="rio-tour-name">Copacabana e Ipanema</h4>
                         <ul class="rio-tour-details">
-                            <li><i class="fa fa-calendar"></i> <strong data-i18n="label_dias">Dias:</strong> Quintas às 15:30</li>
+                          
                             <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Estação General Osório (Metrô) — Saída A</li>
+                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> EstaÃ§Ã£o General OsÃ³rio (MetrÃ´) â€” SaÃ­da A</li>
                             <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
                         </ul>
                         <div class="rio-tour-actions">
@@ -162,61 +207,245 @@
             </div>
 
             <!-- TOURS PAGOS -->
-            <h3 class="rio-section-subtitle rio-paid-label" data-i18n="tours_other">Outros Tours</h3>
             <div class="rio-section-divider rio-divider-small"></div>
-            <h4 class="rio-paid-subtitle" data-i18n="tours_paid">Tours Pagos</h4>
 
             <div class="rio-tours-grid">
-                <article class="rio-tour-card rio-tour-paid">
-                    <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/12/6154b435ca6c9c0010a3dead/1639076728414-750.webp" alt="Favela Tour — Morro Dona Marta" loading="lazy">
-                    </div>
-                    <div class="rio-tour-info">
-                        <h4 class="rio-tour-name">Favela Tour <span class="rio-tour-name-sub">(Morro Dona Marta)</span></h4>
-                        <ul class="rio-tour-details">
-                            <li><i class="fa fa-calendar"></i> <strong data-i18n="label_dias">Dias:</strong> Todos os dias às 14h</li>
-                            <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> Português, Inglês e Espanhol</li>
-                            <li><i class="fa fa-tag"></i> <strong data-i18n="label_valor">Valor:</strong> R$ 120,00 por pessoa</li>
-                            <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> Praça Corumbá — Botafogo</li>
-                            <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> Guias com camisetas verdes</li>
-                        </ul>
-                        <div class="rio-tour-actions">
-                            <a href="https://goo.gl/maps/aRQ9UYneFVPpu1ea9" target="_blank" rel="noopener" class="rio-link-map"><i class="fa fa-map"></i> Ver no Mapa</a>
-                            <a href="https://forms.gle/Ru3CXKsKzVE24GdM7" target="_blank" rel="noopener" class="btn-book rio-btn-reserve">Reservar Agora</a>
-                        </div>
-                    </div>
-                </article>
             </div>
         </section>
 
         <!-- FOOTER -->
         <footer class="rio-footer">
-            <div class="social-icons">
-                <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-                <a href="https://wa.me/5521964458696" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
-                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <div class="rio-footer-card" id="rioFooterCard">
+                <button class="footer-card-up" type="button" aria-label="Ir ao topo">
+                    <i class="fa fa-arrow-up"></i>
+                </button>
+                <h3 class="rio-footer-card-title">Informações</h3>
+                <div class="rio-footer-card-body" id="rioFooterCardBody">
+                    Clique em â€œCONTATOâ€ para ver as informações dentro deste cartÃ£o.
+                </div>
+                <div class="footer-info-icons">
+                    <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/5521970018590" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+                    <a href="mailto:riobyfoottour@gmail.com" aria-label="Email"><i class="fa fa-envelope"></i></a>
+                </div>
+                <div class="rio-footer-card-credit">
+                    <a href="mailto:contato.exksvol@gmail.com" aria-label="Email: contato.exksvol@gmail.com" title="Email: contato.exksvol@gmail.com" class="footer-credit-link">
+                        <span class="footer-credit-text" data-i18n="footer_developed_by_text"></span>
+                        <img src="../imagem/Rio de Janeiro/assets/exksvol.png" alt="Exksvol" class="footer-credit-logo" />
+                    </a>
+                </div>
             </div>
-            <p class="rio-footer-text">Travel the World · Experiências — Rio de Janeiro</p>
         </footer>
 
-        <div class="award-modal" id="awardModal" aria-hidden="true" aria-live="polite" aria-atomic="true">
-            <div class="award-modal__dialog" role="status" aria-labelledby="awardTitle">
-                <button class="award-modal__close" type="button" data-close-award aria-label="Fechar">&times;</button>
-                <h3 id="awardTitle" class="award-modal__title" data-i18n="award_title">Reconhecimento Especial</h3>
-                <div class="hs-modal__body">
-                    <section class="hs-modal__leftImage"><span class="hs-icon js-hs-icon"><img src="https://app.hoversignal.com/AppImage/Signals/4bd5923d-79aa-4fa7-9ac0-e9ecac175d3e" alt="Prêmio TripAdvisor"></span></section>
-                    <section class="hs-modal__rightDescr">
-                        <div class="hs-modal__rightDescrBody">
-                            <div class="js-hs-description" data-signaltext="" data-i18n="award_text">Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰</div>
-                            <div class="award-modal__countdown" id="awardCountdown" aria-live="polite"></div>
-                        </div>
-                    </section>
+        <div class="award-toast" id="awardToast" aria-live="polite" aria-atomic="true" role="status" aria-label="NotificaÃ§Ã£o">
+            <div class="award-toast__dialog">
+                <button class="award-toast__close" type="button" data-close-award aria-label="Fechar">&times;</button>
+                <h3 class="award-toast__title" data-i18n="award_title">Reconhecimento Especial</h3>
+                <div class="award-toast__body">
+                    <div class="award-toast__icon"><img src="https://app.hoversignal.com/AppImage/Signals/4bd5923d-79aa-4fa7-9ac0-e9ecac175d3e" alt="PrÃªmio TripAdvisor"></div>
+                    <div class="award-toast__text">
+                        <div class="award-toast__message" data-i18n="award_text">Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? ðŸ¥°</div>
+                        <div class="award-toast__countdown" id="awardCountdown" aria-live="polite"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="../js/script.js"></script>
+        <div id="reservationModal" class="reservation-modal-overlay hidden" role="dialog" aria-modal="true" data-i18n-aria="reservation_modal_title" aria-label="Formulário de reserva">
+            <div class="reservation-modal">
+                <h2 data-i18n="reservation_modal_title">Reservar Tour</h2>
+                <form id="reservationForm">
+                    <label><span data-i18n="reservation_tour_label">Tour</span>
+                        <input type="text" id="reservationTour" readonly>
+                    </label>
+                    <label><span data-i18n="reservation_name_label">Nome</span>
+                        <input type="text" id="reservationName" data-i18n-placeholder="reservation_name_placeholder" placeholder="Seu nome" required>
+                    </label>
+                    <label><span data-i18n="reservation_date_label">Data da reserva</span>
+                        <input type="date" id="reservationDate" required>
+                    </label>
+                    <label><span data-i18n="reservation_quantity_label">Quantidade de pessoas</span>
+                        <input type="number" id="reservationQuantity" min="1" value="1" required>
+                    </label>
+                    <label><span data-i18n="reservation_language_label">Idioma</span>
+                        <select id="reservationLanguage" required>
+                            <option value="" data-i18n="reservation_language_placeholder">Selecione um idioma</option>
+                        </select>
+                    </label>
+                    <label><span data-i18n="reservation_phone_label">Celular/WhatsApp</span>
+                        <input type="tel" id="reservationPhone" data-i18n-placeholder="reservation_phone_placeholder" placeholder="(00) 00000-0000" required>
+                    </label>
+                    <label><span data-i18n="reservation_email_label">Email</span>
+                        <input type="email" id="reservationEmail" data-i18n-placeholder="reservation_email_placeholder" placeholder="seuemail@exemplo.com" required>
+                    </label>
+                    <div class="reservation-modal-actions">
+                        <button type="button" id="reservationCancel" class="btn-book" data-i18n="reservation_cancel_btn">Cancelar</button>
+                        <button type="submit" class="btn-book" data-i18n="reservation_confirm_btn">Confirmar Reserva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> 
+    </div>
+    <script src="../js/Translation.js"></script>
     <script src="../js/Riodejaneiro.js"></script>
+    <script>
+        (function () {
+            const folderImages = {
+                CentroHistorico: 6,
+                SantaTeresa: 5,
+                PedraDoSal: 4,
+                PedraDoSalCarnaval: 5,
+                CopacabanaIpanema: 2
+            };
+
+            function startTourSliders() {
+                const sliders = document.querySelectorAll('.rio-tour-slider');
+
+                sliders.forEach((slider) => {
+                    const folder = slider.dataset.folder;
+                    const total = folderImages[folder];
+                    if (!total) {
+                        console.warn('Pasta de imagens nÃ£o configurada para', folder);
+                        return;
+                    }
+
+                    slider.innerHTML = '';
+
+                    const track = document.createElement('div');
+                    track.className = 'rio-tour-slider-track';
+                    slider.appendChild(track);
+
+                    const dotsContainer = document.createElement('div');
+                    dotsContainer.className = 'rio-tour-slider-dots';
+                    slider.appendChild(dotsContainer);
+
+                    for (let i = 1; i <= total; i++) {
+                        const img = document.createElement('img');
+                        img.className = 'rio-tour-slide';
+                        img.src = `../imagem/Rio de Janeiro/${folder}/img${i}.webp`;
+                        img.alt = `${folder} - imagem ${i}`;
+                        img.loading = 'lazy';
+                        track.appendChild(img);
+
+                        const dot = document.createElement('button');
+                        dot.type = 'button';
+                        dot.className = 'rio-tour-dot' + (i === 1 ? ' active' : '');
+                        dot.setAttribute('aria-label', `Ver imagem ${i} de ${total}`);
+                        dot.addEventListener('click', () => {
+                            changeSlide(i - 1);
+                            resetInterval();
+                        });
+
+                        dotsContainer.appendChild(dot);
+                    }
+
+                    let current = 0;
+                    const slides = track.querySelectorAll('img');
+                    const dots = dotsContainer.querySelectorAll('.rio-tour-dot');
+                    let interval = null;
+
+                    function moveTrack(index) {
+                        track.style.transform = `translateX(-${index * 100}%)`;
+                    }
+
+                    function changeSlide(index) {
+                        if (index === current) return;
+                        dots[current].classList.remove('active');
+                        current = index;
+                        dots[current].classList.add('active');
+                        moveTrack(current);
+                    }
+
+                    function prevSlide() {
+                        const previous = (current - 1 + slides.length) % slides.length;
+                        changeSlide(previous);
+                        scheduleNext();
+                    }
+
+                    function nextSlide() {
+                        const next = (current + 1) % slides.length;
+                        changeSlide(next);
+                        scheduleNext();
+                    }
+
+                    function scheduleNext() {
+                        const base = 6500;
+                        const jitter = Math.floor(Math.random() * 2000); // 0-1999ms (6.5-8.5s)
+                        const delay = base + jitter;
+                        if (interval) clearTimeout(interval);
+                        interval = setTimeout(nextSlide, delay);
+                    }
+
+                    function resetInterval() {
+                        if (interval) clearTimeout(interval);
+                        scheduleNext();
+                    }
+
+                    let touchStartX = null;
+                    let touchStartTime = null;
+
+                    slider.addEventListener('touchstart', (event) => {
+                        if (event.touches.length !== 1) return;
+                        touchStartX = event.touches[0].clientX;
+                        touchStartTime = Date.now();
+                    });
+
+                    slider.addEventListener('touchend', (event) => {
+                        if (touchStartX === null) return;
+                        const touchEndX = event.changedTouches[0].clientX;
+                        const diffX = touchEndX - touchStartX;
+                        const elapsed = Date.now() - touchStartTime;
+                        const minSwipeDistance = 40;
+                        const maxSwipeTime = 700;
+
+                        touchStartX = null;
+                        touchStartTime = null;
+
+                        if (Math.abs(diffX) >= minSwipeDistance && elapsed <= maxSwipeTime) {
+                            if (diffX > 0) {
+                                prevSlide();
+                            } else {
+                                nextSlide();
+                            }
+                            resetInterval();
+                        }
+                    });
+
+                    slider.addEventListener('mousedown', (event) => {
+                        touchStartX = event.clientX;
+                        touchStartTime = Date.now();
+                    });
+
+                    slider.addEventListener('mouseup', (event) => {
+                        if (touchStartX === null) return;
+                        const diffX = event.clientX - touchStartX;
+                        const elapsed = Date.now() - touchStartTime;
+
+                        touchStartX = null;
+                        touchStartTime = null;
+
+                        if (Math.abs(diffX) >= 40 && elapsed <= 700) {
+                            if (diffX > 0) {
+                                prevSlide();
+                            } else {
+                                nextSlide();
+                            }
+                            resetInterval();
+                        }
+                    });
+
+                    const initialDelay = 500 + Math.floor(Math.random() * 1200); // 0.5-1.7s para cada slider começar
+                    interval = setTimeout(nextSlide, initialDelay);
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', startTourSliders);
+            } else {
+                startTourSliders();
+            }
+        })();
+    </script>
 </body>
 </html>
