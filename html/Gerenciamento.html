@@ -1,11 +1,11 @@
-<!-- version 1.0 -->
+﻿<!-- version 1.0 -->
 
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciamento de Reservas</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
@@ -34,7 +34,7 @@
                 <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
                 <a href="#" class="profile-item" data-profile-action="account">Minha Conta</a>
                 <a href="#" class="profile-item" data-profile-action="logout">Sair</a>
-                <a href="#" class="profile-item profile-item--admin" data-profile-action="manage" data-i18n="profile_manage" style="display:none;">Gerenciamento da página</a>
+                <a href="#" class="profile-item profile-item--admin" data-profile-action="principal" style="display:none;">Principal</a>
             </div>
         </div>
     </header>
@@ -57,18 +57,25 @@
     <main class="main-container">
         <section id="reservationsStatsSection" class="rio-notice reservas-section" style="padding-top: 2rem;">
             <div class="rio-notice-text blurry-card">
-                <h2 class="rio-notice-title">Gerenciamento de Reservas</h2>
+            <h2 class="rio-notice-title">Gerenciamento de Reservas</h2>
+            <div style="margin-top:1rem; display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center;">
+                <button id="clearAllAlertsBtn" class="btn-book" type="button" style="display:none; background:#f3f4f6;color:#111827;border:1px solid rgba(55,65,81,0.12);border-radius:999px;padding:0.75rem 1.2rem;min-width:180px;">Limpar alertas</button>
+            </div>
+            <div id="importantInfoFeed" class="important-info-feed" style="margin-top:0.85rem; display:grid; gap:0.75rem;">
+              <div class="important-info-empty" style="padding:0.85rem 1rem; border-radius:12px; background:rgba(255,255,255,0.82); color:#4b5563;">Carregando atividades recentes...</div>
+            </div>
+                
                 <div class="gerenciamento-stats" style="display:flex; gap:1rem; flex-wrap:wrap; overflow-x:hidden; margin-top:1rem;">
-                    <div class="status-group" style="display:flex; gap:1rem; width:100%; flex-wrap:wrap; overflow-x:hidden;">
-                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:0 0 120px;"> 
+                  <div class="status-group" style="display:flex; gap:1rem; width:100%; overflow-x:hidden;">
+                    <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px;"> 
                             <strong>Pendente</strong>
                             <div id="statPending" style="font-size:1.4rem; font-weight:800;">0</div>
                         </div>
-                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:1;">
+                    <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px;">
                             <strong>Confirmado</strong>
                             <div id="statConfirmed" style="font-size:1.4rem; font-weight:800;">0</div>
                         </div>
-                        <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px; min-width:120px; flex:1;">
+                    <div class="status-card" style="background:rgba(255,255,255,0.9); padding:1rem; border-radius:12px;">
                             <strong>Finalizado</strong>
                             <div id="statFinalized" style="font-size:1.4rem; font-weight:800;">0</div>
                         </div>
@@ -123,6 +130,11 @@
                 </div>
             </div>
 
+            <div id="reservationAlert" class="reservation-alert hidden" role="status" aria-live="polite">
+                <span id="reservationAlertText">&nbsp;</span>
+                <button type="button" class="reservations-alert-close" aria-label="Fechar alerta">×</button>
+            </div>
+
             <div style="overflow-x:auto;">
                 <table class="rio-tour-table">
                     <thead>
@@ -151,6 +163,12 @@
                     <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
                 </div>
             </div>
+            <div style="margin-bottom:1rem;">
+                <label style="font-weight:700; color:#1f2937; display:block;">
+                    Buscar por Nome
+                    <input type="text" id="accountsNameSearch" placeholder="Nome" style="margin-top:0.5rem; width:100%; max-width:320px; padding:0.55rem 0.75rem; border:1px solid #ccc; border-radius:0.5rem;" />
+                </label>
+            </div>
             <div style="overflow-x:auto;">
                 <table class="rio-tour-table">
                     <thead>
@@ -163,11 +181,10 @@
                             <th>Role</th>
                             <th>País</th>
                             <th>Gênero</th>
-                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="accountsBody">
-                        <tr><td colspan="9" style="padding:0.75rem;">Clique em "Contas" para carregar os registros.</td></tr>
+                        <tr><td colspan="8" style="padding:0.75rem;">Clique em "Contas" para carregar os registros.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -223,23 +240,44 @@
                 <!-- Cabeçalho de gerenciamento removido conforme solicitação -->
             </div>
 
-            <div style="overflow-x:auto; margin-bottom: 1.25rem;">
+            <div id="financeSection" class="currency-converter" aria-label="Calculadora de conversão de moeda">
+                <h3>Calculadora Real ↔ Dólar</h3>
+                <div class="currency-converter-grid">
+                    <label>
+                        Valor em Real (BRL)
+                        <input type="number" id="brlAmount" min="0" step="0.01" placeholder="0,00" />
+                    </label>
+                    <label>
+                        Cotação atual (1 USD = BRL)
+                        <input type="number" id="usdRate" min="0" step="0.0001" readonly placeholder="Carregando..." />
+                    </label>
+                    <label>
+                        Valor em Dólar (USD)
+                        <input type="number" id="usdResult" min="0" step="0.01" placeholder="0,00" />
+                    </label>
+                </div>
+
+            </div>
+
+            <div id="pageManagementToursSection" style="overflow-x:auto; margin-bottom: 1.25rem;">
                 <h3 style="margin:0 0 0.5rem; font-size:1rem;">Tours da Página</h3>
                 <table class="rio-tour-table">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Tour</th>
+                            <th>Cidade</th>
                             <th>Idiomas</th>
                             <th>Encontro</th>
                             <th>Identificação</th>
                             <th>Link</th>
                             <th>Valor</th>
+                            <th>Modalidade</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="tourManagementBody">
-                        <tr><td colspan="8" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>
+                        <tr><td colspan="10" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -344,6 +382,16 @@
               Nome
               <input type="text" id="tourModalName" required />
             </label>
+            <label>
+              Cidade
+              <select id="tourModalCidade">
+                <option value="">Selecione</option>
+                <option value="Rio de Janeiro">Rio de Janeiro</option>
+                <option value="Lencois">Lençóis Maranhenses</option>
+                <option value="Sao Luis">São Luís do Maranhão</option>
+                <option value="Salvador">Salvador</option>
+              </select>
+            </label>
             <fieldset>
               <legend>Idiomas</legend>
               <div class="checkbox-row">
@@ -375,6 +423,21 @@
                 <option value="Pausado">Pausado</option>
               </select>
             </label>
+            <label>
+              Modalidade
+              <select id="tourModalModalidade">
+                <option value="free">Aberto (Free)</option>
+                <option value="privado">Privado</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Imagens</legend>
+              <div id="tourModalGallery" class="tour-gallery"></div>
+              <div class="tour-gallery-upload">
+                <input type="file" id="tourModalImageInput" accept="image/*" multiple />
+                <button type="button" id="tourModalUploadImages" class="btn-book">Enviar Imagens</button>
+              </div>
+            </fieldset>
             <div class="modal-actions">
               <button type="button" id="tourModalPause" class="btn-book" style="background:#f59e0b; color:#fff;">Pausar</button>
               <button type="button" id="tourModalDelete" class="btn-book btn-danger">Excluir</button>
@@ -430,7 +493,118 @@
       </div>
     </div>
 
-    <script src="../js/Riodejaneiro.js"></script>
-    <script src="../js/Gerenciamento.js"></script>
+    <div class="floating-calculator-group">
+      <button id="translateFloatingBtn" class="floating-action-button floating-translate-button" type="button" aria-label="Traduzir">
+        <i class="fa fa-language" aria-hidden="true"></i>
+      </button>
+      <button id="financeFloatingCalc" class="floating-calculator" type="button" aria-label="Abrir calculadora">
+        <i class="fa fa-calculator" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div id="floatingToolsBackdrop" class="floating-tools-backdrop" aria-hidden="true"></div>
+
+    <div id="translateFloatingPanel" class="floating-translate-panel hidden" aria-hidden="true">
+      <div class="floating-calculator-header">
+        <span>Tradutor</span>
+        <button id="closeTranslatePanel" class="floating-calculator-close" type="button" aria-label="Fechar tradutor">×</button>
+      </div>
+      <div class="translator-widget">
+        <div class="translator-direction-row">
+          <label>
+            Idioma de origem
+            <select id="translatorSourceLang" aria-label="Idioma de origem">
+              <option value="pt">Português</option>
+              <option value="en">Inglês</option>
+              <option value="es">Espanhol</option>
+            </select>
+          </label>
+          <label>
+            Idioma de destino
+            <select id="translatorTargetLang" aria-label="Idioma de destino">
+              <option value="en">Inglês</option>
+              <option value="pt">Português</option>
+              <option value="es">Espanhol</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Texto a traduzir
+          <textarea id="translatorSource" rows="4" placeholder="Digite aqui o texto..." aria-label="Texto de origem"></textarea>
+        </label>
+        <label class="translator-result-label">
+          Resultado
+          <div class="translator-result-wrapper">
+            <textarea id="translatorResult" rows="4" placeholder="A tradução aparecerá aqui..." aria-label="Texto traduzido"></textarea>
+            <button id="copyTranslationBtn" class="translator-copy-icon" type="button" aria-label="Copiar tradução">
+              <i class="fa fa-copy" aria-hidden="true"></i>
+            </button>
+          </div>
+        </label>
+        <div class="translator-actions-row">
+          <button id="translateSubmit" class="btn-book" type="button">Traduzir</button>
+          <button id="saveTranslationBtn" class="btn-book btn-secondary" type="button">Salvar tradução</button>
+        </div>
+        <div class="translation-history">
+          <div class="translation-history-header">Traduções salvas</div>
+          <div id="translationHistoryList" class="translation-history-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="financeCalculatorPanel" class="floating-calculator-panel hidden" aria-hidden="true">
+        <div class="floating-calculator-header">
+            <span>Calculadora Real ↔ Dólar</span>
+            <button id="closeFinanceCalculator" class="floating-calculator-close" type="button" aria-label="Fechar calculadora">×</button>
+        </div>
+        <div class="currency-converter" aria-label="Calculadora de conversão de moeda">
+            <div class="currency-converter-grid">
+                <label>
+                    Valor em Real (BRL)
+                    <input type="number" id="brlAmountFloating" min="0" step="0.01" placeholder="0,00" />
+                </label>
+                <label>
+                    Cotação atual (1 USD = BRL)
+                    <input type="number" id="usdRateFloating" min="0" step="0.0001" readonly placeholder="Carregando..." />
+                </label>
+                <label>
+                    Valor em Dólar (USD)
+                    <input type="number" id="usdResultFloating" min="0" step="0.01" placeholder="0,00" />
+                </label>
+            </div>
+        </div>
+        <div class="floating-standard-calculator" aria-label="Calculadora convencional">
+            <input type="text" id="floatingCalcDisplay" class="floating-calc-display" inputmode="text" autocomplete="off" aria-label="Visor da calculadora" placeholder="Digite números e operadores" />
+            <div class="floating-calc-keypad">
+                <button type="button" class="floating-calc-key" data-value="C">C</button>
+                <button type="button" class="floating-calc-key" data-value="⌫">⌫</button>
+                <button type="button" class="floating-calc-key" data-value="(">(</button>
+                <button type="button" class="floating-calc-key" data-value=")">)</button>
+                <button type="button" class="floating-calc-key floating-calc-key--operator" data-value="/">÷</button>
+                <button type="button" class="floating-calc-key" data-value="7">7</button>
+                <button type="button" class="floating-calc-key" data-value="8">8</button>
+                <button type="button" class="floating-calc-key" data-value="9">9</button>
+                <button type="button" class="floating-calc-key floating-calc-key--operator" data-value="*">×</button>
+                <button type="button" class="floating-calc-key" data-value="4">4</button>
+                <button type="button" class="floating-calc-key" data-value="5">5</button>
+                <button type="button" class="floating-calc-key" data-value="6">6</button>
+                <button type="button" class="floating-calc-key floating-calc-key--operator" data-value="-">−</button>
+                <button type="button" class="floating-calc-key" data-value="1">1</button>
+                <button type="button" class="floating-calc-key" data-value="2">2</button>
+                <button type="button" class="floating-calc-key" data-value="3">3</button>
+                <button type="button" class="floating-calc-key floating-calc-key--operator" data-value="+">+</button>
+                <button type="button" class="floating-calc-key floating-calc-key--wide" data-value="0">0</button>
+                <button type="button" class="floating-calc-key" data-value=","> , </button>
+                <button type="button" class="floating-calc-key floating-calc-key--equals" data-value="=">=</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/Translation.js?v=2"></script>
+    <script src="../js/Riodejaneiro.js?v=3"></script>
+    <script src="../js/Gerenciamento.js?v=2"></script>
 </body>
 </html>
+
+
+

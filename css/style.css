@@ -8,19 +8,19 @@
 }
 
 :root {
-    --primary-gradient: linear-gradient(120deg, #7ecab7 0%, #c8f8f3 100%);
+    --primary-gradient: linear-gradient(120deg, #7ecab780 0%, #095c54 100%);
     --font-main: 'Montserrat', sans-serif;
-    --green-dark: #0d5548;
-    --green-main: #1da194;
-    --green-light: #7fe9e2;
+    --green-dark: #0d554859;
+    --green-main: #1da1948e;
+    --green-light: #3ac4bb2c;
 }
 
 body {
     font-family: var(--font-main);
-    background: url("../imagem/Papel-de-fundo.png") center center / cover no-repeat fixed;
+    background: url("../imagem/assets/Papel-de-fundo.png") center center / cover no-repeat fixed;
     min-height: 100vh;
     display: flex;
-    color: #fff;
+    color: #ffffff;
 }
 
 /* ===================================================== */
@@ -34,7 +34,7 @@ body {
         radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,0.08), transparent 60%),
         radial-gradient(900px 500px at 20% 80%, rgba(255,255,255,0.06), transparent 55%),
         radial-gradient(800px 600px at 100% 100%, rgba(255,255,255,0.22), transparent 60%),
-        linear-gradient(120deg, rgba(13,85,72,0.85) 0%, rgba(33,175,156,0.75) 55%, rgba(127,233,226,0.7) 100%);
+        linear-gradient(120deg, rgba(2, 61, 49, 0.884) 0%, rgba(20, 139, 123, 0.774) 55%, rgba(12, 160, 150, 0.788) 100%);
     background-blend-mode: normal, screen, screen, screen, normal;
     width: 100%;
     min-height: 100vh;
@@ -464,10 +464,10 @@ main {
 }
 
 /* Imagens de cada cidade */
-.city-thumb-rio { background-image: url('../imagem/RiodeJaneiro.jpeg'); }
-.city-thumb-salvador { background-image: url('../imagem/Salvador.jpeg'); }
-.city-thumb-saoluis { background-image: url('../imagem/SaoLuis.jpeg'); }
-.city-thumb-lencois { background-image: url('../imagem/Lencois.jpeg'); }
+.city-thumb-rio { background-image: url('../imagem/assets/RiodeJaneiro.jpeg'); }
+.city-thumb-salvador { background-image: url('../imagem/assets/Salvador.jpeg'); }
+.city-thumb-saoluis { background-image: url('../imagem/assets/SaoLuis.jpeg'); }
+.city-thumb-lencois { background-image: url('../imagem/assets/Lencois.jpeg'); }
 
 /* ===================================================== */
 /* SELETOR DE IDIOMA                                     */
@@ -739,6 +739,53 @@ main {
 /* MEDIA QUERIES                                         */
 /* ===================================================== */
 
+/* ---------- TELAS MUITO GRANDES >= 1600px --------------
+   Sem isso, o main (hero-text + cápsulas) ficava grudado à
+   esquerda com "justify-content:flex-start", deixando uma
+   faixa vazia enorme do lado direito em monitores grandes/4K,
+   e as cápsulas mantinham tamanho fixo (pequenas e "perdidas"
+   num viewport muito maior). Aqui o bloco é centralizado com
+   largura máxima e as cápsulas crescem de forma proporcional
+   (clamp com vw) até um teto, mantendo a proporção do formato
+   "cápsula".                                              */
+@media (min-width: 1600px) {
+    main {
+        width: 100%;
+        max-width: 1800px;
+        margin: 0 auto;
+        justify-content: space-between;
+    }
+
+    .hero-images {
+        --capsule-w: clamp(110px, 6vw, 170px);
+        margin-left: 0;
+    }
+
+    .capsule {
+        width: var(--capsule-w);
+    }
+
+    .capsule-video {
+        width: calc(var(--capsule-w) * 3 + 1.2rem * 2);
+        height: clamp(500px, 27vw, 770px);
+    }
+
+    .capsule-center .capsule-video { left: calc(-1 * (var(--capsule-w) + 1.2rem)); }
+    .capsule-right .capsule-video  { left: calc(-2 * (var(--capsule-w) + 1.2rem)); }
+
+    .capsule-left {
+        height: clamp(320px, 17.5vw, 495px);
+    }
+
+    .capsule-center {
+        height: clamp(500px, 27vw, 770px);
+    }
+
+    .capsule-right {
+        height: clamp(340px, 18.5vw, 525px);
+    }
+}
+
 /* ---------- DESKTOP MEDIO < 1200px -------------------- */
 @media (max-width: 1200px) {
     header {
@@ -771,11 +818,13 @@ main {
         height: auto;
     }
 
+    /* Cápsulas de vídeo são puramente decorativas e, abaixo de 1200px,
+       não cabem ao lado do texto — sobrariam empurradas para depois de
+       todo o conteúdo real (cidades, ícones), ocupando espaço valioso
+       de rolagem à toa. Removidas para priorizar o conteúdo em telas
+       menores e evitar carregar 3 vídeos à toa em conexões móveis. */
     .hero-images {
-        width: 100%;
-        justify-content: center;
-        margin-left: 0;
-        padding-right: 0;
+        display: none;
     }
 
     .site-sections {
@@ -823,15 +872,30 @@ main {
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         order: 2;
+        /* flex-basis 0 (não "auto") faz o algoritmo de quebra de linha
+           considerar este item como "cabe sempre antes de crescer",
+           em vez de usar a largura do conteúdo (busca + login) para
+           decidir se quebra para uma linha própria. */
+        flex: 1 1 0;
+        min-width: 0;
     }
 
     header.menu-open nav {
         display: flex;
     }
 
+    /* Fechado: nav-left fica compacto (só o hamburger o antecede) para que
+       hamburger + busca + login caibam lado a lado, na mesma linha. */
     .nav-left {
+        width: auto;
+        flex: 0 0 auto;
+    }
+
+    /* Aberto: nav-left ocupa a linha inteira para o dropdown (nav/idioma)
+       se expandir abaixo, com largura total. */
+    header.menu-open .nav-left {
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap;
@@ -941,35 +1005,6 @@ main {
         height: auto;
     }
 
-    .hero-images {
-        width: 100%;
-        justify-content: center;
-        order: 12;
-        padding-bottom: 0;
-        margin-top: 1rem;
-    }
-
-    .capsule {
-        width: 90px;
-    }
-
-    .capsule-video {
-        width: calc(90px * 3 + 1.2rem * 2);
-        height: 380px;
-    }
-
-    .capsule-center .capsule-video { left: calc(-1 * (90px + 1.2rem)); }
-    .capsule-right .capsule-video  { left: calc(-2 * (90px + 1.2rem)); }
-
-    .capsule-center {
-        height: 380px;
-    }
-
-    .capsule-left,
-    .capsule-right {
-        height: 260px;
-    }
-
     .site-sections {
         padding: 0 1.2rem 2rem;
     }
@@ -1032,13 +1067,19 @@ main {
     }
 
     .city-list {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 0.6rem;
+    }
+
+    .city-name {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.4rem 0.6rem;
     }
 
     .city-thumb {
         aspect-ratio: 4 / 5;
         height: auto;
+        margin: 6px;
     }
 
     .social-icons {
@@ -1052,30 +1093,6 @@ main {
         font-size: 1rem;
     }
 
-    .hero-images {
-        gap: 0.8rem;
-    }
-
-    .capsule {
-        width: 70px;
-    }
-
-    .capsule-video {
-        width: calc(70px * 3 + 0.8rem * 2);
-        height: 300px;
-    }
-
-    .capsule-center .capsule-video { left: calc(-1 * (70px + 0.8rem)); }
-    .capsule-right .capsule-video  { left: calc(-2 * (70px + 0.8rem)); }
-
-    .capsule-center {
-        height: 300px;
-    }
-
-    .capsule-left,
-    .capsule-right {
-        height: 210px;
-    }
 }
 
 /* ---------- MOBILE PEQUENO < 400px --------------------- */

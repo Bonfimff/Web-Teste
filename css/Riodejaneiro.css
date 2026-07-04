@@ -31,6 +31,15 @@ body {
     background: transparent !important;
 }
 
+/* Neutraliza o display:flex do body (style.css): como html/body têm height:100%,
+   o flex estica o .main-container.rio-page para exatamente a altura da janela e
+   cria uma barra de rolagem interna que rouba ~15px do lado direito do painel.
+   Com o body em bloco (como já faz Lencoismaranhenses.css), a rolagem volta para
+   o documento e o hero encosta nas duas bordas. */
+body {
+    display: block !important;
+}
+
 :root {
     --bg: transparent;
 }
@@ -308,6 +317,7 @@ body {
 .rio-hero {
     position: relative;
     min-height: 70vh;
+    flex-shrink: 0; /* impede que o flex column da .main-container espreme o hero abaixo do conteúdo real */
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -354,11 +364,14 @@ body {
 .rio-hero-overlay {
     position: absolute;
     inset: 0;
+    /* Degradê de referência (usado em todas as cidades): tom azul-marinho
+       do Rio de Janeiro, com a base mais escura/sólida para ancorar
+       visualmente a transição do painel para o resto da página. */
     background: linear-gradient(
         180deg,
         rgba(12, 35, 64, 0.60) 0%,
         rgba(26, 82, 118, 0.38) 60%,
-        rgba(12, 35, 64, 0.72) 100%
+        rgba(12, 35, 64, 0.88) 100%
     );
     z-index: 1;
 }
@@ -383,14 +396,15 @@ body {
 }
 
 .rio-hero-title {
-    font-family: "Montserrat", sans-serif;
-    font-weight: 800;
-    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 4.5vw, 3.6rem);
     color: #f0e5c0; /* tom de areia */
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    text-transform: none;
+    letter-spacing: 0.5px;
     line-height: 1.15;
-    margin: 0.2rem 0 0.5rem;
+    margin: 0.4rem 0 0.2rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.45);
 }
 
 #rioHeroDesc {
@@ -442,21 +456,41 @@ body {
 
 .rio-city-highlight {
     display: block;
+    font-family: "Montserrat", "Lato", sans-serif;
     background: linear-gradient(120deg, #c2b280 0%, #f0e5c0 45%, #c2b280 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
     text-transform: none;
+    text-shadow: none;
+    letter-spacing: 0.5px;
     font-size: clamp(2.2rem, 5vw, 4rem);
 }
 
 .rio-hero-location {
-    font-family: "Montserrat", sans-serif;
-    font-weight: 600;
-    font-size: clamp(1rem, 2vw, 1.4rem);
-    color: rgba(255,255,255,0.85);
-    margin-bottom: 1.2rem;
+    font-family: "Lato", "Montserrat", sans-serif;
+    font-weight: 300;
+    font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+    color: rgba(255,255,255,0.80);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0.2rem 0 0.4rem;
+}
+
+.rio-hero-desc,
+.hero-desc-text {
+    display: block;
+    font-family: "Lato", "Montserrat", sans-serif;
+    font-weight: 400;
+    color: #dfeeff; /* branco gelo */
+    font-size: clamp(0.98rem, 1.7vw, 1.15rem);
+    line-height: 1.85;
+    width: min(100%, 680px);
+    max-width: 680px;
+    text-align: center;
+    margin: 0.3rem auto 1rem;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
 }
 
 
@@ -1167,11 +1201,22 @@ body {
     }
 
     .rio-hero-title {
-        font-size: clamp(1.4rem, 6vw, 2rem);
+        font-size: clamp(1.4rem, 6vw, 2.2rem);
     }
 
     .rio-city-highlight {
-        font-size: clamp(1.8rem, 8vw, 2.8rem);
+        font-size: clamp(2rem, 8vw, 3.2rem);
+    }
+
+    .rio-hero-location {
+        font-size: clamp(0.75rem, 2.5vw, 0.95rem);
+        letter-spacing: 2px;
+    }
+
+    .rio-hero-desc,
+    .hero-desc-text {
+        font-size: clamp(0.9rem, 3.5vw, 1rem);
+        line-height: 1.7;
     }
 
     .rio-notice {
@@ -2750,4 +2795,163 @@ header {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ===================================================== */
+/* DEPOIMENTOS: quotes + galeria de relatos               */
+/* ===================================================== */
+.rio-testimonials-quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto 2.5rem;
+}
+
+.rio-testimonial-quote {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 1.8rem 1.8rem 1.6rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.rio-testimonial-icon {
+  display: block;
+  color: #c2b280;
+  font-size: 1.4rem;
+  opacity: 0.65;
+  margin-bottom: 0.6rem;
+}
+
+.rio-testimonial-text {
+  color: #4a5568;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  font-style: italic;
+  margin: 0 0 1rem;
+}
+
+.rio-testimonial-author {
+  display: block;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.rio-testimonial-author::before {
+  content: '— ';
+  color: #c2b280;
+}
+
+.rio-relatos-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.rio-relatos-item {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rio-relatos-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+}
+
+.rio-relatos-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.rio-relatos-item:hover img {
+  transform: scale(1.06);
+}
+
+.rio-relatos-item::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+.rio-relatos-like {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #2c3e50;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.rio-relatos-like i {
+  color: #c0392b;
+  transition: transform 0.25s ease;
+}
+
+.rio-relatos-like:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.rio-relatos-like.is-liked {
+  background: #c0392b;
+  color: #fff;
+}
+
+.rio-relatos-like.is-liked i {
+  color: #fff;
+}
+
+.rio-relatos-like.just-liked i {
+  animation: relatosLikePulse 0.4s ease;
+}
+
+@keyframes relatosLikePulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 900px) {
+  .rio-relatos-gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .rio-relatos-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.7rem;
+  }
+
+  .rio-testimonials-quotes {
+    grid-template-columns: 1fr;
+  }
 }

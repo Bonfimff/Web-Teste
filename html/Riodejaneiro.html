@@ -13,7 +13,7 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=7">
 </head>
 <body>
     <div class="rio-page">
@@ -81,8 +81,9 @@
             <div class="rio-hero-overlay"></div>
             <div class="rio-hero-content">
                 <img src="../imagem/Rio de Janeiro/assets/Logo.png" alt="Logo Tour no Rio de Janeiro" class="rio-hero-logo" loading="eager" decoding="async">
-                <h1 class="rio-hero-title">Tour no<br><span class="rio-city-highlight">RIO DE JANEIRO</span></h1>
-                <span id="rioHeroDesc" data-i18n="hero_desc_rio" class="hero-desc-text">Seja bem vindo Ã  cidade Maravilhosa; o Rio dos amores e da beleza inconfundÃ­vel te espera de braÃ§os abertos.</span>
+                <h1 class="rio-hero-title"><span class="rio-city-highlight">Rio de Janeiro</span></h1>
+                <p class="rio-hero-location">Rio de Janeiro - Brasil</p>
+                <p id="rioHeroDesc" class="rio-hero-desc">Seja bem-vindo à Cidade Maravilhosa; o Rio dos amores e da beleza inconfundível te espera de braços abertos, com o Cristo Redentor a te acolher do alto e as praias mais famosas do mundo aos seus pés.</p>
                 <a href="#tours" class="btn-book" data-i18n="btn_book">Conhecer Tours</a>
             </div>
         </section>
@@ -287,8 +288,8 @@
         </div>
     </div> 
     </div>
-    <script src="../js/Translation.js"></script>
-    <script src="../js/Riodejaneiro.js"></script>
+    <script src="../js/Translation.js?v=2"></script>
+    <script src="../js/Riodejaneiro.js?v=3"></script>
     <script>
         (function () {
             const folderImages = {
@@ -304,8 +305,15 @@
 
                 sliders.forEach((slider) => {
                     const folder = slider.dataset.folder;
+                    // Imagens enviadas via admin (Gerenciamento) têm prioridade; sem elas,
+                    // cai no manifesto local de sempre (folderImages/img{N}.webp).
+                    const dbImages = window.tourImagesByFolder && window.tourImagesByFolder[folder];
                     const total = folderImages[folder];
-                    if (!total) {
+                    const imageUrls = (Array.isArray(dbImages) && dbImages.length)
+                        ? dbImages
+                        : (total ? Array.from({ length: total }, (_, i) => `../imagem/Rio de Janeiro/${folder}/img${i + 1}.webp`) : null);
+
+                    if (!imageUrls) {
                         console.warn('Pasta de imagens nÃ£o configurada para', folder);
                         return;
                     }
@@ -320,10 +328,12 @@
                     dotsContainer.className = 'rio-tour-slider-dots';
                     slider.appendChild(dotsContainer);
 
-                    for (let i = 1; i <= total; i++) {
+                    imageUrls.forEach((url, idx) => {
+                        const i = idx + 1;
+                        const total = imageUrls.length;
                         const img = document.createElement('img');
                         img.className = 'rio-tour-slide';
-                        img.src = `../imagem/Rio de Janeiro/${folder}/img${i}.webp`;
+                        img.src = url;
                         img.alt = `${folder} - imagem ${i}`;
                         img.loading = 'lazy';
                         track.appendChild(img);
@@ -338,7 +348,7 @@
                         });
 
                         dotsContainer.appendChild(dot);
-                    }
+                    });
 
                     let current = 0;
                     const slides = track.querySelectorAll('img');
@@ -439,6 +449,8 @@
                     interval = setTimeout(nextSlide, initialDelay);
                 });
             }
+
+            window.startTourSliders = startTourSliders;
 
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', startTourSliders);

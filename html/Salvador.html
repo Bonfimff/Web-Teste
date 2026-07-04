@@ -7,68 +7,89 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css">
-    <link rel="stylesheet" href="../css/Salvador.css">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=7">
+    <link rel="stylesheet" href="../css/Salvador.css?v=5">
 </head>
 <body>
     <div class="main-container rio-page">
         <header>
             <div class="nav-left">
-                <div class="lang-selector" id="langSelector">
-                    <button class="lang-btn" type="button" id="langBtn">
-                        <span class="flag flag-pt"></span> Português
-                    </button>
-                    <ul class="lang-list" id="langList">
-                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
-                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
-                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
-                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
-                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
-                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
-                    </ul>
-                </div>
+                <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
                 <nav>
                     <a href="../index.html" data-i18n="nav_home">INÍCIO</a>
-                    <a href="../index.html#sobre" data-i18n="nav_about">SOBRE</a>
-                    <a href="../index.html#contato" data-i18n="nav_contact">CONTATO</a>
-                    <a href="../index.html#ajuda" data-i18n="nav_help">AJUDA</a>
+                    <a href="#" data-footer-action="sobre" data-i18n="nav_about">SOBRE</a>
+                    <a href="#" data-footer-action="contato" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#" data-footer-action="ajuda" data-i18n="nav_help">AJUDA</a>
                 </nav>
             </div>
 
-            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+            <div class="header-spacer" aria-hidden="true"></div>
 
-            <div class="nav-right" id="navRight">
-                <div class="search-bar">
-                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
-                    <button type="button"><i class="fa fa-search"></i></button>
+            <div class="header-center">
+                <div class="lang-selector" id="langSelector">
+                    <button class="lang-btn" type="button" id="langBtn">
+                        <span class="flag flag-pt"></span><span class="lang-label" data-i18n="lang_label">Português</span>
+                    </button>
+                    <ul class="lang-list" id="langList">
+                        <li data-lang="pt"><span class="flag flag-pt"></span><span class="lang-label">Português</span></li>
+                        <li data-lang="en"><span class="flag flag-en"></span><span class="lang-label">English</span></li>
+                        <li data-lang="fr"><span class="flag flag-fr"></span><span class="lang-label">Français</span></li>
+                        <li data-lang="es"><span class="flag flag-es"></span><span class="lang-label">Español</span></li>
+                        <li data-lang="it"><span class="flag flag-it"></span><span class="lang-label">Italiano</span></li>
+                        <li data-lang="zh"><span class="flag flag-zh"></span><span class="lang-label">中文(普通话)</span></li>
+                    </ul>
                 </div>
-                <button class="btn-signup" data-i18n="login">LOGIN</button>
+            </div>
+
+            <div class="header-spacer" aria-hidden="true"></div>
+
+            <div class="profile-menu">
+                <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-label="Conta"><i class="fa fa-user-circle"></i></button>
+                <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
+                    <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
+                    <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
+                </div>
             </div>
         </header>
 
+        <div class="mobile-menu-container" id="mobileMenuContainer" aria-hidden="true">
+            <div class="mobile-menu-panel">
+                <div class="mobile-menu-header">
+                    <button class="mobile-menu-back" id="mobileMenuBack" type="button" aria-label="Voltar">←</button>
+                    <span class="mobile-menu-title" id="mobileMenuTitle">Menu</span>
+                    <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Fechar">×</button>
+                </div>
+                <div class="mobile-menu-content">
+                    <div class="mobile-menu-view mobile-menu-main" data-view="main"></div>
+                    <div class="mobile-menu-view mobile-menu-lang" data-view="lang"></div>
+                    <div class="mobile-menu-view mobile-menu-user" data-view="user"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- HERO SALVADOR -->
-        <section class="rio-hero">
+        <section class="rio-hero" style="background-image: url('../imagem/Salvador/assets/painel.png');">
             <div class="rio-hero-overlay"></div>
             <div class="rio-hero-content">
-                <h1 class="rio-hero-title">Free Walking Tour em<br><span class="rio-city-highlight">Salvador</span></h1>
-                <p class="rio-hero-location">Bahia — Brasil</p>
-                <p class="rio-hero-desc">Ao fazer um Free Walking Tour pela cidade, a sua experiência vai além de somente ver. Você poderá sentir, tocar e provar um pouco da cultura e da história desta terra.</p>
+                <img src="../imagem/Salvador/assets/Logo.png" alt="Logo Tour by Foot Salvador" class="rio-hero-logo" loading="eager" decoding="async">
+                <h1 class="rio-hero-title"><span class="rio-city-highlight">Salvador</span></h1>
+                <p class="rio-hero-location">Bahia - Brasil</p>
+                <p class="rio-hero-desc">Descubra a alma vibrante do Pelourinho: ladeiras coloridas, o som do berimbau ecoando pelas ruas e séculos de história a cada passo. Mais que um passeio, uma imersão nos sabores, sons e cores da Bahia.</p>
                 <a href="#tours" class="btn-book">Conhecer Tours</a>
             </div>
         </section>
 
         <!-- AVISO -->
         <section class="rio-notice">
-           
+
             <div class="rio-notice-text">
                 <h2 class="rio-notice-title">Informações Importantes</h2>
                 <p><i class="fa fa-circle-info"></i> Para participar de nosso Free Tour é necessário reservar sua vaga.</p>
                 <p><i class="fa fa-circle-info"></i> Seguimos todas as medidas sanitárias exigidas para este tipo de passeio.</p>
                 <p><i class="fa fa-circle-info"></i> Por favor estar atentos aos dias disponíveis no formulário de reserva.</p>
                 <p><i class="fa fa-circle-info"></i> Sua contribuição é a remuneração do guia, seja consciente.</p>
-                <p><i class="fa fa-circle-info"></i> Em caso de não poder comparecer ao tour, cancele sua reserva pelo <a href="https://wa.me/5521964458696?text=Ol%C3%A1%2C%20preciso%20cancelar%20minha%20reserva." target="_blank" rel="noopener"><strong>WhatsApp</strong></a>.</p>
                 <button class="btn-proceed" type="button">Prosseguir</button>
             </div>
         </section>
@@ -84,7 +105,9 @@
                 <!-- FREE TOUR — PELOURINHO -->
                 <article class="rio-tour-card">
                     <div class="rio-tour-images">
-                        <img src="https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp" alt="Pelourinho — Salvador" loading="lazy">
+                        <div class="rio-tour-slider" data-folder="Caminhando pelo Pelourinho" aria-label="Slideshow Pelourinho">
+                            <img class="rio-tour-slide active" src="../imagem/Salvador/Caminhando pelo Pelourinho/imagem-elevador-lacerda-500.webp" alt="Pelourinho — Salvador" loading="lazy">
+                        </div>
                     </div>
                     <div class="rio-tour-info">
                         <h4 class="rio-tour-name">Pelourinho</h4>
@@ -103,14 +126,77 @@
             </div>
         </section>
 
+        <section class="rio-tours" id="depoimentos">
+            <h2 class="rio-section-title">Quem já caminhou com a gente pelo Pelourinho</h2>
+            <div class="rio-section-divider rio-divider-small"></div>
+
+            <div class="rio-testimonials-quotes">
+                <article class="rio-testimonial-quote">
+                    <i class="fa fa-quote-left rio-testimonial-icon"></i>
+                    <p class="rio-testimonial-text">Guia super atencioso, contou a história do Pelourinho com muita paixão. Recomendo demais!</p>
+                    <span class="rio-testimonial-author">Bruno Castilho</span>
+                </article>
+                <article class="rio-testimonial-quote">
+                    <i class="fa fa-quote-left rio-testimonial-icon"></i>
+                    <p class="rio-testimonial-text">Passeio incrível, aprendi muito sobre a cultura baiana. Vale cada minuto do tour.</p>
+                    <span class="rio-testimonial-author">Helena Prado</span>
+                </article>
+            </div>
+
+            <div class="rio-relatos-gallery" id="relatosGallery">
+                <figure class="rio-relatos-item" data-photo-id="salvador-clientes-1">
+                    <img src="../imagem/Salvador/Relatos/clientes_dizem_1-min-300.webp" alt="Relato de viagem em Salvador" loading="lazy">
+                    <button type="button" class="rio-relatos-like" aria-label="Curtir foto" data-i18n-aria="relatos_like_label">
+                        <i class="fa fa-heart"></i>
+                        <span class="rio-relatos-like-count">0</span>
+                    </button>
+                </figure>
+                <figure class="rio-relatos-item" data-photo-id="salvador-clientes-2">
+                    <img src="../imagem/Salvador/Relatos/clientes_dizem_2-jpeg-min-300.webp" alt="Relato de viagem em Salvador" loading="lazy">
+                    <button type="button" class="rio-relatos-like" aria-label="Curtir foto" data-i18n-aria="relatos_like_label">
+                        <i class="fa fa-heart"></i>
+                        <span class="rio-relatos-like-count">0</span>
+                    </button>
+                </figure>
+                <figure class="rio-relatos-item" data-photo-id="salvador-clientes-3">
+                    <img src="../imagem/Salvador/Relatos/clientes_dizem_3-jpeg-min-300.webp" alt="Relato de viagem em Salvador" loading="lazy">
+                    <button type="button" class="rio-relatos-like" aria-label="Curtir foto" data-i18n-aria="relatos_like_label">
+                        <i class="fa fa-heart"></i>
+                        <span class="rio-relatos-like-count">0</span>
+                    </button>
+                </figure>
+                <figure class="rio-relatos-item" data-photo-id="salvador-clientes-4">
+                    <img src="../imagem/Salvador/Relatos/clientes_dizem_4-jpeg-min-300.webp" alt="Relato de viagem em Salvador" loading="lazy">
+                    <button type="button" class="rio-relatos-like" aria-label="Curtir foto" data-i18n-aria="relatos_like_label">
+                        <i class="fa fa-heart"></i>
+                        <span class="rio-relatos-like-count">0</span>
+                    </button>
+                </figure>
+            </div>
+        </section>
+
         <!-- FOOTER -->
         <footer class="rio-footer">
-            <div class="social-icons">
-                <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-                <a href="https://wa.me/5521964458696" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
-                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <div class="rio-footer-card" id="rioFooterCard">
+                <button class="footer-card-up" type="button" aria-label="Ir ao topo">
+                    <i class="fa fa-arrow-up"></i>
+                </button>
+                <h3 class="rio-footer-card-title">Informações</h3>
+                <div class="rio-footer-card-body" id="rioFooterCardBody">
+                    Clique em "CONTATO" para ver as informações dentro deste cartão.
+                </div>
+                <div class="footer-info-icons">
+                    <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/5521964458696" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+                    <a href="mailto:riobyfoottour@gmail.com" aria-label="Email"><i class="fa fa-envelope"></i></a>
+                </div>
+                <div class="rio-footer-card-credit">
+                    <a href="mailto:contato.exksvol@gmail.com" aria-label="Email: contato.exksvol@gmail.com" title="Email: contato.exksvol@gmail.com" class="footer-credit-link">
+                        <span class="footer-credit-text" data-i18n="footer_developed_by_text"></span>
+                        <img src="../imagem/Salvador/assets/exksvol.png" alt="Exksvol" class="footer-credit-logo" />
+                    </a>
+                </div>
             </div>
-            <p class="rio-footer-text">Travel the World · Experiências — Salvador</p>
         </footer>
 
         <div class="award-modal" id="awardModal" aria-hidden="true" aria-live="polite" aria-atomic="true">
@@ -128,10 +214,46 @@
                 </div>
             </div>
         </div>
+
+        <div id="reservationModal" class="reservation-modal-overlay hidden" role="dialog" aria-modal="true" data-i18n-aria="reservation_modal_title" aria-label="Formulário de reserva">
+            <div class="reservation-modal">
+                <h2 data-i18n="reservation_modal_title">Reservar Tour</h2>
+                <form id="reservationForm">
+                    <label><span data-i18n="reservation_tour_label">Tour</span>
+                        <input type="text" id="reservationTour" readonly>
+                    </label>
+                    <label><span data-i18n="reservation_name_label">Nome</span>
+                        <input type="text" id="reservationName" data-i18n-placeholder="reservation_name_placeholder" placeholder="Seu nome" required>
+                    </label>
+                    <label><span data-i18n="reservation_date_label">Data da reserva</span>
+                        <input type="date" id="reservationDate" required>
+                    </label>
+                    <label><span data-i18n="reservation_quantity_label">Quantidade de pessoas</span>
+                        <input type="number" id="reservationQuantity" min="1" value="1" required>
+                    </label>
+                    <label><span data-i18n="reservation_language_label">Idioma</span>
+                        <select id="reservationLanguage" required>
+                            <option value="" data-i18n="reservation_language_placeholder">Selecione um idioma</option>
+                        </select>
+                    </label>
+                    <label><span data-i18n="reservation_phone_label">Celular/WhatsApp</span>
+                        <input type="tel" id="reservationPhone" data-i18n-placeholder="reservation_phone_placeholder" placeholder="(00) 00000-0000" required>
+                    </label>
+                    <label><span data-i18n="reservation_email_label">Email</span>
+                        <input type="email" id="reservationEmail" data-i18n-placeholder="reservation_email_placeholder" placeholder="seuemail@exemplo.com" required>
+                    </label>
+                    <div class="reservation-modal-actions">
+                        <button type="button" id="reservationCancel" class="btn-book" data-i18n="reservation_cancel_btn">Cancelar</button>
+                        <button type="submit" class="btn-book" data-i18n="reservation_confirm_btn">Confirmar Reserva</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="../js/translations.js"></script>
-    <script src="../js/script.js"></script>
-    <script src="../js/Salvador.js"></script>
+    <script src="../js/ui-translations.js"></script>
+    <script src="../js/site-shell.js?v=2"></script>
+    <script src="../js/Salvador.js?v=2"></script>
 </body>
 </html>

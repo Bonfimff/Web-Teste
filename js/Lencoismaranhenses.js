@@ -1,13 +1,23 @@
 (() => {
     const pageKey = 'Lencoismaranhenses';
     const pageTranslations = window.pageTranslations?.[pageKey] || {};
+    const applyTourCard = (card, name, details, reserveLabel, sub) => {
+        if (!card) return;
+        const nameEl = card.querySelector('.rio-tour-name');
+        if (nameEl && name) {
+            nameEl.innerHTML = sub ? `${name} <span class="rio-tour-name-sub">${sub}</span>` : name;
+        }
+        const detailItems = card.querySelectorAll('.rio-tour-details li');
+        (details || []).forEach((html, index) => {
+            if (detailItems[index]) detailItems[index].innerHTML = html;
+        });
+        const reserveBtn = card.querySelector('.rio-btn-reserve');
+        if (reserveBtn && reserveLabel) reserveBtn.textContent = reserveLabel;
+    };
+
     const applyPageLanguage = (lang) => {
         const t = pageTranslations[lang] || pageTranslations.pt;
-        const noticeItems = document.querySelectorAll('.rio-notice-text p');
-        const names = document.querySelectorAll('.rio-tour-name');
-        const details1 = document.querySelectorAll('.rio-tours-grid .rio-tour-card:nth-child(1) .rio-tour-details li');
-        const details2 = document.querySelectorAll('.rio-tours-grid .rio-tour-card:nth-child(2) .rio-tour-details li');
-        const actions = document.querySelectorAll('.rio-tour-actions a');
+        if (!t) return;
 
         const heroTitle = document.querySelector('.rio-hero-title');
         if (heroTitle) heroTitle.innerHTML = t.hero_title;
@@ -24,7 +34,7 @@
         const noticeTitle = document.querySelector('.rio-notice-title');
         if (noticeTitle) noticeTitle.textContent = t.notice_title;
 
-        noticeItems.forEach((item, index) => {
+        document.querySelectorAll('.rio-notice-text p').forEach((item, index) => {
             if (t.notice_lines[index]) {
                 item.innerHTML = `<i class="fa fa-circle-info"></i> ${t.notice_lines[index]}`;
             }
@@ -33,40 +43,80 @@
         const proceedButton = document.querySelector('.rio-notice .btn-proceed');
         if (proceedButton) proceedButton.textContent = t.proceed;
 
-        const sectionTitle = document.querySelector('.rio-section-title');
-        if (sectionTitle) sectionTitle.textContent = t.section_title;
+        // Passeios (free/shared entry tours)
+        const toursSection = document.getElementById('tours');
+        if (toursSection) {
+            const sectionTitle = toursSection.querySelector('.rio-section-title');
+            if (sectionTitle) sectionTitle.textContent = t.section_title;
+            const sectionSubtitle = toursSection.querySelector('.rio-section-subtitle');
+            if (sectionSubtitle) sectionSubtitle.textContent = t.section_subtitle;
 
-        const sectionSubtitle = document.querySelector('.rio-section-subtitle');
-        if (sectionSubtitle) sectionSubtitle.textContent = t.section_subtitle;
+            const cards = toursSection.querySelectorAll('.rio-tour-card');
+            applyTourCard(cards[0], t.names?.[0], t.card1_details, t.reserve);
+            applyTourCard(cards[1], t.names?.[1], t.card2_details, t.reserve);
+        }
 
-        if (names[0]) names[0].textContent = t.names[0];
-        if (names[1]) names[1].textContent = t.names[1];
+        // Expedições Compartilhadas
+        const sharedSection = document.getElementById('expedicoes-compartilhadas');
+        if (sharedSection) {
+            const sectionTitle = sharedSection.querySelector('.rio-section-title');
+            if (sectionTitle) sectionTitle.textContent = t.shared_section_title;
+            const cards = sharedSection.querySelectorAll('.rio-tour-card');
+            (t.shared_tours || []).forEach((tour, index) => {
+                applyTourCard(cards[index], tour.name, tour.details, t.reserve);
+            });
+        }
 
-        details1.forEach((item, index) => {
-            if (t.card1_details[index]) item.innerHTML = t.card1_details[index];
-        });
-        details2.forEach((item, index) => {
-            if (t.card2_details[index]) item.innerHTML = t.card2_details[index];
-        });
+        // Expedições Privativas
+        const privateSection = document.getElementById('expedicoes-privativas');
+        if (privateSection) {
+            const sectionTitle = privateSection.querySelector('.rio-section-title');
+            if (sectionTitle) sectionTitle.textContent = t.private_section_title;
+            const cards = privateSection.querySelectorAll('.rio-tour-card');
+            (t.private_tours || []).forEach((tour, index) => {
+                applyTourCard(cards[index], tour.name, tour.details, t.reserve, tour.sub);
+            });
+        }
 
-        actions.forEach((action, index) => {
-            if (index % 2 === 0) action.innerHTML = t.details;
-            if (index % 2 === 1) action.textContent = t.reserve;
-        });
+        // Como realizar minha reserva
+        const reservaSection = document.getElementById('reserva');
+        if (reservaSection) {
+            const sectionTitle = reservaSection.querySelector('.rio-section-title');
+            if (sectionTitle) sectionTitle.textContent = t.reserva_section_title;
+            const stepIcons = ['fa-whatsapp', 'fa-comments', 'fa-calendar-check', 'fa-money-check-dollar', 'fa-ticket'];
+            reservaSection.querySelectorAll('.rio-tour-details li').forEach((item, index) => {
+                const step = t.reserva_steps?.[index];
+                if (step) item.innerHTML = `<i class="fa ${stepIcons[index] || 'fa-circle'}"></i> ${step}`;
+            });
+            const reserveBtn = reservaSection.querySelector('.rio-btn-reserve');
+            if (reserveBtn && t.reserve) reserveBtn.textContent = t.reserve;
+        }
+
+        // Depoimentos
+        const depoimentosSection = document.getElementById('depoimentos');
+        if (depoimentosSection) {
+            const sectionTitle = depoimentosSection.querySelector('.rio-section-title');
+            if (sectionTitle) sectionTitle.textContent = t.depoimentos_title;
+            const quotes = depoimentosSection.querySelectorAll('.rio-testimonial-quote');
+            (t.testimonials || []).forEach((item, index) => {
+                const quote = quotes[index];
+                if (!quote) return;
+                const textEl = quote.querySelector('.rio-testimonial-text');
+                if (textEl) textEl.textContent = item.text;
+                const authorEl = quote.querySelector('.rio-testimonial-author');
+                if (authorEl) authorEl.textContent = item.author;
+            });
+            const likeLabel = t.relatos_like_label;
+            if (likeLabel) {
+                depoimentosSection.querySelectorAll('.rio-relatos-like').forEach((btn) => {
+                    btn.setAttribute('aria-label', likeLabel);
+                });
+            }
+        }
 
         const footerText = document.querySelector('.rio-footer-text');
         if (footerText) footerText.textContent = t.footer;
     };
-
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', (e) => {
-            const target = document.querySelector(anchor.getAttribute('href'));
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    });
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -77,7 +127,7 @@
         });
     }, { threshold: 0.15 });
 
-    document.querySelectorAll('.rio-tour-card').forEach(card => {
+    document.querySelectorAll('.rio-tour-card, .rio-relatos-item').forEach(card => {
         card.classList.add('rio-card-hidden');
         observer.observe(card);
     });
@@ -107,8 +157,15 @@
 
         document.querySelectorAll('.rio-tour-slider').forEach((slider) => {
             const folder = slider.dataset.folder;
-            const total = folderImages[folder];
-            if (!total) return;
+            // Imagens enviadas via admin (Gerenciamento) têm prioridade; sem elas,
+            // cai no manifesto local de sempre (folderImages/img{N}.webp).
+            const dbImages = window.tourImagesByFolder && window.tourImagesByFolder[folder];
+            const fallbackCount = folderImages[folder];
+            const imageUrls = (Array.isArray(dbImages) && dbImages.length)
+                ? dbImages
+                : (fallbackCount ? Array.from({ length: fallbackCount }, (_, i) => `../imagem/Lencois/${folder}/img${i + 1}.webp`) : null);
+            if (!imageUrls) return;
+            const total = imageUrls.length;
 
             slider.innerHTML = '';
 
@@ -123,7 +180,7 @@
             for (let i = 1; i <= total; i++) {
                 const img = document.createElement('img');
                 img.className = 'rio-tour-slide';
-                img.src = `../imagem/Lencois/${folder}/img${i}.webp`;
+                img.src = imageUrls[i - 1];
                 img.alt = `${folder} - imagem ${i}`;
                 img.loading = 'lazy';
                 track.appendChild(img);
@@ -220,6 +277,8 @@
             interval = setTimeout(nextSlide, initialDelay);
         });
     }
+
+    window.startTourSliders = startTourSliders;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', startTourSliders);

@@ -1,11 +1,9 @@
 
-// version 1.0 
+// Site shell (header, mobile menu, login/register, footer card, notifications).
+// Generic logic shared by pages that use the "rio-page" layout pattern. Extracted from
+// js/Riodejaneiro.js, minus the Rio-only tour database rendering and reservation-form intercept.
 (() => {
-    const pageTranslations = window.pageTranslations || {};
-
-    let currentFooterInfo = pageTranslations.pt.footer_info;
     let rolePermissionsMap = {};
-    let toursFromDatabase = [];
 
     const ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT = window.ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT !== false;
     window.ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT = ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT;
@@ -232,54 +230,6 @@
 
     console.debug('API_BASE_URL configurado para:', API_BASE_URL);
 
-    // 2. MÃ©todo padronizado para adicionar reserva
-    const adicionarReservaNoServidor = async (dadosReserva) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/add_agendamento`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dadosReserva)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                if (typeof showGlobalNotification === 'function') {
-                    showGlobalNotification('Reserva concluída com sucesso.', 'success');
-                } else {
-                    alert('Reserva concluÃ­da com sucesso.');
-                }
-                if (typeof carregarAgendamentosDoBanco === 'function') {
-                    carregarAgendamentosDoBanco();
-                }
-            } else {
-                if (typeof showGlobalNotification === 'function') {
-                    showGlobalNotification('Erro: ' + result.message, 'error');
-                } else {
-                    alert('Erro: ' + result.message);
-                }
-            }
-        } catch (error) {
-            console.error('Erro na requisiÃ§Ã£o:', error);
-            if (typeof showGlobalNotification === 'function') {
-                showGlobalNotification('Ocorreu um erro de conexão com o servidor.', 'error');
-            } else {
-                alert('Ocorreu um erro de conexão com o servidor.');
-            }
-        }
-    };
-
-    // Exemplo de uso:
-    // const dados = {
-    //     email: localStorage.getItem('userEmail'),
-    //     tour: 'Rio de Janeiro',
-    //     data: '2026-05-10',
-    //     pessoas: 2
-    // };
-    // adicionarReservaNoServidor(dados);
-
     const apiFetch = async (path, options = {}) => {
         const url = path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
         const defaultOptions = {
@@ -329,434 +279,112 @@
     // Expor apiFetch globalmente para evitar erro "apiFetch is not defined" em outros mÃ³dulos
     window.apiFetch = apiFetch;
 
-    const login = async (email, password) => {
-        if (!email || !password) throw new Error('Email e senha sÃ£o obrigatÃ³rios');
-
-        const params = new URLSearchParams({
-            username: email,
-            password
-        });
-
-        return apiFetch('/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: params.toString()
-            // sem credentials para reduzir verificaÃ§Ãµes extras CORS
-        });
-    };
-
-    const carregarToursDoBanco = async () => {
-        const endpoints = [
-            '/get_tours_pagina',
-            `${API_BASE_URL}/get_tours_pagina`,
-            'https://api.exksvol.com/get_tours_pagina',
-            'http://127.0.0.1:5000/get_tours_pagina',
-            'http://localhost:5000/get_tours_pagina'
-        ];
-
-        let tours = null;
-        let lastError = null;
-
-        for (const endpoint of endpoints) {
-            try {
-                const payload = await apiFetch(endpoint, { method: 'GET' });
-                if (Array.isArray(payload) && payload.length) {
-                    tours = payload;
-                    console.log('[Tours] carregados do endpoint:', endpoint, payload);
-                    break;
-                }
-            } catch (error) {
-                lastError = error;
-                console.warn('[Tours] Falha ao carregar de', endpoint, error);
-            }
-        }
-
-        if (!Array.isArray(tours) || !tours.length) {
-            toursFromDatabase = [];
-            if (lastError) {
-                throw lastError;
-            }
-            return tours;
-        }
-
-        try {
-            toursFromDatabase = tours;
-            try {
-                localStorage.setItem('pageTours', JSON.stringify(tours));
-            } catch {
-                // ignore
-            }
-
-            const cards = document.querySelectorAll('.rio-tour-card');
-            cards.forEach((card, index) => {
-                const tour = tours[index];
-                if (!tour) return;
-
-                const nameEl = card.querySelector('.rio-tour-name');
-                if (nameEl) {
-                    nameEl.textContent = tour.nome_tour || tour.name || nameEl.textContent;
-                }
-
-                const detailsEl = card.querySelector('.rio-tour-details');
-                if (detailsEl) {
-                    const currentLang = (typeof window.getCurrentLang === 'function') ? window.getCurrentLang() : 'pt';
-                    const languages = translateTourCardDetailValue('languages', tour.idiomas || tour.languages || 'Português, Inglês e Espanhol', currentLang);
-                    const meeting = translateTourCardDetailValue('meeting', tour.encontro || tour.meeting || 'Não informado', currentLang);
-                    const identification = translateTourCardDetailValue('identification', tour.identificacao || tour.identification || 'Guias com camisetas verdes', currentLang);
-                    const value = tour.valor ?? tour.value;
-                    const estado = (tour.estado || tour.status || '').trim();
-                    let valueLine = '';
-                    if (value != null && value !== '') {
-                        const formatted = Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        valueLine = `<li><i class="fa fa-dollar-sign"></i> <strong>Valor:</strong> ${formatted}</li>`;
-                    }
-                    let stateLine = '';
-                    if (estado && estado.toLowerCase() !== 'ativo') {
-                        stateLine = `<li><i class="fa fa-info-circle"></i> <strong>Estado:</strong> ${estado}</li>`;
-                    }
-
-                    detailsEl.innerHTML = `
-                        <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> ${languages}</li>
-                        <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> ${meeting}</li>
-                        <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> ${identification}</li>
-                        ${valueLine}
-                        ${stateLine}
-                    `;
-                }
-
-                const mapLink = card.querySelector('.rio-link-map');
-                const mapUrl = tour.link_tour || tour.link || '';
-                if (mapLink && mapUrl) {
-                    mapLink.href = mapUrl;
-                }
-
-                // Imagens enviadas via admin (Gerenciamento) substituem o slideshow local
-                // hardcoded, casadas pelo mesmo Ã­ndice de card jÃ¡ usado acima.
-                const folder = card.querySelector('.rio-tour-slider')?.dataset.folder;
-                if (folder && Array.isArray(tour.imagens) && tour.imagens.length) {
-                    window.tourImagesByFolder = window.tourImagesByFolder || {};
-                    window.tourImagesByFolder[folder] = tour.imagens;
+    // Award notification: supports either the corner "toast" markup (#awardToast, used by
+    // the Rio de Janeiro page) or the centered "modal" markup (#awardModal, used by the
+    // other destination pages). Whichever one is present in the DOM gets wired up.
+    const initAwardNotification = () => {
+        const toast = document.getElementById('awardToast');
+        if (toast) {
+            let awardToastTimer = null;
+            toast.addEventListener('click', (event) => {
+                const close = event.target.closest('[data-close-award]');
+                if (close) {
+                    toast.classList.remove('visible');
+                    if (awardToastTimer) clearTimeout(awardToastTimer);
                 }
             });
-
-            if (typeof window.startTourSliders === 'function') {
-                window.startTourSliders();
-            }
-
-            // Reaplica idioma para garantir que conteÃºdo dinÃ¢mico venÃ§a qualquer texto estÃ¡tico.
-            if (typeof window.dispatchLanguageChange === 'function' && typeof window.getCurrentLang === 'function') {
-                window.dispatchLanguageChange(window.getCurrentLang());
-            }
-
-            return tours;
-        } catch (error) {
-            console.error('Erro ao conectar com a API:', error);
-            throw error;
+            awardToastTimer = setTimeout(() => {
+                toast.classList.add('visible');
+                awardToastTimer = setTimeout(() => toast.classList.remove('visible'), 15000);
+            }, 700);
+            return;
         }
-    };
 
-    // Expor para a segunda IIFE (shared logic) poder chamar no DOMContentLoaded
-    window.carregarToursDoBanco = carregarToursDoBanco;
+        const modal = document.getElementById('awardModal');
+        if (!modal) return;
 
-    const translateTourCardDetailValue = (fieldKey, rawValue, lang) => {
-        if (!rawValue && rawValue !== 0) return rawValue || '';
-        const value = String(rawValue).trim();
-        const defaultsByLang = window.translationCatalog?.tourCardDefaultByLang?.[lang]
-            || window.translationCatalog?.tourCardDefaultByLang?.pt
-            || { languages: 'Português, Inglês e Espanhol', meeting: 'Não informado', identification: 'Guias com camisetas verdes' };
+        const countdownEl = document.getElementById('awardCountdown');
+        const awardLink = 'https://www.tripadvisor.com.br/Attraction_Review-g303506-d12219836-Reviews-Rio_by_Foot_Free_Walking_Tour-Rio_de_Janeiro_State_of_Rio_de_Janeiro.html';
+        let countdownTimer = null;
 
-        const knownValues = {
-            languages: {
-                pt: 'Português, Inglês e Espanhol',
-                en: 'Portuguese, English and Spanish',
-                fr: 'Portugais, anglais et espagnol',
-                es: 'Portugués, inglés y español',
-                it: 'Portoghese, inglese e spagnolo',
-                zh: '葡萄牙语、英语和西班牙语'
-            },
-            meeting: {
-                pt: 'Não informado',
-                en: 'Not informed',
-                fr: 'Non renseigné',
-                es: 'No informado',
-                it: 'Non indicato',
-                zh: '未指定'
-            },
-            identification: {
-                pt: 'Guias com camisetas verdes',
-                en: 'Guides wearing green shirts',
-                fr: 'Guides avec t-shirts verts',
-                es: 'Guías con camisetas verdes',
-                it: 'Guide con magliette verdi',
-                zh: '穿绿色T恤的导游'
+        const getCountdownLabel = (seconds) => {
+            const labels = {
+                pt: 'Fecha em', en: 'Closes in', fr: 'Se ferme dans',
+                es: 'Se cierra en', it: 'Si chiude tra', zh: '将在'
+            };
+            const lang = window.getCurrentLanguage ? window.getCurrentLanguage() : 'pt';
+            const prefix = labels[lang] || labels.pt;
+            return lang === 'zh' ? `${prefix} ${seconds} 秒` : `${prefix} ${seconds}s`;
+        };
+
+        const stopCountdown = () => {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
             }
         };
 
-        const target = {
-            languages: defaultsByLang.languages,
-            meeting: defaultsByLang.meeting,
-            identification: defaultsByLang.identification
-        }[fieldKey] || value;
+        const closeModal = () => {
+            stopCountdown();
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            try { sessionStorage.setItem('awardModalSeen', '1'); } catch (e) {}
+        };
 
-        const normalize = (text) => text
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase();
+        const openModal = () => {
+            let secondsLeft = 10;
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            if (countdownEl) countdownEl.textContent = getCountdownLabel(secondsLeft);
 
-        const normalizedValue = normalize(value);
-        for (const [langKey, phrase] of Object.entries(knownValues[fieldKey] || {})) {
-            if (normalize(phrase) === normalizedValue) {
-                return target;
-            }
-        }
-
-        return value;
-    };
-
-    const applyPageLanguage = (lang) => {
-        const t = pageTranslations[lang] || pageTranslations.pt;
-        currentFooterInfo = t.footer_info || currentFooterInfo;
-        const cards = document.querySelectorAll('.rio-tour-card');
-        const noticeItems = document.querySelectorAll('.rio-notice-text p');
-        const subtitles = document.querySelectorAll('.rio-section-subtitle');
-
-        const heroTitle = document.querySelector('.rio-hero-title');
-        if (heroTitle) heroTitle.innerHTML = t.hero_title;
-
-        const heroLocation = document.querySelector('.rio-hero-location');
-        if (heroLocation) heroLocation.textContent = t.hero_location;
-
-        const heroDesc = document.querySelector('#rioHeroDesc');
-        if (heroDesc) heroDesc.textContent = t.hero_desc;
-
-        const heroButton = document.querySelector('.rio-hero-content .btn-book');
-        if (heroButton) heroButton.textContent = t.hero_button;
-
-        const noticeTitle = document.querySelector('.rio-notice-title');
-        if (noticeTitle) noticeTitle.textContent = t.notice_title;
-
-        noticeItems.forEach((item, index) => {
-            if (t.notice_lines[index]) item.innerHTML = `<i class="fa fa-circle-info"></i> ${t.notice_lines[index]}`;
-        });
-
-        const proceedButton = document.querySelector('.rio-notice .btn-proceed');
-        if (proceedButton) proceedButton.textContent = t.proceed;
-
-        const sectionTitle = document.querySelector('.rio-section-title');
-        if (sectionTitle) sectionTitle.textContent = t.section_title;
-
-        if (subtitles[0]) subtitles[0].textContent = t.free_subtitle;
-        if (subtitles[1]) subtitles[1].textContent = t.paid_title;
-
-        const paidSubtitle = document.querySelector('.rio-paid-subtitle');
-        if (paidSubtitle) paidSubtitle.textContent = t.paid_subtitle;
-
-        const footerTitleByLang = window.translationCatalog?.footerTitleByLang || {};
-        const footerTitle = document.querySelector('.rio-footer-card-title');
-        if (footerTitle) footerTitle.textContent = footerTitleByLang[lang] || footerTitleByLang.pt || 'Informações';
-
-        cards.forEach((card, index) => {
-            const dbTour = toursFromDatabase[index];
-            if (dbTour) {
-                const labels = {
-                    pt: { idiomas: 'Idiomas', encontro: 'Encontro', identificacao: 'Identificação' },
-                    en: { idiomas: 'Languages', encontro: 'Meeting', identificacao: 'Identification' },
-                    fr: { idiomas: 'Langues', encontro: 'Rendez-vous', identificacao: 'Identification' },
-                    es: { idiomas: 'Idiomas', encontro: 'Encuentro', identificacao: 'Identificación' },
-                    it: { idiomas: 'Lingue', encontro: 'Incontro', identificacao: 'Identificazione' },
-                    zh: { idiomas: '语言', encontro: '集合', identificacao: '识别' }
-                }[lang] || { idiomas: 'Idiomas', encontro: 'Encontro', identificacao: 'Identificação' };
-
-                const nameEl = card.querySelector('.rio-tour-name');
-                if (nameEl) nameEl.textContent = dbTour.nome_tour || dbTour.name || '-';
-
-                const detailList = card.querySelector('.rio-tour-details');
-                if (detailList) {
-                    const languages = translateTourCardDetailValue('languages', dbTour.idiomas || dbTour.languages || 'Português, Inglês e Espanhol', lang);
-                    const meeting = translateTourCardDetailValue('meeting', dbTour.encontro || dbTour.meeting || 'Não informado', lang);
-                    const identification = translateTourCardDetailValue('identification', dbTour.identificacao || dbTour.identification || 'Guias com camisetas verdes', lang);
-                    detailList.innerHTML = `
-                        <li><i class="fa fa-language"></i> <strong>${labels.idiomas}:</strong> ${languages}</li>
-                        <li><i class="fa fa-map-marker-alt"></i> <strong>${labels.encontro}:</strong> ${meeting}</li>
-                        <li><i class="fa fa-shirt"></i> <strong>${labels.identificacao}:</strong> ${identification}</li>
-                    `;
+            stopCountdown();
+            countdownTimer = setInterval(() => {
+                secondsLeft -= 1;
+                if (secondsLeft <= 0) {
+                    closeModal();
+                    return;
                 }
+                if (countdownEl) countdownEl.textContent = getCountdownLabel(secondsLeft);
+            }, 1000);
+        };
 
-                const actions = card.querySelectorAll('.rio-tour-actions a');
-                if (actions[0]) {
-                    actions[0].innerHTML = (t.cards[index] && t.cards[index].map) ? t.cards[index].map : '<i class="fa fa-map"></i> Ver no Mapa';
-                    if (dbTour.link_tour) actions[0].href = dbTour.link_tour;
-                }
-                if (actions[1]) {
-                    const tourStatus = (dbTour.estado || dbTour.status || '').toString().trim().toLowerCase();
-                    const isAvailable = tourStatus === 'ativo' || tourStatus === 'active';
-                    if (!isAvailable) {
-                        const unavailableText = t.reserve_unavailable || 'Temporariamente indisponÃ­vel';
-                        actions[1].textContent = unavailableText;
-                        actions[1].removeAttribute('href');
-                        actions[1].classList.add('disabled');
-                        actions[1].setAttribute('aria-disabled', 'true');
-                        actions[1].style.pointerEvents = 'none';
-                    } else {
-                        actions[1].textContent = (t.cards[index] && t.cards[index].reserve) ? t.cards[index].reserve : 'Reservar Agora';
-                        if (dbTour.link_tour) {
-                            actions[1].href = dbTour.link_tour;
-                        }
-                        actions[1].classList.remove('disabled');
-                        actions[1].removeAttribute('aria-disabled');
-                        actions[1].style.pointerEvents = '';
-                    }
-                }
-                return;
-            }
-
-            const cardData = t.cards[index];
-            if (!cardData) return;
-
-            const name = card.querySelector('.rio-tour-name');
-            if (name) name.innerHTML = cardData.name;
-
-            const detailList = card.querySelector('.rio-tour-details');
-            const tourCardLabelByLang = window.translationCatalog?.tourCardLabelByLang || {};
-            const labels = tourCardLabelByLang[lang] || tourCardLabelByLang.pt || { idiomas: 'Idiomas', valor: 'Valor', encontro: 'Encontro', identificacao: 'Identificação' };
-
-            const parsed = {
-                idiomas: '',
-                encontro: '',
-                identificacao: ''
-            };
-
-            (cardData.details || []).forEach(rawLine => {
-                let line = rawLine;
-
-                line = line.replace(/<strong>.*?Idiomas?:.*?<\/strong>/i, `<strong>${labels.idiomas}:</strong>`);
-                line = line.replace(/<strong>.*?Languages?:.*?<\/strong>/i, `<strong>${labels.idiomas}:</strong>`);
-                line = line.replace(/<strong>.*?Langues?:.*?<\/strong>/i, `<strong>${labels.idiomas}:</strong>`);
-                line = line.replace(/<strong>.*?Lingue?:.*?<\/strong>/i, `<strong>${labels.idiomas}:</strong>`);
-                line = line.replace(/<strong>.*?语言.*?<\/strong>/i, `<strong>${labels.idiomas}:</strong>`);
-
-
-                line = line.replace(/<strong>.*?Encontro.*?<\/strong>/i, `<strong>${labels.encontro}:</strong>`);
-                line = line.replace(/<strong>.*?Meeting.*?<\/strong>/i, `<strong>${labels.encontro}:</strong>`);
-                line = line.replace(/<strong>.*?Rendez-vous.*?<\/strong>/i, `<strong>${labels.encontro}:</strong>`);
-                line = line.replace(/<strong>.*?Encuentro.*?<\/strong>/i, `<strong>${labels.encontro}:</strong>`);
-                line = line.replace(/<strong>.*?Incontro.*?<\/strong>/i, `<strong>${labels.encontro}:</strong>`);
-                line = line.replace(/<strong>.*?集合.*?<\/strong>/i, `<strong>${labels.encontro}:</strong>`);
-
-                line = line.replace(/<strong>.*?Identificação.*?<\/strong>/i, `<strong>${labels.identificacao}:</strong>`);
-                line = line.replace(/<strong>.*?Identification.*?<\/strong>/i, `<strong>${labels.identificacao}:</strong>`);
-                line = line.replace(/<strong>.*?Identificación.*?<\/strong>/i, `<strong>${labels.identificacao}:</strong>`);
-                line = line.replace(/<strong>.*?Identificazione.*?<\/strong>/i, `<strong>${labels.identificacao}:</strong>`);
-                line = line.replace(/<strong>.*?识别.*?<\/strong>/i, `<strong>${labels.identificacao}:</strong>`);
-
-                if (/Idiomas|Languages|Langues|Lingue|语言/i.test(line)) parsed.idiomas = line;
-                if (/Encontro|Meeting|Rendez-vous|Encuentro|Incontro|集合/i.test(line)) parsed.encontro = line;
-                if (/Identificação|Identification|Identificación|Identificazione|识别/i.test(line)) parsed.identificacao = line;
+        modal.querySelectorAll('[data-close-award]').forEach((el) => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeModal();
             });
-
-            if (detailList) {
-                detailList.innerHTML = '';
-
-                const tourCardDefaultByLang = window.translationCatalog?.tourCardDefaultByLang || {};
-                const defaultsByLang = tourCardDefaultByLang[lang] || tourCardDefaultByLang.pt || {
-                    languages: 'PortuguÃªs, InglÃªs e Espanhol',
-                    meeting: 'NÃ£o informado',
-                    identification: 'Guias com camisetas verdes'
-                };
-
-                const defaultDetails = {
-                    idiomas: `<i class="fa fa-language"></i> <strong>${labels.idiomas}:</strong> ${defaultsByLang.languages}`,
-                    encontro: `<i class="fa fa-map-marker-alt"></i> <strong>${labels.encontro}:</strong> ${defaultsByLang.meeting}`,
-                    identificacao: `<i class="fa fa-shirt"></i> <strong>${labels.identificacao}:</strong> ${defaultsByLang.identification}`
-                };
-
-                ['idiomas', 'encontro', 'identificacao'].forEach(key => {
-                    const value = parsed[key] || defaultDetails[key];
-                    const li = document.createElement('li');
-                    li.innerHTML = value;
-                    detailList.appendChild(li);
-                });
-            }
-
-            const actions = card.querySelectorAll('.rio-tour-actions a');
-            if (actions[0]) actions[0].innerHTML = cardData.map;
-            if (actions[1]) actions[1].textContent = cardData.reserve;
         });
 
-        const footerText = document.querySelector('.rio-footer-text');
-        if (footerText) footerText.textContent = t.footer;
-
-        // update footer card content for the current language
-        updateFooterCardContent();
-    };
-
-    function updateFooterCardContent(key = 'contato') {
-        const body = document.getElementById('rioFooterCardBody');
-        if (!body) return;
-        const info = currentFooterInfo?.[key];
-        body.innerHTML = info || '<p>Selecione uma opÃ§Ã£o para ver mais informações.</p>';
-    }
-
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', (e) => {
-            const href = anchor.getAttribute('href');
-            if (!href || href === '#') return;
-
-            const target = document.querySelector(href);
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    });
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('rio-card-visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.15 });
-
-    document.querySelectorAll('.rio-tour-card').forEach(card => {
-        card.classList.add('rio-card-hidden');
-        observer.observe(card);
-    });
-
-
-    let awardToastTimer = null;
-
-    const showAwardToast = (durationMs = 15000) => {
-        const toast = document.getElementById('awardToast');
-        if (!toast) return;
-
-        toast.classList.add('visible');
-        if (awardToastTimer) {
-            clearTimeout(awardToastTimer);
+        const dialog = modal.querySelector('.award-modal__dialog');
+        if (dialog) {
+            dialog.addEventListener('click', (e) => {
+                if (e.target.closest('[data-close-award]')) return;
+                closeModal();
+                window.location.href = awardLink;
+            });
         }
 
-        awardToastTimer = setTimeout(() => {
-            toast.classList.remove('visible');
-        }, durationMs);
-    };
+        document.addEventListener('app:language-changed', () => {
+            if (!modal.classList.contains('is-open') || !countdownEl) return;
+            const match = countdownEl.textContent.match(/(\d+)/);
+            const seconds = match ? Number(match[1]) : 15;
+            countdownEl.textContent = getCountdownLabel(seconds);
+        });
 
-    const initAwardToast = () => {
-        const toast = document.getElementById('awardToast');
-        if (!toast) return;
-
-        toast.addEventListener('click', (event) => {
-            const close = event.target.closest('[data-close-award]');
-            if (close) {
-                toast.classList.remove('visible');
-                if (awardToastTimer) clearTimeout(awardToastTimer);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+                closeModal();
             }
         });
+
+        let alreadySeen = false;
+        try { alreadySeen = sessionStorage.getItem('awardModalSeen') === '1'; } catch (e) {}
+        if (!alreadySeen) {
+            setTimeout(openModal, 700);
+        }
     };
 
-    initAwardToast();
+    initAwardNotification();
 
     const translateProfileDropdown = (container) => {
         if (!container) return;
@@ -905,21 +533,6 @@
     };
 
     initFooterScrollTop();
-
-    document.addEventListener('app:language-changed', (event) => {
-        applyPageLanguage(event.detail.lang);
-    });
-
-    const initialLang = typeof window.getCurrentLanguage === 'function'
-        ? window.getCurrentLanguage()
-        : (document.documentElement.lang || 'pt').slice(0, 2);
-    applyPageLanguage(initialLang);
-
-    const initMobileNav = () => {
-        // Legacy helper (kept for compatibility), actual toggle logic lives in initHamburgerMenu.
-    };
-
-    initMobileNav();
 })();
 // script.js - shared logic for navigation, language switching and UI helpers
 (() => {
@@ -2778,6 +2391,23 @@
                 if (!Array.isArray(payload)) continue;
                 const tours = mergeTours(getTours(), payload.map(mapBackendTourToPageTour));
                 setTours(tours);
+
+                // Imagens enviadas via admin (Gerenciamento) têm prioridade sobre o
+                // manifesto local hardcoded de cada cidade, casadas pelo nome do tour.
+                window.tourImagesByFolder = window.tourImagesByFolder || {};
+                document.querySelectorAll('.rio-tour-card').forEach((card) => {
+                    const folder = card.querySelector('.rio-tour-slider')?.dataset.folder;
+                    const cardName = card.querySelector('.rio-tour-name')?.textContent?.trim();
+                    if (!folder || !cardName) return;
+                    const matchedTour = tours.find(t => normalizeTourKey(t.name) === normalizeTourKey(cardName));
+                    if (matchedTour && Array.isArray(matchedTour.imagens) && matchedTour.imagens.length) {
+                        window.tourImagesByFolder[folder] = matchedTour.imagens;
+                    }
+                });
+                if (typeof window.startTourSliders === 'function') {
+                    window.startTourSliders();
+                }
+
                 return tours;
             } catch (error) {
                 console.warn('Erro ao buscar tours no backend:', endpoint, error);
@@ -3543,10 +3173,12 @@
             selectedMeetingPoint = (meetingPoint || '').trim();
 
             const strings = window.uiTranslations?.[window.getCurrentLang?.() || (document.documentElement.lang || 'pt').slice(0, 2)] || window.uiTranslations?.pt || {};
+            const defaultLangs = ['Português', 'Inglês', 'Espanhol'];
             const langs = (languageText || '').split(/[,;]+|\s+e\s+/i)
                 .map(s => s.trim())
                 .filter(Boolean)
                 .filter((v, i, arr) => arr.indexOf(v) === i);
+            if (!langs.length) langs.push(...defaultLangs);
 
             if (reservationLanguage) {
                 reservationLanguage.innerHTML = '';
@@ -3577,12 +3209,18 @@
                     event.preventDefault();
                     return;
                 }
-                event.preventDefault();
                 const card = button.closest('.rio-tour-card');
                 const tourName = card?.querySelector('.rio-tour-name')?.textContent?.trim() || '';
+                if (!tourName) {
+                    // Not a per-tour card (eg. a combined "reserve" CTA that sits outside any
+                    // single .rio-tour-card) — nothing to name in the modal, so let the link
+                    // behave normally instead (eg. a WhatsApp deep link).
+                    return;
+                }
+                event.preventDefault();
                 const languageText = card?.querySelector('.fa-language')?.parentElement?.textContent?.replace(/\s*Idiomas?:\s*/i, '').trim() || '';
                 const meetingTextRaw = card?.querySelector('.fa-map-marker-alt')?.parentElement?.textContent?.trim() || '';
-                const meetingText = meetingTextRaw.replace(/^\s*(Encontro|Meeting|Rendez-vous|Encuentro|Incontro|集合)\s*:\s*/i, '').trim();
+                const meetingText = meetingTextRaw.replace(/^\s*(Encontro|Meeting|Rendez-vous|Encuentro|Incontro|集合|Saída|Roteiro)\s*:\s*/i, '').trim();
                 openReservationModal(tourName, languageText, meetingText);
             });
         });
@@ -3787,6 +3425,48 @@
         });
     };
 
+    const initRelatosGallery = () => {
+        const gallery = document.getElementById('relatosGallery');
+        if (!gallery) return;
+
+        gallery.querySelectorAll('.rio-relatos-item').forEach((item) => {
+            const photoId = item.dataset.photoId;
+            const likeBtn = item.querySelector('.rio-relatos-like');
+            const countEl = item.querySelector('.rio-relatos-like-count');
+            if (!photoId || !likeBtn || !countEl) return;
+
+            const storageKey = `relatoLike:${photoId}`;
+            let state;
+            try {
+                state = JSON.parse(localStorage.getItem(storageKey) || 'null');
+            } catch (_err) {
+                state = null;
+            }
+            if (!state || typeof state.count !== 'number') {
+                // Seed a plausible starting count so the gallery doesn't look empty.
+                state = { liked: false, count: 8 + Math.floor(Math.random() * 34) };
+                try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (_err) { /* ignore */ }
+            }
+
+            const render = () => {
+                countEl.textContent = String(state.count);
+                likeBtn.classList.toggle('is-liked', state.liked);
+            };
+            render();
+
+            likeBtn.addEventListener('click', () => {
+                state.liked = !state.liked;
+                state.count += state.liked ? 1 : -1;
+                try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (_err) { /* ignore */ }
+                render();
+                if (state.liked) {
+                    likeBtn.classList.add('just-liked');
+                    setTimeout(() => likeBtn.classList.remove('just-liked'), 400);
+                }
+            });
+        });
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         // Ensure page starts at the top and focus is set to header for accessibility
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -3805,23 +3485,32 @@
         initSmoothAnchorScroll();
         initLoginModal();
         initRegisterModal();
-        initReservationTracking();
         initFooterInfo();
         initFooterEmailCopy();
+        initRelatosGallery();
 
-        const initializePageContent = async () => {
-            try {
-                await window.carregarToursDoBanco();
-            } catch {
-                if (typeof syncToursFromIndex === 'function') {
-                    syncToursFromIndex();
-                }
-            } finally {
-                dispatchLanguageChange(getCurrentLang());
-            }
-        };
+        // Intro/notice overlay (eg. "Informações Importantes") used by several destination
+        // pages: clicking its proceed button just hides the overlay.
+        const noticeProceedBtn = document.querySelector('.rio-notice .btn-proceed');
+        if (noticeProceedBtn) {
+            noticeProceedBtn.addEventListener('click', () => {
+                const notice = noticeProceedBtn.closest('.rio-notice');
+                if (notice) notice.style.display = 'none';
+            });
+        }
 
-        initializePageContent();
+        // Only wire the on-page reservation form for pages that actually have the modal
+        // markup (#reservationModal). Pages without one keep their reserve buttons as-is
+        // (eg. WhatsApp deep links).
+        if (document.getElementById('reservationModal')) {
+            initReservationTracking();
+        }
+        if (typeof syncToursFromIndex === 'function') {
+            syncToursFromIndex();
+        }
+        // Puxa os tours mantidos pela página de Gerenciamento (links, status e valores atualizados)
+        fetchToursFromBackend();
+        dispatchLanguageChange(getCurrentLang());
     });
 })();
 

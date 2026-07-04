@@ -242,6 +242,10 @@ console.log('Layout da imagem de referência carregado.');
 /* Trecho de 0:12 a 2:00, depois repete                  */
 /* ===================================================== */
 (function () {
+	// Cápsulas de vídeo ficam escondidas (display:none) abaixo de 1200px
+	// (ver style.css); evita baixar/reproduzir 3 vídeos à toa em mobile/tablet.
+	if (window.matchMedia('(max-width: 1200px)').matches) return;
+
 	var START = 12;
 	var END   = 120;
 	var videos = document.querySelectorAll('.capsule-video');
