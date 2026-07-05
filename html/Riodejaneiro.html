@@ -13,7 +13,8 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=7">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=8">
+    <link rel="stylesheet" href="../css/tour-interacoes.css?v=4">
 </head>
 <body>
     <div class="rio-page">
@@ -265,6 +266,11 @@
                     <label><span data-i18n="reservation_date_label">Data da reserva</span>
                         <input type="date" id="reservationDate" required>
                     </label>
+                    <label id="reservationTimeField" hidden><span data-i18n="reservation_time_label">Horário</span>
+                        <select id="reservationTime">
+                            <option value="" data-i18n="reservation_time_placeholder">Selecione um horário</option>
+                        </select>
+                    </label>
                     <label><span data-i18n="reservation_quantity_label">Quantidade de pessoas</span>
                         <input type="number" id="reservationQuantity" min="1" value="1" required>
                     </label>
@@ -289,7 +295,8 @@
     </div> 
     </div>
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=3"></script>
+    <script src="../js/tour-interacoes.js?v=4"></script>
+    <script src="../js/Riodejaneiro.js?v=8"></script>
     <script>
         (function () {
             const folderImages = {

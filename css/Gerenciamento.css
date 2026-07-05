@@ -32,9 +32,14 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
+    /* No Android, a barra de navegação some/aparece durante a rolagem e o
+       viewport recalcula; height:100% (equivalente a 100vh aqui) faz o fundo
+       "pular" e revelar uma faixa em branco. 100dvh acompanha essa transição
+       suavemente. height:100% acima é o fallback para navegadores sem suporte. */
+    height: 100dvh;
     z-index: -1;
     background-color: #02415a;
-    background-image: url('../imagem/assets/fundo rj.png');
+    background-image: url('../imagem/Rio de Janeiro/assets/fundo rj.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -998,6 +1003,28 @@ body {
   display: none;
 }
 
+.tour-order-cell {
+  display: flex;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.tour-order-btn {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #fff;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.tour-order-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .tour-gallery {
   display: flex;
   flex-wrap: wrap;
@@ -1038,9 +1065,63 @@ body {
   padding: 0;
 }
 
+.tour-gallery-item .tour-gallery-move {
+  position: absolute;
+  bottom: 2px;
+  width: 20px;
+  height: 18px;
+  line-height: 16px;
+  text-align: center;
+  border: none;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0;
+}
+
+.tour-gallery-item .tour-gallery-move:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.tour-gallery-item .tour-gallery-move-left {
+  left: 2px;
+}
+
+.tour-gallery-item .tour-gallery-move-right {
+  right: 2px;
+}
+
 .tour-gallery-empty {
   font-size: 0.85rem;
   color: #6b7a8d;
+}
+
+.tour-gallery-hint {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #6b7a8d;
+}
+
+#tourModalImageUploadHint {
+  color: #b45309;
+}
+
+.tour-gallery-preview-pending {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(0, 0, 0, 0.15);
+}
+
+.tour-gallery-preview-pending:empty {
+  display: none;
+}
+
+.tour-gallery-item-pending {
+  opacity: 0.7;
 }
 
 .tour-gallery-upload {
@@ -1049,6 +1130,334 @@ body {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.tour-horarios-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tour-horarios-empty {
+  font-size: 0.85rem;
+  color: #6b7a8d;
+}
+
+.tour-horario-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  padding: 0.3rem 0.4rem 0.3rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tour-horario-remove {
+  border: none;
+  background: none;
+  color: #3730a3;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+}
+
+.tour-horarios-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tour-comments-admin-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tour-comment-admin-item {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.tour-comment-admin-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tour-comment-admin-stars {
+  color: #f5a623;
+  font-size: 0.85rem;
+}
+
+.tour-comment-admin-delete {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: #c0392b;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.tour-comment-admin-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.tour-comment-admin-status-pendente .tour-comment-admin-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tour-comment-admin-status-aprovado .tour-comment-admin-badge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tour-comment-admin-status-rejeitado .tour-comment-admin-badge {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tour-comment-admin-fotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0;
+}
+
+.tour-comment-admin-fotos img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.tour-comment-admin-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.tour-comment-admin-actions .btn-book {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+/* ─── Controle financeiro (aba Financeiro) ──────────────────────────────── */
+
+.finance-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.finance-month-nav input[type="month"] {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+.finance-month-btn {
+  padding: 0.35rem 0.85rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .finance-month-nav {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .finance-month-nav input[type="month"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.35rem 0.3rem;
+    font-size: 0.78rem;
+  }
+
+  .finance-month-nav .finance-month-btn {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-width: auto !important;
+    padding: 0.3rem 0.55rem !important;
+    font-size: 0.95rem;
+  }
+
+  .finance-month-nav #financeReload {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-width: auto !important;
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.78rem;
+    margin-left: 0 !important;
+  }
+}
+
+.finance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.finance-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-left: 5px solid #94a3b8;
+}
+
+.finance-card span {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.finance-card strong {
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.finance-card-entrada { border-left-color: #16a34a; }
+.finance-card-retirada { border-left-color: #ea580c; }
+.finance-card-despesa { border-left-color: #dc2626; }
+.finance-card-saldo { border-left-color: #2563eb; }
+
+.finance-block {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.finance-block h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  color: #1f2937;
+}
+
+.finance-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.finance-add-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 0.9rem;
+}
+
+.finance-add-form input[type="text"],
+.finance-add-form input[type="number"],
+.finance-add-form input[type="date"] {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.2;
+  box-sizing: border-box;
+  height: 42px;
+}
+
+.finance-add-form input[type="text"] {
+  flex: 2 1 240px;
+}
+
+.finance-add-form input[type="number"],
+.finance-add-form input[type="date"] {
+  flex: 0 1 150px;
+}
+
+.finance-parcelas-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.finance-parcelas-label input[type="number"] {
+  width: 80px;
+  flex: 0 0 auto;
+  min-height: 42px;
+  height: 42px;
+}
+
+.finance-table .finance-cell-valor {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.finance-badge-auto {
+  display: inline-block;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.finance-badge-fixa {
+  display: inline-block;
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #c4b5fd;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.finance-action-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.15rem 0.35rem;
+  line-height: 1;
+}
+
+.finance-action-btn.finance-edit { color: #2563eb; }
+.finance-action-btn.finance-delete { color: #c0392b; }
 
 .modal-content {
   position: relative;
@@ -1149,6 +1558,11 @@ body {
     font-weight: 700;
     margin-bottom: 0.75rem;
     color: #0b3c6d;
+  }
+
+  .modal-body fieldset.tour-avaliacoes-fieldset {
+    border: none;
+    padding: 0;
   }
 
   #tourEditModal p strong {
@@ -1971,19 +2385,46 @@ section,
   left: 1rem;
   bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   z-index: 1500;
-  width: min(270px, calc(100vw - 2rem));
-  max-width: 100%;
-  max-height: 70dvh;
+  width: clamp(240px, 22vw, 340px);
+  max-width: calc(100vw - 2rem);
+  max-height: min(85dvh, calc(100dvh - 6.5rem - env(safe-area-inset-bottom, 0px)));
   overflow-y: auto;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 14px;
   box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
-  padding: 0.75rem;
+  padding: 0.6rem 0.7rem;
   backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.4rem;
+}
+
+.floating-calculator-panel .currency-converter {
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0;
+  border-radius: 10px;
+}
+
+.floating-calculator-panel .currency-converter-grid {
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+}
+
+.floating-calculator-panel .currency-converter-grid label {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.floating-calculator-panel .currency-converter-grid input {
+  width: 45%;
+  min-width: 90px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
 }
 
 .floating-calculator-panel.hidden {
@@ -2000,12 +2441,12 @@ section,
 
 .floating-standard-calculator {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.35rem;
 }
 
 .floating-calc-display {
   width: 100%;
-  padding: 0.6rem 0.75rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 9px;
   border: 1px solid rgba(148, 163, 184, 0.5);
   background: #f8fafc;
@@ -2019,14 +2460,14 @@ section,
 .floating-calc-keypad {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.35rem;
+  gap: 0.3rem;
   min-width: 0;
 }
 
 .floating-calc-key {
   border: none;
   border-radius: 9px;
-  padding: 0.65rem 0.55rem;
+  padding: 0.5rem 0.4rem;
   font-size: 0.75rem;
   font-weight: 700;
   background: #e2e8f0;
@@ -2096,7 +2537,7 @@ section,
 
   .floating-calculator-panel {
     bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
-    max-height: calc(60dvh - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - 6rem - env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -2104,16 +2545,10 @@ section,
   .floating-translate-panel {
     max-height: calc(55dvh - env(safe-area-inset-bottom, 0px));
   }
-  .floating-calculator-panel {
-    max-height: calc(55dvh - env(safe-area-inset-bottom, 0px));
-  }
 }
 
 @media (max-width: 375px) {
   .floating-translate-panel {
-    max-height: calc(50dvh - env(safe-area-inset-bottom, 0px));
-  }
-  .floating-calculator-panel {
     max-height: calc(50dvh - env(safe-area-inset-bottom, 0px));
   }
 }

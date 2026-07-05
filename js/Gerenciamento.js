@@ -115,7 +115,7 @@ const applyAccountsSearchFilter = () => {
   const visibleAccounts = query
     ? currentAccounts.filter((account) => {
         const fullName = `${account.nome || ''} ${account.sobrenome || ''}`.toLowerCase();
-        return fullName.includes(query) || (account.nome || '').toLowerCase().includes(query);
+        return fullName.includes(query) || (account.email || '').toLowerCase().includes(query);
       })
     : currentAccounts;
 
@@ -313,57 +313,6 @@ const normalizeRoleName = (role) => {
   return normalized === 'user' ? 'cliente_user' : normalized;
 };
 
-const getLocalPageReservations = () => {
-  if (typeof window.getReservations !== 'function') return [];
-
-  const stored = window.getReservations() || [];
-  const updated = stored.map((res, idx) => {
-    const whenValue = res.when ? new Date(res.when) : null;
-    const dateValue = res.data || (whenValue && !Number.isNaN(whenValue.getTime())
-      ? `${String(whenValue.getDate()).padStart(2, '0')}/${String(whenValue.getMonth() + 1).padStart(2, '0')}/${whenValue.getFullYear()}`
-      : '');
-    const timeValue = res.hora || (whenValue && !Number.isNaN(whenValue.getTime())
-      ? `${String(whenValue.getHours()).padStart(2, '0')}:${String(whenValue.getMinutes()).padStart(2, '0')}`
-      : '');
-    const localId = res.id ? String(res.id) : (res.localId ? res.localId : `local-${idx}-${String(whenValue ? whenValue.getTime() : Date.now())}`);
-
-    return {
-      ...res,
-      id: localId,
-      localId: localId,
-      tour: res.tour || '',
-      status: String(res.status || 'Pendente'),
-      data: dateValue,
-      hora: timeValue,
-      idioma: res.language || res.idioma || '',
-      modalidade: res.modality || res.modalidade || 'free',
-      guia: res.guide || res.guia || '',
-      qtd: res.quantity || res.quantas_pessoas || res.qtd || res.qtd_pessoas || 1
-    };
-  });
-
-  // Persist IDs for deterministic local updates
-  if (typeof window.setReservations === 'function') {
-    window.setReservations(updated);
-  }
-
-  return updated;
-};
-
-const getCurrentReservationsForManagement = () => {
-  const local = getLocalPageReservations();
-  const merged = [...local, ...currentReservations];
-
-  // Dedupe by id
-  const byId = {};
-  merged.forEach(r => {
-    if (!r || !r.id) return;
-    byId[String(r.id)] = r;
-  });
-
-  return Object.values(byId);
-};
-
 const getStoredCurrentRolePermissions = () => {
   try {
     const raw = localStorage.getItem('currentRolePermissions');
@@ -556,7 +505,10 @@ const mapBackendTourToPageTour = (tour) => {
     status: normalizeTourStatus(tour?.estado || tour?.status),
     cidade: tour?.cidade || '',
     modalidade: (tour?.modalidade || 'free').toLowerCase(),
-    imagens: Array.isArray(tour?.imagens) ? tour.imagens : []
+    imagens: Array.isArray(tour?.imagens) ? tour.imagens : [],
+    pastaImagens: tour?.pasta_imagens || '',
+    ordem: tour?.ordem ?? 0,
+    horarios: tour?.horarios || ''
   };
 };
 
@@ -581,7 +533,30 @@ const fetchPageToursFromBackend = async () => {
     setPageTours(mapped);
     return mapped;
   } catch (error) {
-    console.warn('Erro ao buscar tours_pagina. Fallback local serÃ¡ usado.', error);
+    console.warn('Erro ao buscar tours_pagina. Fallback local será usado.', error);
+    return null;
+  }
+};
+
+const fetchTourPaginaFromBackend = async (tourId) => {
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail || !tourId) return null;
+
+  try {
+    const response = await fetchWithApiFallback(`/get_tour_pagina/${encodeURIComponent(tourId)}?email=${encodeURIComponent(currentUserEmail)}`);
+    if (!response.ok) {
+      console.warn('Falha ao carregar tour da página do backend:', response.status);
+      return null;
+    }
+
+    const payload = await response.json();
+    if (!payload || typeof payload !== 'object') {
+      return null;
+    }
+
+    return mapBackendTourToPageTour(payload);
+  } catch (error) {
+    console.warn('Erro ao buscar tour da página:', error);
     return null;
   }
 };
@@ -593,6 +568,41 @@ const formatTourValueBRL = (value) => {
 };
 
 let currentlyEditingTourId = null;
+let currentTourHorarios = [];
+
+const renderTourHorarios = (horarios) => {
+  const container = document.getElementById('tourModalHorarios');
+  if (!container) return;
+
+  currentTourHorarios = Array.isArray(horarios) ? [...horarios] : [];
+
+  if (!currentTourHorarios.length) {
+    container.innerHTML = '<span class="tour-horarios-empty">Nenhum horário cadastrado — a reserva não pede horário.</span>';
+    return;
+  }
+
+  container.innerHTML = currentTourHorarios.map((horario) => `
+    <span class="tour-horario-chip">
+      ${escapeHtml(horario)}
+      <button type="button" class="tour-horario-remove" data-horario="${escapeHtml(horario)}" aria-label="Remover horário ${escapeHtml(horario)}">&times;</button>
+    </span>
+  `).join('');
+
+  container.querySelectorAll('.tour-horario-remove').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      renderTourHorarios(currentTourHorarios.filter((h) => h !== btn.getAttribute('data-horario')));
+    });
+  });
+};
+
+const adicionarTourHorario = () => {
+  const input = document.getElementById('tourModalHorarioInput');
+  if (!input || !input.value) return;
+  const novos = new Set(currentTourHorarios);
+  novos.add(input.value);
+  renderTourHorarios(Array.from(novos).sort());
+  input.value = '';
+};
 
 const parseTourLanguages = (value) => {
   if (!value) return [];
@@ -603,10 +613,14 @@ const parseTourLanguages = (value) => {
 };
 
 const setTourModalLanguages = (value) => {
-  const selected = parseTourLanguages(value);
-  document.getElementById('tourModalLanguagePt').checked = selected.includes('PortuguÃªs');
-  document.getElementById('tourModalLanguageEn').checked = selected.includes('InglÃªs');
-  document.getElementById('tourModalLanguageEs').checked = selected.includes('Espanhol');
+  // Usa correspondência por substring (case/acento-insensível ao "e" de ligação)
+  // em vez de comparar a lista dividida por vírgula, porque tours reais salvam
+  // idiomas em formatos como "Português, Inglês e Espanhol" — um split por vírgula
+  // deixaria "Inglês e Espanhol" como um item só, nunca batendo com "Espanhol".
+  const raw = String(value || '');
+  document.getElementById('tourModalLanguagePt').checked = /portugu[eê]s/i.test(raw);
+  document.getElementById('tourModalLanguageEn').checked = /ingl[eê]s/i.test(raw);
+  document.getElementById('tourModalLanguageEs').checked = /espanhol/i.test(raw);
 };
 
 const getTourModalLanguages = () => {
@@ -615,6 +629,67 @@ const getTourModalLanguages = () => {
     .filter(el => el && el.checked)
     .map(el => el.value)
     .join(', ');
+};
+
+// Descobre, direto no navegador, as fotos já publicadas na página pública do
+// tour. Essas imagens vivem em imagem/<cidade>/<pasta>/img{N}.<ext> — o mesmo
+// diretório estático servido pelo site, sem depender do backend para "ver" o
+// que já existe: o carregamento é feito aqui via tentativa sequencial de
+// img1, img2, ... (testando as extensões permitidas em cada número) até a
+// primeira falha, ou um limite de segurança.
+const MAX_LEGACY_TOUR_IMAGES = 30;
+const TOUR_IMAGE_EXTENSIONS = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+
+const probeSingleTourImage = (base, indice) => {
+  return new Promise((resolve) => {
+    let tentativa = 0;
+    const tentarExtensao = () => {
+      if (tentativa >= TOUR_IMAGE_EXTENSIONS.length) {
+        resolve(null);
+        return;
+      }
+      const url = `${base}img${indice}.${TOUR_IMAGE_EXTENSIONS[tentativa]}`;
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => {
+        tentativa += 1;
+        tentarExtensao();
+      };
+      img.src = url;
+    };
+    tentarExtensao();
+  });
+};
+
+const probeTourFolderImages = async (cidade, pasta) => {
+  if (!cidade || !pasta) return [];
+  const base = `../imagem/${cidade}/${pasta}/`;
+  const encontradas = [];
+
+  for (let indice = 1; indice <= MAX_LEGACY_TOUR_IMAGES; indice += 1) {
+    const url = await probeSingleTourImage(base, indice);
+    if (!url) break;
+    encontradas.push(url);
+  }
+
+  return encontradas;
+};
+
+const renderTourImagePreview = (files) => {
+  const container = document.getElementById('tourModalImagePreview');
+  if (!container) return;
+
+  const lista = Array.isArray(files) ? files : [];
+  if (!lista.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = lista.map((file) => `
+    <div class="tour-gallery-item tour-gallery-item-pending">
+      <img src="${URL.createObjectURL(file)}" alt="Prévia da imagem selecionada" />
+    </div>
+  `).join('');
 };
 
 const renderTourGallery = (imagens) => {
@@ -627,85 +702,803 @@ const renderTourGallery = (imagens) => {
     return;
   }
 
-  gallery.innerHTML = urls.map(url => `
+  const podeEditar = isFileSystemAccessSupported();
+
+  gallery.innerHTML = urls.map((url, idx) => `
     <div class="tour-gallery-item">
       <img src="${url}" alt="Imagem do tour" loading="lazy" />
-      <button type="button" class="tour-gallery-remove" data-image-url="${url}" aria-label="Remover imagem">&times;</button>
+      ${podeEditar ? `
+        <button type="button" class="tour-gallery-remove" data-image-url="${url}" aria-label="Remover imagem">&times;</button>
+        <button type="button" class="tour-gallery-move tour-gallery-move-left" data-image-url="${url}" data-move-dir="-1" ${idx === 0 ? 'disabled' : ''} aria-label="Mover imagem para a esquerda">&lsaquo;</button>
+        <button type="button" class="tour-gallery-move tour-gallery-move-right" data-image-url="${url}" data-move-dir="1" ${idx === urls.length - 1 ? 'disabled' : ''} aria-label="Mover imagem para a direita">&rsaquo;</button>
+      ` : ''}
     </div>
   `).join('');
 
   gallery.querySelectorAll('.tour-gallery-remove').forEach(btn => {
     btn.addEventListener('click', () => deleteTourImage(btn.getAttribute('data-image-url')));
   });
+
+  gallery.querySelectorAll('.tour-gallery-move').forEach(btn => {
+    btn.addEventListener('click', () => moveTourImage(urls, btn.getAttribute('data-image-url'), Number(btn.getAttribute('data-move-dir'))));
+  });
+};
+
+// ─── Gravação direta em disco (File System Access API) ──────────────────────
+// As fotos do tour NUNCA passam pelo backend: o navegador grava o arquivo
+// direto em imagem/<cidade>/<pasta>/, a mesma pasta estática servida pelo
+// site. Isso só funciona em navegadores Chromium (Chrome/Edge) e com o
+// Gerenciamento aberto no mesmo computador onde essa pasta existe (o
+// ambiente local de edição, antes do deploy manual de sempre).
+//
+// A pasta raiz "imagem/" só é escolhida UMA VEZ — a permissão fica salva no
+// navegador (IndexedDB). Depois disso, clicar em Enviar/Excluir/Mover em
+// qualquer tour grava direto, sem pedir pasta de novo: só navega por baixo
+// dos panos até imagem/<cidade>/<pasta> a partir dessa raiz já autorizada.
+
+const isFileSystemAccessSupported = () => typeof window.showDirectoryPicker === 'function';
+
+const IMAGEM_ROOT_DB_NAME = 'gerenciamento-fs-handles';
+const IMAGEM_ROOT_DB_STORE = 'handles';
+const IMAGEM_ROOT_DB_KEY = 'imagemRoot';
+
+const openHandleDb = () => new Promise((resolve, reject) => {
+  const request = indexedDB.open(IMAGEM_ROOT_DB_NAME, 1);
+  request.onupgradeneeded = () => {
+    request.result.createObjectStore(IMAGEM_ROOT_DB_STORE);
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+
+const saveImagemRootHandle = async (handle) => {
+  const db = await openHandleDb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(IMAGEM_ROOT_DB_STORE, 'readwrite');
+    tx.objectStore(IMAGEM_ROOT_DB_STORE).put(handle, IMAGEM_ROOT_DB_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+};
+
+const loadImagemRootHandle = async () => {
+  const db = await openHandleDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMAGEM_ROOT_DB_STORE, 'readonly');
+    const request = tx.objectStore(IMAGEM_ROOT_DB_STORE).get(IMAGEM_ROOT_DB_KEY);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+let imagemRootHandleCache = null;
+
+const getImagemRootHandle = async () => {
+  if (imagemRootHandleCache) return imagemRootHandleCache;
+  if (!isFileSystemAccessSupported()) {
+    throw new Error('Seu navegador não suporta salvar arquivos direto em disco. Use Chrome ou Edge.');
+  }
+
+  let handle = await loadImagemRootHandle().catch(() => null);
+  if (handle) {
+    const permissaoAtual = await handle.queryPermission({ mode: 'readwrite' });
+    const permissaoOk = permissaoAtual === 'granted'
+      ? true
+      : (await handle.requestPermission({ mode: 'readwrite' })) === 'granted';
+    if (!permissaoOk) handle = null;
+  }
+
+  if (!handle) {
+    handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    if (handle.name !== 'imagem') {
+      console.warn(`Pasta escolhida ("${handle.name}") é diferente da esperada ("imagem") — usando mesmo assim.`);
+    }
+    await saveImagemRootHandle(handle);
+  }
+
+  imagemRootHandleCache = handle;
+  return handle;
+};
+
+const getTourDirectoryHandle = async (cidade, pasta) => {
+  const root = await getImagemRootHandle();
+  const cidadeHandle = await root.getDirectoryHandle(cidade, { create: true });
+  return cidadeHandle.getDirectoryHandle(pasta, { create: true });
+};
+
+const listDirectoryImageNames = async (directoryHandle) => {
+  const nomes = [];
+  for await (const [name, handle] of directoryHandle.entries()) {
+    if (handle.kind === 'file' && /^img\d+\.(webp|jpe?g|png|gif)$/i.test(name)) {
+      nomes.push(name);
+    }
+  }
+  nomes.sort((a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10));
+  return nomes;
+};
+
+const writeFileToDirectory = async (directoryHandle, nome, fileOuBlob) => {
+  const fileHandle = await directoryHandle.getFileHandle(nome, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(fileOuBlob);
+  await writable.close();
+};
+
+const renumberDirectoryImages = async (directoryHandle, ordemAtual) => {
+  // Duas fases (nomes temporários primeiro) para nunca sobrescrever um
+  // arquivo ainda não lido durante uma reordenação arbitrária.
+  const temporarios = [];
+  for (const nome of ordemAtual) {
+    const fileHandle = await directoryHandle.getFileHandle(nome);
+    const file = await fileHandle.getFile();
+    const extensao = nome.split('.').pop();
+    const nomeTemp = `tmp_${crypto.randomUUID()}.${extensao}`;
+    await writeFileToDirectory(directoryHandle, nomeTemp, file);
+    await directoryHandle.removeEntry(nome);
+    temporarios.push({ nomeTemp, extensao });
+  }
+
+  for (let indice = 0; indice < temporarios.length; indice += 1) {
+    const { nomeTemp, extensao } = temporarios[indice];
+    const fileHandle = await directoryHandle.getFileHandle(nomeTemp);
+    const file = await fileHandle.getFile();
+    await writeFileToDirectory(directoryHandle, `img${indice + 1}.${extensao}`, file);
+    await directoryHandle.removeEntry(nomeTemp);
+  }
+};
+
+const refreshGalleryAfterDiskChange = async () => {
+  const cidade = document.getElementById('tourModalCidade')?.value || '';
+  const pasta = document.getElementById('tourModalPastaImagens')?.value.trim() || '';
+  const urls = await probeTourFolderImages(cidade, pasta);
+  renderTourGallery(urls);
+};
+
+const reorderTourImages = async (novaOrdemUrls) => {
+  const cidade = document.getElementById('tourModalCidade')?.value || '';
+  const pasta = document.getElementById('tourModalPastaImagens')?.value.trim() || '';
+  const ordemArquivos = novaOrdemUrls.map(url => url.split('/').pop());
+
+  try {
+    const directoryHandle = await getTourDirectoryHandle(cidade, pasta);
+    if (!directoryHandle) return;
+    await renumberDirectoryImages(directoryHandle, ordemArquivos);
+    await refreshGalleryAfterDiskChange();
+  } catch (error) {
+    console.error('Erro ao reordenar imagens do tour:', error);
+    if (error.name !== 'AbortError') {
+      alert(`Erro ao reordenar imagens: ${error.message || error}`);
+    }
+  }
+};
+
+const moveTourImage = (urls, url, direction) => {
+  const index = urls.indexOf(url);
+  const targetIndex = index + direction;
+  if (index === -1 || targetIndex < 0 || targetIndex >= urls.length) return undefined;
+
+  const reordered = [...urls];
+  [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+  return reorderTourImages(reordered);
 };
 
 const uploadTourImages = async () => {
   const input = document.getElementById('tourModalImageInput');
-  const id = currentlyEditingTourId;
-  if (!input || !input.files || !input.files.length || !id) return;
+  if (!input || !input.files || !input.files.length) return;
 
-  const adminEmail = localStorage.getItem('userEmail') || '';
+  const cidade = document.getElementById('tourModalCidade')?.value || '';
+  const pasta = document.getElementById('tourModalPastaImagens')?.value.trim() || '';
+  if (!cidade || !pasta) {
+    alert('Defina cidade e pasta de imagens antes de enviar fotos.');
+    return;
+  }
+
   const files = Array.from(input.files);
 
   try {
-    let lastImagens = null;
+    const directoryHandle = await getTourDirectoryHandle(cidade, pasta);
+    if (!directoryHandle) return;
+
     for (const file of files) {
-      const formData = new FormData();
-      formData.append('admin_email', adminEmail);
-      formData.append('tour_id', id);
-      formData.append('imagem', file);
-
-      const response = await fetchWithApiFallback('/upload_tour_imagem', {
-        method: 'POST',
-        body: formData
-      });
-
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.success) {
-        alert(`Falha ao enviar imagem "${file.name}": ${result.message || response.statusText}`);
-        continue;
-      }
-      lastImagens = result.imagens;
+      const nomesExistentes = await listDirectoryImageNames(directoryHandle);
+      const numeros = nomesExistentes.map(n => parseInt(n.match(/\d+/)[0], 10));
+      const proximoNumero = numeros.length ? Math.max(...numeros) + 1 : 1;
+      const extensao = (file.name.split('.').pop() || 'webp').toLowerCase();
+      await writeFileToDirectory(directoryHandle, `img${proximoNumero}.${extensao}`, file);
     }
 
     input.value = '';
-    if (lastImagens) {
-      renderTourGallery(lastImagens);
-      carregarToursGerenciamento();
-    }
+    renderTourImagePreview([]);
+    await refreshGalleryAfterDiskChange();
   } catch (error) {
     console.error('Erro ao enviar imagens do tour:', error);
-    alert('Erro ao enviar imagens. Verifique sua conexão e tente novamente.');
+    if (error.name !== 'AbortError') {
+      alert(`Erro ao enviar imagens: ${error.message || error}`);
+    }
   }
 };
 
 const deleteTourImage = async (arquivoUrl) => {
-  const id = currentlyEditingTourId;
-  if (!id || !arquivoUrl) return;
+  if (!arquivoUrl) return;
   if (!confirm('Remover esta imagem do tour?')) return;
 
   const arquivo = arquivoUrl.split('/').pop();
+  const cidade = document.getElementById('tourModalCidade')?.value || '';
+  const pasta = document.getElementById('tourModalPastaImagens')?.value.trim() || '';
+
+  try {
+    const directoryHandle = await getTourDirectoryHandle(cidade, pasta);
+    if (!directoryHandle) return;
+
+    const restantes = (await listDirectoryImageNames(directoryHandle)).filter(nome => nome !== arquivo);
+    await directoryHandle.removeEntry(arquivo);
+    await renumberDirectoryImages(directoryHandle, restantes);
+    await refreshGalleryAfterDiskChange();
+  } catch (error) {
+    console.error('Erro ao remover imagem do tour:', error);
+    if (error.name !== 'AbortError') {
+      alert(`Erro ao remover imagem: ${error.message || error}`);
+    }
+  }
+};
+
+const TOUR_COMMENT_STATUS_LABEL = {
+  pendente: 'Em análise',
+  aprovado: 'Aprovado',
+  rejeitado: 'Rejeitado'
+};
+
+const renderTourComments = (comentarios) => {
+  const container = document.getElementById('tourModalComments');
+  if (!container) return;
+
+  const lista = Array.isArray(comentarios) ? comentarios : [];
+  if (!lista.length) {
+    container.innerHTML = '<p>Nenhum comentário ainda.</p>';
+    return;
+  }
+
+  container.innerHTML = lista.map(c => {
+    const status = c.status || 'pendente';
+    const fotosHtml = Array.isArray(c.fotos) && c.fotos.length
+      ? `<div class="tour-comment-admin-fotos">${c.fotos.map(url => `<img src="${url}" alt="Foto da avaliação" loading="lazy" />`).join('')}</div>`
+      : '';
+    return `
+    <div class="tour-comment-admin-item tour-comment-admin-status-${status}" data-comment-id="${c.id}">
+      <div class="tour-comment-admin-header">
+        <strong>${c.usuario_nome || 'Usuário'}</strong>
+        ${c.nota ? `<span class="tour-comment-admin-stars">${'★'.repeat(c.nota)}${'☆'.repeat(5 - c.nota)}</span>` : ''}
+        <span class="tour-comment-admin-badge">${TOUR_COMMENT_STATUS_LABEL[status] || status}</span>
+        <button type="button" class="tour-comment-admin-delete" data-comment-id="${c.id}" aria-label="Excluir comentário">&times;</button>
+      </div>
+      <p>${c.comentario || ''}</p>
+      ${fotosHtml}
+      <div class="tour-comment-admin-actions">
+        ${status !== 'aprovado' ? `<button type="button" class="btn-book tour-comment-admin-approve" data-comment-id="${c.id}">Aprovar</button>` : ''}
+        ${status !== 'rejeitado' ? `<button type="button" class="btn-book tour-comment-admin-reject" data-comment-id="${c.id}">Rejeitar</button>` : ''}
+      </div>
+    </div>
+  `;
+  }).join('');
+
+  container.querySelectorAll('.tour-comment-admin-delete').forEach(btn => {
+    btn.addEventListener('click', () => deleteTourComentario(btn.getAttribute('data-comment-id')));
+  });
+  container.querySelectorAll('.tour-comment-admin-approve').forEach(btn => {
+    btn.addEventListener('click', () => moderarTourComentario(btn.getAttribute('data-comment-id'), 'aprovar'));
+  });
+  container.querySelectorAll('.tour-comment-admin-reject').forEach(btn => {
+    btn.addEventListener('click', () => moderarTourComentario(btn.getAttribute('data-comment-id'), 'rejeitar'));
+  });
+};
+
+const loadTourComments = async (tourId) => {
+  const container = document.getElementById('tourModalComments');
+  if (!container || !tourId) return;
+  container.innerHTML = '<p>Carregando comentários...</p>';
+
   const adminEmail = localStorage.getItem('userEmail') || '';
 
   try {
-    const response = await fetchWithApiFallback('/delete_tour_imagem', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admin_email: adminEmail, tour_id: id, arquivo })
-    });
-
+    const response = await fetchWithApiFallback(`/get_tour_comentarios/${tourId}?admin_email=${encodeURIComponent(adminEmail)}`, { method: 'GET' });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) {
-      alert(`Falha ao remover imagem: ${result.message || response.statusText}`);
+      container.innerHTML = '<p>Não foi possível carregar os comentários.</p>';
+      return;
+    }
+    renderTourComments(result.comentarios);
+  } catch (error) {
+    console.error('Erro ao carregar comentários do tour:', error);
+    container.innerHTML = '<p>Não foi possível carregar os comentários.</p>';
+  }
+};
+
+const moderarTourComentario = async (comentarioId, acao) => {
+  if (!comentarioId) return;
+  const adminEmail = localStorage.getItem('userEmail') || '';
+
+  try {
+    const response = await fetchWithApiFallback('/moderar_tour_comentario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, comentario_id: comentarioId, acao })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao moderar comentário: ${result.message || response.statusText}`);
+      return;
+    }
+    loadTourComments(currentlyEditingTourId);
+  } catch (error) {
+    console.error('Erro ao moderar comentário do tour:', error);
+    alert('Erro ao moderar comentário. Verifique sua conexão e tente novamente.');
+  }
+};
+
+const deleteTourComentario = async (comentarioId) => {
+  if (!comentarioId || !confirm('Excluir este comentário?')) return;
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+
+  try {
+    const response = await fetchWithApiFallback('/delete_tour_comentario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, comentario_id: comentarioId })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao excluir comentário: ${result.message || response.statusText}`);
+      return;
+    }
+    loadTourComments(currentlyEditingTourId);
+  } catch (error) {
+    console.error('Erro ao excluir comentário do tour:', error);
+    alert('Erro ao excluir comentário. Verifique sua conexão e tente novamente.');
+  }
+};
+
+// ─── Controle financeiro (aba Financeiro) ────────────────────────────────
+
+const formatBRL = (valor) => Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const formatDataBR = (iso) => {
+  if (!iso) return '--';
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+};
+
+const getFinanceMonth = () => {
+  const input = document.getElementById('financeMonth');
+  if (input && input.value) return input.value;
+  const hoje = new Date();
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const setFinanceDateDefaults = () => {
+  const mes = getFinanceMonth();
+  const hoje = new Date();
+  const hojeMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  const dia = mes === hojeMes ? String(hoje.getDate()).padStart(2, '0') : '01';
+  ['financeEntradaData', 'financeRetiradaData', 'financeDespesaData'].forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.value = `${mes}-${dia}`;
+  });
+};
+
+const carregarFinanceiro = async () => {
+  const email = localStorage.getItem('userEmail') || '';
+  const mes = getFinanceMonth();
+  const monthInput = document.getElementById('financeMonth');
+  if (monthInput && !monthInput.value) monthInput.value = mes;
+  setFinanceDateDefaults();
+
+  const corpos = {
+    entrada: document.getElementById('financeEntradasBody'),
+    retirada: document.getElementById('financeRetiradasBody'),
+    despesa: document.getElementById('financeDespesasBody')
+  };
+  if (!corpos.entrada) return;
+
+  Object.values(corpos).forEach((tbody) => {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;">Carregando...</td></tr>';
+  });
+
+  try {
+    const response = await fetchWithApiFallback(`/get_financeiro?email=${encodeURIComponent(email)}&mes=${encodeURIComponent(mes)}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      const msg = escapeHtml(result.message || 'Erro ao carregar o financeiro.');
+      Object.values(corpos).forEach((tbody) => {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:0.75rem;">${msg}</td></tr>`;
+      });
+      return;
+    }
+    renderFinanceiro(result);
+  } catch (error) {
+    console.error('Erro ao carregar financeiro:', error);
+    Object.values(corpos).forEach((tbody) => {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;">Erro de conexão ao carregar o financeiro.</td></tr>';
+    });
+  }
+};
+
+const renderFinanceiro = (dados) => {
+  const totais = dados.totais || {};
+  const setText = (id, valor) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = formatBRL(valor);
+  };
+  setText('financeTotalEntradas', totais.entradas);
+  setText('financeTotalRetiradas', totais.retiradas);
+  setText('financeTotalDespesas', totais.despesas);
+  setText('financeSaldo', totais.saldo);
+
+  const saldoEl = document.getElementById('financeSaldo');
+  if (saldoEl) saldoEl.style.color = (totais.saldo ?? 0) >= 0 ? '#15803d' : '#b91c1c';
+
+  const lancamentos = Array.isArray(dados.lancamentos) ? dados.lancamentos : [];
+
+  const renderAcoes = (l) => {
+    const btnEditar = `<button type="button" class="finance-action-btn finance-edit" data-id="${l.id}" title="Editar">✎</button>`;
+    // Lançamentos automáticos (tour finalizado, despesa fixa) não podem ser
+    // excluídos: a sincronização os recriaria no próximo carregamento. O
+    // valor/descrição seguem editáveis; despesa fixa é gerida na própria lista.
+    const btnExcluir = (l.origem === 'auto_tour' || l.origem === 'fixa')
+      ? ''
+      : `<button type="button" class="finance-action-btn finance-delete" data-id="${l.id}" data-parcelado="${l.parcela_total ? '1' : ''}" title="Excluir">🗑</button>`;
+    return `${btnEditar}${btnExcluir}`;
+  };
+
+  const preencher = (tbody, linhas, colunas, vazio) => {
+    if (!tbody) return;
+    tbody.innerHTML = linhas.length
+      ? linhas.join('')
+      : `<tr><td colspan="${colunas}" style="padding:0.75rem;">${vazio}</td></tr>`;
+  };
+
+  preencher(
+    document.getElementById('financeEntradasBody'),
+    lancamentos.filter((l) => l.tipo === 'entrada').map((l) => `
+      <tr data-lancamento-id="${l.id}">
+        <td data-label="Data">${formatDataBR(l.data)}</td>
+        <td data-label="Descrição" class="finance-cell-desc">${escapeHtml(l.descricao)}</td>
+        <td data-label="Origem">${l.origem === 'auto_tour' ? '<span class="finance-badge-auto">Auto</span>' : 'Manual'}</td>
+        <td data-label="Valor" class="finance-cell-valor">${formatBRL(l.valor)}</td>
+        <td data-label="Ações">${renderAcoes(l)}</td>
+      </tr>
+    `),
+    5,
+    'Nenhuma entrada neste mês.'
+  );
+
+  preencher(
+    document.getElementById('financeRetiradasBody'),
+    lancamentos.filter((l) => l.tipo === 'retirada').map((l) => `
+      <tr data-lancamento-id="${l.id}">
+        <td data-label="Data">${formatDataBR(l.data)}</td>
+        <td data-label="Descrição" class="finance-cell-desc">${escapeHtml(l.descricao)}</td>
+        <td data-label="Valor" class="finance-cell-valor">${formatBRL(l.valor)}</td>
+        <td data-label="Ações">${renderAcoes(l)}</td>
+      </tr>
+    `),
+    4,
+    'Nenhuma retirada neste mês.'
+  );
+
+  preencher(
+    document.getElementById('financeDespesasBody'),
+    lancamentos.filter((l) => l.tipo === 'despesa').map((l) => `
+      <tr data-lancamento-id="${l.id}">
+        <td data-label="Data">${formatDataBR(l.data)}</td>
+        <td data-label="Descrição" class="finance-cell-desc">${escapeHtml(l.descricao)}</td>
+        <td data-label="Parcela">${l.origem === 'fixa' ? '<span class="finance-badge-fixa">Fixa</span>' : (l.parcela_total ? `${l.parcela_num}/${l.parcela_total}` : 'Única')}</td>
+        <td data-label="Valor" class="finance-cell-valor">${formatBRL(l.valor)}</td>
+        <td data-label="Ações">${renderAcoes(l)}</td>
+      </tr>
+    `),
+    5,
+    'Nenhuma despesa neste mês.'
+  );
+
+  const fixas = Array.isArray(dados.despesas_fixas) ? dados.despesas_fixas : [];
+  preencher(
+    document.getElementById('financeDespesasFixasBody'),
+    fixas.map((f) => `
+      <tr data-fixa-id="${f.id}">
+        <td data-label="Descrição" class="finance-cell-desc">${escapeHtml(f.descricao)}</td>
+        <td data-label="Valor mensal" class="finance-cell-valor">${formatBRL(f.valor)}</td>
+        <td data-label="Dia">${f.dia_lancamento}</td>
+        <td data-label="Início">${formatDataBR(f.data_inicio)}</td>
+        <td data-label="Situação">${f.data_fim ? `Encerrada em ${formatDataBR(f.data_fim)}` : '<span class="finance-badge-auto">Ativa</span>'}</td>
+        <td data-label="Ações">
+          <button type="button" class="finance-action-btn finance-fixa-edit" data-id="${f.id}" title="Editar">✎</button>
+          ${f.data_fim ? '' : `<button type="button" class="finance-action-btn finance-fixa-encerrar" data-id="${f.id}" title="Encerrar (para de lançar nos próximos meses)">⏸</button>`}
+          <button type="button" class="finance-action-btn finance-delete finance-fixa-delete" data-id="${f.id}" title="Excluir (remove também os lançamentos gerados)">🗑</button>
+        </td>
+      </tr>
+    `),
+    6,
+    'Nenhuma despesa fixa cadastrada.'
+  );
+
+  // Guarda os dados carregados para edição inline
+  window.lastFinanceLancamentos = lancamentos;
+  window.lastFinanceDespesasFixas = fixas;
+
+  document.querySelectorAll('.finance-edit').forEach((btn) => {
+    btn.addEventListener('click', () => editarLancamentoFinanceiro(Number(btn.dataset.id)));
+  });
+  document.querySelectorAll('.finance-delete:not(.finance-fixa-delete)').forEach((btn) => {
+    btn.addEventListener('click', () => excluirLancamentoFinanceiro(Number(btn.dataset.id), btn.dataset.parcelado === '1'));
+  });
+  document.querySelectorAll('.finance-fixa-edit').forEach((btn) => {
+    btn.addEventListener('click', () => editarDespesaFixa(Number(btn.dataset.id)));
+  });
+  document.querySelectorAll('.finance-fixa-encerrar').forEach((btn) => {
+    btn.addEventListener('click', () => encerrarDespesaFixa(Number(btn.dataset.id)));
+  });
+  document.querySelectorAll('.finance-fixa-delete').forEach((btn) => {
+    btn.addEventListener('click', () => excluirDespesaFixa(Number(btn.dataset.id)));
+  });
+};
+
+const editarDespesaFixa = async (id) => {
+  const fixa = (window.lastFinanceDespesasFixas || []).find((f) => f.id === id);
+  if (!fixa) return;
+
+  const novaDescricao = prompt('Descrição:', fixa.descricao);
+  if (novaDescricao === null) return;
+
+  const novoValorRaw = prompt('Valor mensal (R$):', String(fixa.valor).replace('.', ','));
+  if (novoValorRaw === null) return;
+  const novoValor = Number(String(novoValorRaw).replace(',', '.'));
+  if (!novoValor || novoValor <= 0) {
+    alert('Valor inválido.');
+    return;
+  }
+
+  const novoDiaRaw = prompt('Dia do mês para o lançamento (1 a 31):', String(fixa.dia_lancamento));
+  if (novoDiaRaw === null) return;
+  const novoDia = Math.max(1, Math.min(Number(novoDiaRaw) || 1, 31));
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/update_despesa_fixa', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, id, descricao: novaDescricao.trim(), valor: novoValor, dia: novoDia })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao atualizar despesa fixa: ${result.message || response.statusText}`);
+      return;
+    }
+    carregarFinanceiro();
+  } catch (error) {
+    console.error('Erro ao atualizar despesa fixa:', error);
+    alert('Erro de conexão ao atualizar a despesa fixa.');
+  }
+};
+
+const encerrarDespesaFixa = async (id) => {
+  if (!confirm('Encerrar esta despesa fixa? Ela deixa de ser lançada nos próximos meses (os meses já lançados são mantidos).')) return;
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/update_despesa_fixa', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, id, encerrar: true })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao encerrar despesa fixa: ${result.message || response.statusText}`);
+      return;
+    }
+    carregarFinanceiro();
+  } catch (error) {
+    console.error('Erro ao encerrar despesa fixa:', error);
+    alert('Erro de conexão ao encerrar a despesa fixa.');
+  }
+};
+
+const excluirDespesaFixa = async (id) => {
+  if (!confirm('Excluir esta despesa fixa? Todos os lançamentos gerados por ela (inclusive de meses anteriores) também serão removidos.\n\nPara apenas parar de lançar daqui em diante, use Encerrar (⏸).')) return;
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/delete_despesa_fixa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, id })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao excluir despesa fixa: ${result.message || response.statusText}`);
+      return;
+    }
+    carregarFinanceiro();
+  } catch (error) {
+    console.error('Erro ao excluir despesa fixa:', error);
+    alert('Erro de conexão ao excluir a despesa fixa.');
+  }
+};
+
+const adicionarDespesaFixa = async () => {
+  const descricao = document.getElementById('financeDespesaFixaDesc')?.value?.trim();
+  const valor = Number(document.getElementById('financeDespesaFixaValor')?.value);
+  const dia = Math.max(1, Math.min(Number(document.getElementById('financeDespesaFixaDia')?.value) || 1, 31));
+
+  if (!descricao || !valor || valor <= 0) {
+    alert('Preencha descrição e valor.');
+    return;
+  }
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/add_despesa_fixa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        admin_email: adminEmail,
+        descricao,
+        valor,
+        dia,
+        mes_inicio: getFinanceMonth()
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao adicionar despesa fixa: ${result.message || response.statusText}`);
       return;
     }
 
-    renderTourGallery(result.imagens);
-    carregarToursGerenciamento();
+    document.getElementById('financeDespesaFixaDesc').value = '';
+    document.getElementById('financeDespesaFixaValor').value = '';
+    carregarFinanceiro();
   } catch (error) {
-    console.error('Erro ao remover imagem do tour:', error);
-    alert('Erro ao remover imagem. Verifique sua conexão e tente novamente.');
+    console.error('Erro ao adicionar despesa fixa:', error);
+    alert('Erro de conexão ao adicionar a despesa fixa.');
   }
+};
+
+const editarLancamentoFinanceiro = async (id) => {
+  const lancamento = (window.lastFinanceLancamentos || []).find((l) => l.id === id);
+  if (!lancamento) return;
+
+  const novaDescricao = prompt('Descrição:', lancamento.descricao);
+  if (novaDescricao === null) return;
+
+  const novoValorRaw = prompt('Valor (R$):', String(lancamento.valor).replace('.', ','));
+  if (novoValorRaw === null) return;
+  const novoValor = Number(String(novoValorRaw).replace(',', '.'));
+  if (!novoValor || novoValor <= 0) {
+    alert('Valor inválido.');
+    return;
+  }
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/update_financeiro_lancamento', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, id, descricao: novaDescricao.trim(), valor: novoValor })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao atualizar lançamento: ${result.message || response.statusText}`);
+      return;
+    }
+    carregarFinanceiro();
+  } catch (error) {
+    console.error('Erro ao atualizar lançamento financeiro:', error);
+    alert('Erro de conexão ao atualizar o lançamento.');
+  }
+};
+
+const excluirLancamentoFinanceiro = async (id, parcelado) => {
+  if (!confirm('Excluir este lançamento?')) return;
+  const excluirGrupo = parcelado
+    ? confirm('Esta despesa é parcelada. Excluir também as parcelas dos meses seguintes?\n\nOK = esta e as futuras · Cancelar = somente esta')
+    : false;
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/delete_financeiro_lancamento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, id, excluir_grupo: excluirGrupo })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao excluir lançamento: ${result.message || response.statusText}`);
+      return;
+    }
+    carregarFinanceiro();
+  } catch (error) {
+    console.error('Erro ao excluir lançamento financeiro:', error);
+    alert('Erro de conexão ao excluir o lançamento.');
+  }
+};
+
+const adicionarLancamentoFinanceiro = async (tipo, campos) => {
+  const descricao = document.getElementById(campos.desc)?.value?.trim();
+  const valor = Number(document.getElementById(campos.valor)?.value);
+  const dataLancamento = document.getElementById(campos.data)?.value;
+  const parcelas = campos.parcelas ? Number(document.getElementById(campos.parcelas)?.value) || 1 : 1;
+
+  if (!descricao || !valor || valor <= 0 || !dataLancamento) {
+    alert('Preencha descrição, valor e data.');
+    return;
+  }
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/add_financeiro_lancamento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        admin_email: adminEmail,
+        tipo,
+        descricao,
+        valor,
+        data: dataLancamento,
+        parcelas
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao adicionar lançamento: ${result.message || response.statusText}`);
+      return;
+    }
+
+    document.getElementById(campos.desc).value = '';
+    document.getElementById(campos.valor).value = '';
+    if (campos.parcelas) document.getElementById(campos.parcelas).value = '1';
+    carregarFinanceiro();
+  } catch (error) {
+    console.error('Erro ao adicionar lançamento financeiro:', error);
+    alert('Erro de conexão ao adicionar o lançamento.');
+  }
+};
+
+const shiftFinanceMonth = (delta) => {
+  const input = document.getElementById('financeMonth');
+  if (!input) return;
+  const [ano, mes] = getFinanceMonth().split('-').map(Number);
+  const novaData = new Date(ano, mes - 1 + delta, 1);
+  input.value = `${novaData.getFullYear()}-${String(novaData.getMonth() + 1).padStart(2, '0')}`;
+  carregarFinanceiro();
+};
+
+const initFinanceControls = () => {
+  const monthInput = document.getElementById('financeMonth');
+  if (!monthInput) return;
+
+  if (!monthInput.value) monthInput.value = getFinanceMonth();
+  monthInput.addEventListener('change', carregarFinanceiro);
+
+  document.getElementById('financePrevMonth')?.addEventListener('click', () => shiftFinanceMonth(-1));
+  document.getElementById('financeNextMonth')?.addEventListener('click', () => shiftFinanceMonth(1));
+  document.getElementById('financeReload')?.addEventListener('click', carregarFinanceiro);
+
+  document.getElementById('financeFormEntrada')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    adicionarLancamentoFinanceiro('entrada', { desc: 'financeEntradaDesc', valor: 'financeEntradaValor', data: 'financeEntradaData' });
+  });
+  document.getElementById('financeFormRetirada')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    adicionarLancamentoFinanceiro('retirada', { desc: 'financeRetiradaDesc', valor: 'financeRetiradaValor', data: 'financeRetiradaData' });
+  });
+  document.getElementById('financeFormDespesa')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    adicionarLancamentoFinanceiro('despesa', { desc: 'financeDespesaDesc', valor: 'financeDespesaValor', data: 'financeDespesaData', parcelas: 'financeDespesaParcelas' });
+  });
+  document.getElementById('financeFormDespesaFixa')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    adicionarDespesaFixa();
+  });
 };
 
 const openTourEditModal = (tourData) => {
@@ -717,6 +1510,7 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalId').textContent = tourData.id || '--';
   document.getElementById('tourModalName').value = tourData.name || '';
   document.getElementById('tourModalCidade').value = tourData.cidade || '';
+  document.getElementById('tourModalPastaImagens').value = tourData.pastaImagens || tourData.pasta_imagens || '';
   setTourModalLanguages(tourData.languages || tourData.idiomas || '');
   document.getElementById('tourModalMeeting').value = tourData.meeting || tourData.encontro || '';
   document.getElementById('tourModalIdentification').value = tourData.identification || tourData.identificacao || '';
@@ -724,7 +1518,16 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalValue').value = tourData.value != null ? tourData.value : tourData.valor != null ? tourData.valor : '';
   document.getElementById('tourModalStatus').value = tourData.status || tourData.estado || 'Ativo';
   document.getElementById('tourModalModalidade').value = (tourData.modalidade || 'free').toLowerCase();
-  renderTourGallery(tourData.imagens || []);
+
+  const cidadeAtual = tourData.cidade || '';
+  const pastaAtual = tourData.pastaImagens || tourData.pasta_imagens || '';
+  renderTourGallery([]);
+  renderTourImagePreview([]);
+  probeTourFolderImages(cidadeAtual, pastaAtual).then(renderTourGallery);
+
+  const horariosBrutos = tourData.horarios || '';
+  renderTourHorarios(horariosBrutos ? horariosBrutos.split(',').map((h) => h.trim()).filter(Boolean).sort() : []);
+  loadTourComments(tourData.id);
 
   const pauseButton = document.getElementById('tourModalPause');
   if (pauseButton) {
@@ -785,6 +1588,7 @@ const saveTourEditModal = async () => {
   const status = document.getElementById('tourModalStatus').value;
   const cidade = document.getElementById('tourModalCidade').value;
   const modalidade = document.getElementById('tourModalModalidade').value;
+  const pastaImagens = document.getElementById('tourModalPastaImagens').value.trim();
   const adminEmail = localStorage.getItem('userEmail') || '';
 
   const payload = {
@@ -798,6 +1602,8 @@ const saveTourEditModal = async () => {
     estado: status,
     cidade,
     modalidade,
+    pasta_imagens: pastaImagens,
+    horarios: currentTourHorarios.join(','),
     admin_email: adminEmail
   };
 
@@ -827,7 +1633,9 @@ const saveTourEditModal = async () => {
           value: Number.isFinite(value) ? value : (t.value ?? 0),
           status,
           cidade,
-          modalidade
+          modalidade,
+          pastaImagens,
+          horarios: currentTourHorarios.join(',')
         };
       }
       return t;
@@ -843,14 +1651,47 @@ const saveTourEditModal = async () => {
   }
 };
 
+let lastLoadedTours = [];
+
+const reorderTours = async (novaOrdemIds) => {
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/reorder_tours', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: adminEmail, ordem: novaOrdemIds })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert(`Falha ao reordenar tours: ${result.message || response.statusText}`);
+      return;
+    }
+    carregarToursGerenciamento();
+  } catch (error) {
+    console.error('Erro ao reordenar tours:', error);
+    alert('Erro ao reordenar tours. Verifique sua conexão e tente novamente.');
+  }
+};
+
+const moveTourOrder = (tourId, direction) => {
+  const ids = lastLoadedTours.map(t => t.id);
+  const index = ids.indexOf(String(tourId));
+  const targetIndex = index + direction;
+  if (index === -1 || targetIndex < 0 || targetIndex >= ids.length) return;
+
+  [ids[index], ids[targetIndex]] = [ids[targetIndex], ids[index]];
+  reorderTours(ids);
+};
+
 const carregarToursGerenciamento = async () => {
   const remoteTours = await fetchPageToursFromBackend();
   const tours = Array.isArray(remoteTours) ? remoteTours : getPageTours();
+  lastLoadedTours = tours;
   const tableBody = document.getElementById('tourManagementBody');
   if (!tableBody) return;
 
   if (!tours.length) {
-    tableBody.innerHTML = '<tr><td colspan="10" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="11" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>';
     return;
   }
 
@@ -866,6 +1707,10 @@ const carregarToursGerenciamento = async () => {
     const modalidadeLabel = (tour.modalidade || 'free').toLowerCase() === 'privado' ? 'Privado' : 'Aberto (Free)';
 
     row.innerHTML = `
+      <td data-label="Ordem" class="tour-order-cell">
+        <button type="button" class="tour-order-btn" data-order-dir="-1" ${idx === 0 ? 'disabled' : ''} aria-label="Mover para cima">▲</button>
+        <button type="button" class="tour-order-btn" data-order-dir="1" ${idx === tours.length - 1 ? 'disabled' : ''} aria-label="Mover para baixo">▼</button>
+      </td>
       <td data-label="ID">${tour.id || `tour-${idx}`}</td>
       <td data-label="Tour">${tour.name || '-'}</td>
       <td data-label="Cidade">${tour.cidade || '-'}</td>
@@ -877,6 +1722,13 @@ const carregarToursGerenciamento = async () => {
       <td data-label="Modalidade">${modalidadeLabel}</td>
       <td data-label="Status">${tour.status || 'Ativo'}</td>
     `;
+
+    row.querySelectorAll('.tour-order-btn').forEach(btn => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        moveTourOrder(tour.id, Number(btn.getAttribute('data-order-dir')));
+      });
+    });
 
     row.addEventListener('dblclick', () => openTourEditModal(tour));
     tableBody.appendChild(row);
@@ -1373,7 +2225,6 @@ const carregarAgendamentosDoBanco = async () => {
       });
     }
 
-    carregarGerenciamentoPagina();
     console.log('Tabela atualizada com sucesso!');
   } catch (error) {
     console.error('Erro de conexÃ£o ao carregar tabela:', error);
@@ -1431,6 +2282,7 @@ const mostrarSecao = (secao) => {
   }
 
   if (secao === 'financeiro') {
+    carregarFinanceiro();
     fetchCurrentUsdBrlRate().then(() => {
       if (typeof window.convertCurrency === 'function') {
         window.convertCurrency();
@@ -1458,8 +2310,8 @@ const mostrarSecao = (secao) => {
   const titleMap = {
     reservas: 'Reservas',
     contas: 'Contas',
-    perfis: 'Gerenciamento da pÃ¡gina',
-    gerenciamento: 'Gerenciamento da pÃ¡gina',
+    perfis: 'Gerenciamento da página',
+    gerenciamento: 'Gerenciamento da página',
     financeiro: 'Financeiro'
   };
 
@@ -1498,7 +2350,6 @@ const mostrarSecao = (secao) => {
   }
 
   if (secao === 'gerenciamento') {
-    carregarGerenciamentoPagina();
     carregarToursGerenciamento();
   }
 };
@@ -1517,7 +2368,6 @@ const toggleReservaPausada = async (id, currentStatus) => {
     });
 
     window.setReservations(updated);
-    carregarGerenciamentoPagina();
     return;
   }
 
@@ -1534,7 +2384,6 @@ const toggleReservaPausada = async (id, currentStatus) => {
     }
 
     carregarAgendamentosDoBanco();
-    carregarGerenciamentoPagina();
   } catch (error) {
     console.error(error);
     alert('NÃ£o foi possÃ­vel atualizar o status da reserva.');
@@ -1549,7 +2398,6 @@ const excluirReservaAgendamento = async (id) => {
     const raw = window.getReservations();
     const updated = raw.filter((res) => String(res.id) !== String(id) && String(res.localId) !== String(id));
     window.setReservations(updated);
-    carregarGerenciamentoPagina();
     return;
   }
 
@@ -1566,44 +2414,10 @@ const excluirReservaAgendamento = async (id) => {
     }
 
     carregarAgendamentosDoBanco();
-    carregarGerenciamentoPagina();
   } catch (error) {
     console.error(error);
     alert('NÃ£o foi possÃ­vel excluir a reserva.');
   }
-};
-
-const carregarGerenciamentoPagina = () => {
-  const tableBody = document.getElementById('pageManagementBody');
-  if (!tableBody) return;
-
-  const reservations = getCurrentReservationsForManagement();
-  if (!reservations.length) {
-    tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Nenhuma reserva disponÃ­vel para gerenciamento.</td></tr>';
-    return;
-  }
-
-  tableBody.innerHTML = '';
-
-  reservations.forEach((ag) => {
-    const row = document.createElement('tr');
-    row.setAttribute('data-id', ag.id);
-
-    const statusValue = (ag.status || 'Pendente').toString();
-    const inPause = statusValue.toLowerCase() === 'pausado';
-
-    row.innerHTML = `
-      <td data-label="ID">${ag.id || '-'}</td>
-      <td data-label="Tour">${ag.tour || '-'}</td>
-      <td data-label="Status">${statusValue}</td>
-      <td data-label="Data">${ag.data || '-'}</td>
-      <td data-label="Hora">${ag.hora || '-'}</td>
-      <td data-label="Pessoas">${ag.qtd ?? ag.qtd_pessoas ?? '-'}</td>
-      <td data-label="Ações">-</td>
-    `;
-
-    tableBody.appendChild(row);
-  });
 };
 
 const carregarContasDoBanco = async () => {
@@ -1614,7 +2428,7 @@ const carregarContasDoBanco = async () => {
   currentUserPermissions = currentUserPermissions || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
 
   if (!currentUserPermissions.manageContas) {
-    tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Sem permissÃ£o para visualizar tabela de acessos.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Sem permissÃ£o para visualizar tabela de acessos.</td></tr>';
     const rolesManager = document.getElementById('rolesManager');
     if (rolesManager) rolesManager.style.display = 'none';
     return;
@@ -1627,26 +2441,26 @@ const carregarContasDoBanco = async () => {
     return;
   }
 
-  tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Carregando contas...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Carregando contas...</td></tr>';
 
   try {
     const response = await fetchWithApiFallback(`/get_acessos?email=${encodeURIComponent(currentUserEmail)}`);
 
     if (response.status === 403) {
-      tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Acesso negado â€” somente admin/super_admin.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Acesso negado â€” somente admin/super_admin.</td></tr>';
       return;
     }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       console.error('Erro ao buscar acessos', response.status, response.statusText, errorText);
-      tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Erro ao carregar contas.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Erro ao carregar contas.</td></tr>';
       return;
     }
 
     const accounts = await response.json();
     if (!Array.isArray(accounts) || !accounts.length) {
-      tableBody.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Nenhuma conta encontrada.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Nenhuma conta encontrada.</td></tr>';
       return;
     }
 
@@ -1671,7 +2485,7 @@ const carregarContasDoBanco = async () => {
     }
   } catch (error) {
     console.error('Erro ao carregar contas:', error);
-    tableBody.innerHTML = `<tr><td colspan="9" style="padding:0.75rem;">Erro de conexÃ£o: ${error.message || error}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Erro de conexÃ£o: ${error.message || error}</td></tr>`;
   }
 };
 
@@ -1795,30 +2609,21 @@ const resetarNiveisDeAcesso = async () => {
   }
 };
 
-// roleToPerms / permsToRole usadps no modal de ediÃ§Ã£o de perfil
-const roleToPerms = (role) => {
-  const base = currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || {
-    manageReservas: false,
-    manageContas: false,
-    managePerfis: false,
-    manageSelfEdit: false,
-    manageOtherEdit: false,
-    manageConsultas: false,
-    loadAllReservas: false,
-    pages: [],
-    tabs: []
-  };
-  return base;
-};
+// Popula um <select> de role com as roles configuradas (Gerenciamento de NÃ­veis
+// de Acesso), incluindo roles customizadas criadas via "Adicionar nÃ­vel de acesso".
+// Sem isso, uma role nova nunca poderia ser atribuÃ­da a nenhuma conta.
+const populateRoleOptionsInto = (selectEl, selectedValue) => {
+  if (!selectEl) return;
 
-const permsToRole = (perms) => {
-  if (perms.manageReservas && perms.manageContas && perms.managePerfis) {
-    return 'super_admin';
-  }
-  if (perms.manageReservas && perms.manageContas) {
-    return 'admin';
-  }
-  return 'cliente_user';
+  const roleNames = Object.keys(currentRolesConfig).length
+    ? Object.keys(currentRolesConfig)
+    : Object.keys(DEFAULT_ROLE_PERMISSIONS);
+
+  const options = new Set(roleNames.length ? roleNames : ['cliente_user', 'admin', 'super_admin']);
+  if (selectedValue) options.add(selectedValue);
+
+  selectEl.innerHTML = Array.from(options).map(role => `<option value="${escapeHtml(role)}">${escapeHtml(role)}</option>`).join('');
+  if (selectedValue) selectEl.value = selectedValue;
 };
 
 const openAccountModal = (account) => {
@@ -1829,9 +2634,8 @@ const openAccountModal = (account) => {
   const sobrenomeInput = document.getElementById('accountSobrenome');
   const celularInput = document.getElementById('accountCelular');
   const roleInput = document.getElementById('accountRole');
-  const permReservations = document.getElementById('permReservations');
-  const permAccounts = document.getElementById('permAccounts');
-  const permProfiles = document.getElementById('permProfiles');
+  const generoInput = document.getElementById('accountGenero');
+  const senhaInput = document.getElementById('accountSenha');
 
   if (!accountModal || !emailInput) return;
 
@@ -1840,13 +2644,11 @@ const openAccountModal = (account) => {
   sobrenomeInput.value = account.sobrenome || '';
   celularInput.value = account.celular || '';
   const paisOrigemInput = document.getElementById('accountPaisOrigem');
-  if (paisOrigemInput) paisOrigemInput.value = account.pais_origem || account.pais_origem || '';
-  roleInput.value = account.role || 'cliente_user';
+  if (paisOrigemInput) paisOrigemInput.value = account.pais_origem || '';
+  if (generoInput) generoInput.value = account.genero || '';
+  if (senhaInput) senhaInput.value = '';
 
-  const perms = roleToPerms(account.role || 'cliente_user');
-  if (permReservations) permReservations.checked = perms.manageReservas;
-  if (permAccounts) permAccounts.checked = perms.manageContas;
-  if (permProfiles) permProfiles.checked = perms.managePerfis;
+  populateRoleOptionsInto(roleInput, account.role || 'cliente_user');
 
   accountModal.classList.remove('hidden');
 };
@@ -1876,13 +2678,9 @@ const setupAccountModalEvents = () => {
       const nome = document.getElementById('accountNome')?.value.trim();
       const sobrenome = document.getElementById('accountSobrenome')?.value.trim();
       const celular = document.getElementById('accountCelular')?.value.trim();
-      const roleManual = document.getElementById('accountRole')?.value;
-      const manageReservas = document.getElementById('permReservations')?.checked;
-      const manageContas = document.getElementById('permAccounts')?.checked;
-      const managePerfis = document.getElementById('permProfiles')?.checked;
-
-      const inferredRole = permsToRole({manageReservas, manageContas, managePerfis});
-      const role = roleManual || inferredRole;
+      const role = document.getElementById('accountRole')?.value;
+      const genero = document.getElementById('accountGenero')?.value || '';
+      const senha = document.getElementById('accountSenha')?.value;
 
       const paisOrigem = document.getElementById('accountPaisOrigem')?.value.trim();
       const currentUserEmail = localStorage.getItem('userEmail');
@@ -1893,8 +2691,10 @@ const setupAccountModalEvents = () => {
         sobrenome,
         celular,
         pais_origem: paisOrigem || undefined,
+        genero,
         role
       };
+      if (senha) payload.senha = senha;
 
       const response = await fetchWithApiFallback('/update_user', {
         method: 'PUT',
@@ -1944,6 +2744,73 @@ const setupAccountModalEvents = () => {
     });
   }
 
+  const addAccountBtn = document.getElementById('addAccountBtn');
+  const addAccountModal = document.getElementById('addAccountModal');
+  const addAccountCancel = document.getElementById('addAccountCancel');
+  const addAccountSave = document.getElementById('addAccountSave');
+
+  const closeAddAccountModal = () => {
+    if (addAccountModal) addAccountModal.classList.add('hidden');
+  };
+
+  if (addAccountBtn) {
+    addAccountBtn.addEventListener('click', () => {
+      if (!addAccountModal) return;
+      document.getElementById('addAccountForm')?.reset();
+      populateRoleOptionsInto(document.getElementById('newAccountRole'), 'cliente_user');
+      addAccountModal.classList.remove('hidden');
+    });
+  }
+
+  if (addAccountCancel) {
+    addAccountCancel.addEventListener('click', closeAddAccountModal);
+  }
+
+  if (addAccountSave) {
+    addAccountSave.addEventListener('click', async () => {
+      const email = document.getElementById('newAccountEmail')?.value.trim();
+      const senha = document.getElementById('newAccountSenha')?.value;
+      const nome = document.getElementById('newAccountNome')?.value.trim();
+      const sobrenome = document.getElementById('newAccountSobrenome')?.value.trim();
+      const celular = document.getElementById('newAccountCelular')?.value.trim();
+      const paisOrigem = document.getElementById('newAccountPaisOrigem')?.value.trim();
+      const genero = document.getElementById('newAccountGenero')?.value || '';
+      const role = document.getElementById('newAccountRole')?.value || 'cliente_user';
+
+      if (!email || !senha) {
+        alert('E-mail e senha são obrigatórios.');
+        return;
+      }
+
+      const currentUserEmail = localStorage.getItem('userEmail');
+      const response = await fetchWithApiFallback('/add_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_email: currentUserEmail,
+          email,
+          password: senha,
+          nome,
+          sobrenome,
+          celular,
+          pais_origem: paisOrigem,
+          genero,
+          role
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        alert(`Falha ao criar conta: ${result.message || response.statusText}`);
+        return;
+      }
+
+      alert('Conta criada com sucesso.');
+      closeAddAccountModal();
+      carregarContasDoBanco();
+    });
+  }
+
   const tourModalCancel = document.getElementById('tourModalCancel');
   const tourModalSave = document.getElementById('tourModalSave');
   if (tourModalCancel) {
@@ -1976,6 +2843,35 @@ const setupAccountModalEvents = () => {
   if (tourModalUploadImages) {
     tourModalUploadImages.addEventListener('click', () => {
       uploadTourImages();
+    });
+  }
+
+  if (!isFileSystemAccessSupported()) {
+    document.getElementById('tourModalImageUploadHint')?.removeAttribute('hidden');
+    if (tourModalUploadImages) tourModalUploadImages.disabled = true;
+    const imageInput = document.getElementById('tourModalImageInput');
+    if (imageInput) imageInput.disabled = true;
+  }
+
+  const refreshGallery = () => {
+    const cidade = document.getElementById('tourModalCidade')?.value || '';
+    const pasta = document.getElementById('tourModalPastaImagens')?.value.trim() || '';
+    probeTourFolderImages(cidade, pasta).then(renderTourGallery);
+  };
+  document.getElementById('tourModalCidade')?.addEventListener('change', refreshGallery);
+  document.getElementById('tourModalPastaImagens')?.addEventListener('change', refreshGallery);
+
+  const tourModalImageInput = document.getElementById('tourModalImageInput');
+  if (tourModalImageInput) {
+    tourModalImageInput.addEventListener('change', () => {
+      renderTourImagePreview(Array.from(tourModalImageInput.files || []));
+    });
+  }
+
+  const tourModalAddHorario = document.getElementById('tourModalAddHorario');
+  if (tourModalAddHorario) {
+    tourModalAddHorario.addEventListener('click', () => {
+      adicionarTourHorario();
     });
   }
 };
@@ -2027,14 +2923,6 @@ const attachSectionLinks = () => {
 };
 
 const setupRolesControls = () => {
-  const openRolesManagerBtn = document.getElementById('openRolesManager');
-  if (openRolesManagerBtn) {
-    openRolesManagerBtn.addEventListener('click', () => {
-      mostrarSecao('perfis');
-      carregarNiveisDeAcesso();
-    });
-  }
-
   const saveRolesBtn = document.getElementById('saveRolesConfig');
   if (saveRolesBtn) {
     saveRolesBtn.addEventListener('click', salvarNiveisDeAcesso);
@@ -2142,7 +3030,6 @@ const openEditModalFromBackend = (ag) => {
 
 const initReservationManagement = () => {
   const tableBody = document.getElementById('reservationsBody');
-  const clearBtn = document.getElementById('clearReservations');
   const filterFrom = document.getElementById('filterFrom');
   const filterTo = document.getElementById('filterTo');
   const filterTour = document.getElementById('filterTour');
@@ -2810,13 +3697,6 @@ const initReservationManagement = () => {
     }
   };
 
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      setReservations([]);
-      render();
-    });
-  }
-
   attachFilters();
 
   // Render the table immediately after initialization
@@ -2992,6 +3872,27 @@ const initFloatingStandardCalculator = () => {
     }
   };
 
+  const applyPercent = () => {
+    const tailMatch = display.value.match(/([+\-*/]?)(-?[0-9]+(?:[.,][0-9]+)?)$/);
+    if (!tailMatch) return;
+
+    const [full, operator, numStr] = tailMatch;
+    const before = display.value.slice(0, display.value.length - full.length);
+    const num = parseFloat(numStr.replace(',', '.'));
+    if (!Number.isFinite(num)) return;
+
+    let resultNum;
+    if (operator === '+' || operator === '-') {
+      const leftMatch = before.match(/(-?[0-9]+(?:[.,][0-9]+)?)\s*$/);
+      const leftNum = leftMatch ? parseFloat(leftMatch[1].replace(',', '.')) : NaN;
+      resultNum = Number.isFinite(leftNum) ? (leftNum * num) / 100 : num / 100;
+    } else {
+      resultNum = num / 100;
+    }
+
+    setDisplay(`${before}${operator}${String(resultNum).replace('.', ',')}`);
+  };
+
   keypad.querySelectorAll('button[data-value]').forEach((button) => {
     button.addEventListener('click', () => {
       const value = button.dataset.value;
@@ -3001,6 +3902,8 @@ const initFloatingStandardCalculator = () => {
         backspace();
       } else if (value === '=') {
         calculate();
+      } else if (value === '%') {
+        applyPercent();
       } else {
         appendValue(value);
       }
@@ -3421,6 +4324,7 @@ window.addEventListener('DOMContentLoaded', () => {
     attachSectionLinks();
     setupAccountModalEvents();
     setupRolesControls();
+    initFinanceControls();
 
     // Inicialmente carregamos apenas a aba de reservas (sem prÃ©-carregar contas ou gerenciamento)
     mostrarSecao('reservas');
@@ -3618,6 +4522,8 @@ window.addEventListener('DOMContentLoaded', () => {
         } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da pÃ¡gina') {
           mostrarSecao('gerenciamento');
           carregarAgendamentosDoBanco();
+        } else if (rawSection === 'financeiro') {
+          mostrarSecao('financeiro');
         } else {
           mostrarSecao('reservas');
           carregarAgendamentosDoBanco();

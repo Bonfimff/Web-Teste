@@ -389,10 +389,20 @@
                 // ignore
             }
 
+            // Filtra só os tours desta cidade: a tabela tours_pagina traz tours de
+            // todas as cidades numa lista só (ordenada por cidade), então casar por
+            // índice bruto misturaria tours de Lençóis/São Luís/Salvador nos cards do Rio.
+            const toursRio = tours.filter(t => (t.cidade || '').trim() === 'Rio de Janeiro');
+
             const cards = document.querySelectorAll('.rio-tour-card');
+            const cardsByParent = new Map();
             cards.forEach((card, index) => {
-                const tour = tours[index];
+                const tour = toursRio[index];
                 if (!tour) return;
+
+                const parentEntries = cardsByParent.get(card.parentElement) || [];
+                parentEntries.push({ card, ordem: tour.ordem ?? index, originalIndex: index });
+                cardsByParent.set(card.parentElement, parentEntries);
 
                 const nameEl = card.querySelector('.rio-tour-name');
                 if (nameEl) {
@@ -439,6 +449,17 @@
                     window.tourImagesByFolder = window.tourImagesByFolder || {};
                     window.tourImagesByFolder[folder] = tour.imagens;
                 }
+                if (tour.id && typeof window.TourInteracoes !== 'undefined' && window.TourInteracoes) {
+                    window.TourInteracoes.attachCommentsToggle(card, tour.id);
+                }
+            });
+
+            // Reordena os cards conforme a ordem de exibição definida no admin
+            // (Gerenciamento), preservando os atributos/slideshow de cada card.
+            cardsByParent.forEach((entries, parent) => {
+                entries
+                    .sort((a, b) => (a.ordem - b.ordem) || (a.originalIndex - b.originalIndex))
+                    .forEach(({ card }) => parent.appendChild(card));
             });
 
             if (typeof window.startTourSliders === 'function') {
@@ -2740,7 +2761,8 @@
             status: tour?.estado || '',
             cidade: tour?.cidade || '',
             modalidade: (tour?.modalidade || 'free').toLowerCase(),
-            imagens: Array.isArray(tour?.imagens) ? tour.imagens : []
+            imagens: Array.isArray(tour?.imagens) ? tour.imagens : [],
+            horarios: tour?.horarios || ''
         };
     };
 
@@ -3506,6 +3528,8 @@
         const reservationTour = document.getElementById('reservationTour');
         const reservationName = document.getElementById('reservationName');
         const reservationDate = document.getElementById('reservationDate');
+        const reservationTimeField = document.getElementById('reservationTimeField');
+        const reservationTime = document.getElementById('reservationTime');
         const reservationQuantity = document.getElementById('reservationQuantity');
         const reservationLanguage = document.getElementById('reservationLanguage');
         const reservationPhone = document.getElementById('reservationPhone');
@@ -3565,6 +3589,37 @@
 
                 if (langs.length === 1) {
                     reservationLanguage.value = langs[0];
+                }
+            }
+
+            const matchedTour = getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tourName));
+            const horarios = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
+
+            if (reservationTime && reservationTimeField) {
+                reservationTime.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.setAttribute('data-i18n', 'reservation_time_placeholder');
+                defaultOption.textContent = strings.reservation_time_placeholder || 'Selecione um horário';
+                reservationTime.appendChild(defaultOption);
+
+                horarios.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario;
+                    option.textContent = horario;
+                    reservationTime.appendChild(option);
+                });
+
+                if (horarios.length) {
+                    reservationTimeField.hidden = false;
+                    reservationTime.setAttribute('required', 'required');
+                    if (horarios.length === 1) {
+                        reservationTime.value = horarios[0];
+                    }
+                } else {
+                    reservationTimeField.hidden = true;
+                    reservationTime.removeAttribute('required');
+                    reservationTime.value = '';
                 }
             }
 
@@ -3633,9 +3688,16 @@
                 // no formulário do cliente. O backend também valida isso de forma independente.
                 const matchedTour = getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tour));
                 const modality = (matchedTour?.modalidade || 'free').toLowerCase();
+                const horariosDisponiveis = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
+                const selectedTime = reservationTime ? reservationTime.value : '';
 
                 if (!tour || !clientName || !date || !quantity || !language || !phone || !email) {
                     showGlobalNotification('Preencha todos os campos obrigatÃ³rios para concluir a reserva.', 'error');
+                    return;
+                }
+
+                if (horariosDisponiveis.length && !selectedTime) {
+                    showGlobalNotification('Escolha um horário para a reserva.', 'error');
                     return;
                 }
 
@@ -3656,13 +3718,14 @@
                     return;
                 }
 
-                // Formato required para backend: data e hora em campos separados
-                const defaultTime = '12:00';
+                // Formato required para backend: data e hora em campos separados.
+                // Tours sem horários cadastrados mantêm o comportamento anterior (12:00 fixo).
+                const finalTime = horariosDisponiveis.length ? selectedTime : '12:00';
 
                 const payload = {
                     tour,
                     data: date,
-                    hora: defaultTime,
+                    hora: finalTime,
                     idioma: language,
                     modalidade: modality,
                     guia: guideName,
@@ -3708,7 +3771,7 @@
                         const ui = window.uiTranslations?.[currentLang] || window.uiTranslations?.pt || {};
                         const safeMeetingPoint = escapeHtml(selectedMeetingPoint || 'Conforme descrição do tour');
                         const safeDate = escapeHtml(formattedDate);
-                        const safeTime = escapeHtml(defaultTime);
+                        const safeTime = escapeHtml(finalTime);
                         const detailsHtml = `
                             <ul class="app-notification__summary">
                                 <li><strong>${ui.booking_success_detail_date || 'Data:'}</strong> ${safeDate}</li>

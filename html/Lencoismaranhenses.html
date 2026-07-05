@@ -6,9 +6,10 @@
     <title>Experiências · Lençóis Maranhenses</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@700;900&family=Lato:wght@300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css?v=2">
 
-    <link rel="stylesheet" href="../css/Lencoismaranhenses.css?v=4">
+    <link rel="stylesheet" href="../css/Lencoismaranhenses.css?v=5">
+    <link rel="stylesheet" href="../css/tour-interacoes.css?v=4">
 </head>
 <body>
     <div class="main-container rio-page">
@@ -357,7 +358,7 @@
                 </article>
             </div>
 
-            <div class="rio-relatos-gallery" id="relatosGallery">
+            <div class="rio-relatos-gallery" id="relatosGallery" data-cidade="Lencois">
                 <figure class="rio-relatos-item" data-photo-id="foto-escadaria-lagoa-bonita">
                     <img src="../imagem/Lencois/Relatos/foto-escadaria-lagoa-bonita-750.webp" alt="Relato de viagem nos Lençóis Maranhenses" loading="lazy">
                     <button type="button" class="rio-relatos-like" aria-label="Curtir foto" data-i18n-aria="relatos_like_label">
@@ -498,6 +499,11 @@
                     <label><span data-i18n="reservation_date_label">Data da reserva</span>
                         <input type="date" id="reservationDate" required>
                     </label>
+                    <label id="reservationTimeField" hidden><span data-i18n="reservation_time_label">Horário</span>
+                        <select id="reservationTime">
+                            <option value="" data-i18n="reservation_time_placeholder">Selecione um horário</option>
+                        </select>
+                    </label>
                     <label><span data-i18n="reservation_quantity_label">Quantidade de pessoas</span>
                         <input type="number" id="reservationQuantity" min="1" value="1" required>
                     </label>
@@ -523,7 +529,8 @@
 
     <script src="../js/translations.js"></script>
     <script src="../js/ui-translations.js"></script>
-    <script src="../js/site-shell.js?v=2"></script>
-    <script src="../js/Lencoismaranhenses.js?v=2"></script>
+    <script src="../js/tour-interacoes.js?v=4"></script>
+    <script src="../js/site-shell.js?v=6"></script>
+    <script src="../js/Lencoismaranhenses.js?v=4"></script>
 </body>
 </html>

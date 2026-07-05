@@ -17,10 +17,28 @@
 
 body {
     font-family: var(--font-main);
-    background: url("../imagem/assets/Papel-de-fundo.png") center center / cover no-repeat fixed;
     min-height: 100vh;
     display: flex;
     color: #ffffff;
+}
+
+/* Fundo em pseudo-elemento fixed dedicado (em vez de background-attachment:fixed
+   no body): no Android, quando a barra de navegação some/aparece durante a
+   rolagem, o viewport recalcula e um background-attachment:fixed comum "pula" e
+   revela uma faixa em branco. Usar height:100dvh (viewport dinâmico) faz o
+   pseudo-elemento acompanhar essa transição suavemente, sem o salto. O
+   height:100% acima serve de fallback para navegadores sem suporte a dvh. */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    z-index: -2;
+    background: url("../imagem/assets/Papel-de-fundo.png") center center / cover no-repeat;
+    pointer-events: none;
 }
 
 /* ===================================================== */
@@ -30,17 +48,30 @@ body {
     position: relative;
     isolation: isolate;
     background:
-        url("../imagem/Papel-de-fundo.png") center center / cover no-repeat fixed,
         radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,0.08), transparent 60%),
         radial-gradient(900px 500px at 20% 80%, rgba(255,255,255,0.06), transparent 55%),
         radial-gradient(800px 600px at 100% 100%, rgba(255,255,255,0.22), transparent 60%),
         linear-gradient(120deg, rgba(2, 61, 49, 0.884) 0%, rgba(20, 139, 123, 0.774) 55%, rgba(12, 160, 150, 0.788) 100%);
-    background-blend-mode: normal, screen, screen, screen, normal;
+    background-blend-mode: screen, screen, screen, normal;
     width: 100%;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+}
+
+/* Mesma correção do body::before, aplicada à imagem de fundo do painel central. */
+.main-container::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    z-index: -2;
+    background: url("../imagem/assets/Papel-de-fundo.png") center center / cover no-repeat;
+    pointer-events: none;
 }
 
 .main-container::before {
@@ -50,7 +81,7 @@ body {
     pointer-events: none;
     z-index: 0;
     background: linear-gradient(135deg, rgba(6, 54, 45, 0.22) 0%, rgba(255, 255, 255, 0.14) 100%);
-    -webkit-backdrop-filter: blur(1.7px); 
+    -webkit-backdrop-filter: blur(1.7px);
     backdrop-filter: blur(1.7px);
 }
 

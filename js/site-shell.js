@@ -2353,7 +2353,9 @@
             status: tour?.estado || '',
             cidade: tour?.cidade || '',
             modalidade: (tour?.modalidade || 'free').toLowerCase(),
-            imagens: Array.isArray(tour?.imagens) ? tour.imagens : []
+            imagens: Array.isArray(tour?.imagens) ? tour.imagens : [],
+            ordem: tour?.ordem ?? 0,
+            horarios: tour?.horarios || ''
         };
     };
 
@@ -2395,15 +2397,34 @@
                 // Imagens enviadas via admin (Gerenciamento) têm prioridade sobre o
                 // manifesto local hardcoded de cada cidade, casadas pelo nome do tour.
                 window.tourImagesByFolder = window.tourImagesByFolder || {};
-                document.querySelectorAll('.rio-tour-card').forEach((card) => {
+                const cardsByParent = new Map();
+                Array.from(document.querySelectorAll('.rio-tour-card')).forEach((card, originalIndex) => {
                     const folder = card.querySelector('.rio-tour-slider')?.dataset.folder;
                     const cardName = card.querySelector('.rio-tour-name')?.textContent?.trim();
-                    if (!folder || !cardName) return;
+                    if (!cardName) return;
                     const matchedTour = tours.find(t => normalizeTourKey(t.name) === normalizeTourKey(cardName));
-                    if (matchedTour && Array.isArray(matchedTour.imagens) && matchedTour.imagens.length) {
+                    if (!matchedTour) return;
+
+                    if (folder && Array.isArray(matchedTour.imagens) && matchedTour.imagens.length) {
                         window.tourImagesByFolder[folder] = matchedTour.imagens;
                     }
+                    if (matchedTour.id && window.TourInteracoes) {
+                        window.TourInteracoes.attachCommentsToggle(card, matchedTour.id);
+                    }
+
+                    const parentEntries = cardsByParent.get(card.parentElement) || [];
+                    parentEntries.push({ card, ordem: matchedTour.ordem ?? originalIndex, originalIndex });
+                    cardsByParent.set(card.parentElement, parentEntries);
                 });
+
+                // Reordena os cards conforme a ordem de exibição definida no admin
+                // (Gerenciamento), preservando os atributos/slideshow de cada card.
+                cardsByParent.forEach((entries, parent) => {
+                    entries
+                        .sort((a, b) => (a.ordem - b.ordem) || (a.originalIndex - b.originalIndex))
+                        .forEach(({ card }) => parent.appendChild(card));
+                });
+
                 if (typeof window.startTourSliders === 'function') {
                     window.startTourSliders();
                 }
@@ -3136,6 +3157,8 @@
         const reservationTour = document.getElementById('reservationTour');
         const reservationName = document.getElementById('reservationName');
         const reservationDate = document.getElementById('reservationDate');
+        const reservationTimeField = document.getElementById('reservationTimeField');
+        const reservationTime = document.getElementById('reservationTime');
         const reservationQuantity = document.getElementById('reservationQuantity');
         const reservationLanguage = document.getElementById('reservationLanguage');
         const reservationPhone = document.getElementById('reservationPhone');
@@ -3197,6 +3220,37 @@
 
                 if (langs.length === 1) {
                     reservationLanguage.value = langs[0];
+                }
+            }
+
+            const matchedTour = getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tourName));
+            const horarios = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
+
+            if (reservationTime && reservationTimeField) {
+                reservationTime.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.setAttribute('data-i18n', 'reservation_time_placeholder');
+                defaultOption.textContent = strings.reservation_time_placeholder || 'Selecione um horário';
+                reservationTime.appendChild(defaultOption);
+
+                horarios.forEach(horario => {
+                    const option = document.createElement('option');
+                    option.value = horario;
+                    option.textContent = horario;
+                    reservationTime.appendChild(option);
+                });
+
+                if (horarios.length) {
+                    reservationTimeField.hidden = false;
+                    reservationTime.setAttribute('required', 'required');
+                    if (horarios.length === 1) {
+                        reservationTime.value = horarios[0];
+                    }
+                } else {
+                    reservationTimeField.hidden = true;
+                    reservationTime.removeAttribute('required');
+                    reservationTime.value = '';
                 }
             }
 
@@ -3271,9 +3325,16 @@
                 // no formulário do cliente. O backend também valida isso de forma independente.
                 const matchedTour = getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tour));
                 const modality = (matchedTour?.modalidade || 'free').toLowerCase();
+                const horariosDisponiveis = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
+                const selectedTime = reservationTime ? reservationTime.value : '';
 
                 if (!tour || !clientName || !date || !quantity || !language || !phone || !email) {
                     showGlobalNotification('Preencha todos os campos obrigatÃ³rios para concluir a reserva.', 'error');
+                    return;
+                }
+
+                if (horariosDisponiveis.length && !selectedTime) {
+                    showGlobalNotification('Escolha um horário para a reserva.', 'error');
                     return;
                 }
 
@@ -3294,13 +3355,14 @@
                     return;
                 }
 
-                // Formato required para backend: data e hora em campos separados
-                const defaultTime = '12:00';
+                // Formato required para backend: data e hora em campos separados.
+                // Tours sem horários cadastrados mantêm o comportamento anterior (12:00 fixo).
+                const finalTime = horariosDisponiveis.length ? selectedTime : '12:00';
 
                 const payload = {
                     tour,
                     data: date,
-                    hora: defaultTime,
+                    hora: finalTime,
                     idioma: language,
                     modalidade: modality,
                     guia: guideName,
@@ -3346,7 +3408,7 @@
                         const ui = window.uiTranslations?.[currentLang] || window.uiTranslations?.pt || {};
                         const safeMeetingPoint = escapeHtml(selectedMeetingPoint || 'Conforme descrição do tour');
                         const safeDate = escapeHtml(formattedDate);
-                        const safeTime = escapeHtml(defaultTime);
+                        const safeTime = escapeHtml(finalTime);
                         const detailsHtml = `
                             <ul class="app-notification__summary">
                                 <li><strong>${ui.booking_success_detail_date || 'Data:'}</strong> ${safeDate}</li>
@@ -3429,42 +3491,11 @@
         const gallery = document.getElementById('relatosGallery');
         if (!gallery) return;
 
-        gallery.querySelectorAll('.rio-relatos-item').forEach((item) => {
-            const photoId = item.dataset.photoId;
-            const likeBtn = item.querySelector('.rio-relatos-like');
-            const countEl = item.querySelector('.rio-relatos-like-count');
-            if (!photoId || !likeBtn || !countEl) return;
-
-            const storageKey = `relatoLike:${photoId}`;
-            let state;
-            try {
-                state = JSON.parse(localStorage.getItem(storageKey) || 'null');
-            } catch (_err) {
-                state = null;
-            }
-            if (!state || typeof state.count !== 'number') {
-                // Seed a plausible starting count so the gallery doesn't look empty.
-                state = { liked: false, count: 8 + Math.floor(Math.random() * 34) };
-                try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (_err) { /* ignore */ }
-            }
-
-            const render = () => {
-                countEl.textContent = String(state.count);
-                likeBtn.classList.toggle('is-liked', state.liked);
-            };
-            render();
-
-            likeBtn.addEventListener('click', () => {
-                state.liked = !state.liked;
-                state.count += state.liked ? 1 : -1;
-                try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (_err) { /* ignore */ }
-                render();
-                if (state.liked) {
-                    likeBtn.classList.add('just-liked');
-                    setTimeout(() => likeBtn.classList.remove('just-liked'), 400);
-                }
-            });
-        });
+        // Curtidas reais (persistidas no banco), chaveadas por cidade + data-photo-id.
+        // Ver js/tour-interacoes.js (window.TourInteracoes.initRelatosLikes).
+        if (window.TourInteracoes) {
+            window.TourInteracoes.initRelatosLikes(gallery.dataset.cidade);
+        }
     };
 
     document.addEventListener('DOMContentLoaded', () => {

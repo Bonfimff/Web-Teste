@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=20">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -163,11 +163,12 @@
                     <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
                 </div>
             </div>
-            <div style="margin-bottom:1rem;">
+            <div style="margin-bottom:1rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;">
                 <label style="font-weight:700; color:#1f2937; display:block;">
-                    Buscar por Nome
-                    <input type="text" id="accountsNameSearch" placeholder="Nome" style="margin-top:0.5rem; width:100%; max-width:320px; padding:0.55rem 0.75rem; border:1px solid #ccc; border-radius:0.5rem;" />
+                    Buscar por Nome ou E-mail
+                    <input type="text" id="accountsNameSearch" placeholder="Nome ou e-mail" style="margin-top:0.5rem; width:100%; max-width:320px; padding:0.55rem 0.75rem; border:1px solid #ccc; border-radius:0.5rem;" />
                 </label>
+                <button type="button" id="addAccountBtn" class="btn-book" style="background:#18b015;color:#fff;">Nova Conta</button>
             </div>
             <div style="overflow-x:auto;">
                 <table class="rio-tour-table">
@@ -240,21 +241,120 @@
                 <!-- Cabeçalho de gerenciamento removido conforme solicitação -->
             </div>
 
-            <div id="financeSection" class="currency-converter" aria-label="Calculadora de conversão de moeda">
-                <h3>Calculadora Real ↔ Dólar</h3>
-                <div class="currency-converter-grid">
-                    <label>
-                        Valor em Real (BRL)
-                        <input type="number" id="brlAmount" min="0" step="0.01" placeholder="0,00" />
-                    </label>
-                    <label>
-                        Cotação atual (1 USD = BRL)
-                        <input type="number" id="usdRate" min="0" step="0.0001" readonly placeholder="Carregando..." />
-                    </label>
-                    <label>
-                        Valor em Dólar (USD)
-                        <input type="number" id="usdResult" min="0" step="0.01" placeholder="0,00" />
-                    </label>
+            <div id="financeSection" aria-label="Controle financeiro">
+
+                <div class="finance-month-nav">
+                    <button type="button" id="financePrevMonth" class="btn-book finance-month-btn" aria-label="Mês anterior">‹</button>
+                    <input type="month" id="financeMonth" aria-label="Mês do controle financeiro" />
+                    <button type="button" id="financeNextMonth" class="btn-book finance-month-btn" aria-label="Próximo mês">›</button>
+                    <button type="button" id="financeReload" class="btn-book" style="margin-left:auto;">Atualizar</button>
+                </div>
+
+                <div class="finance-summary">
+                    <div class="finance-card finance-card-entrada">
+                        <span>Entradas</span>
+                        <strong id="financeTotalEntradas">R$ 0,00</strong>
+                    </div>
+                    <div class="finance-card finance-card-retirada">
+                        <span>Retiradas</span>
+                        <strong id="financeTotalRetiradas">R$ 0,00</strong>
+                    </div>
+                    <div class="finance-card finance-card-despesa">
+                        <span>Despesas</span>
+                        <strong id="financeTotalDespesas">R$ 0,00</strong>
+                    </div>
+                    <div class="finance-card finance-card-saldo">
+                        <span>Saldo do mês</span>
+                        <strong id="financeSaldo">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="finance-block">
+                    <h3>Entradas</h3>
+                    <p class="finance-hint">Reservas finalizadas de tours pagos entram automaticamente (marcadas como <strong>Auto</strong>, com valor editável). Use o formulário para entradas manuais, como tours free.</p>
+                    <form id="financeFormEntrada" class="finance-add-form">
+                        <input type="text" id="financeEntradaDesc" placeholder="Descrição." required />
+                        <input type="number" id="financeEntradaValor" min="0.01" step="0.01" placeholder="Valor (R$)" required />
+                        <input type="date" id="financeEntradaData" required />
+                        <button type="submit" class="btn-book">Adicionar entrada</button>
+                    </form>
+                    <div style="overflow-x:auto;">
+                        <table class="rio-tour-table finance-table">
+                            <thead>
+                                <tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Valor</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="financeEntradasBody">
+                                <tr><td colspan="5" style="padding:0.75rem;">Nenhuma entrada neste mês.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="finance-block">
+                    <h3>Retiradas</h3>
+                        <form id="financeFormRetirada" class="finance-add-form">
+                        <input type="text" id="financeRetiradaDesc" placeholder="Descrição." required />
+                        <input type="number" id="financeRetiradaValor" min="0.01" step="0.01" placeholder="Valor (R$)" required />
+                        <input type="date" id="financeRetiradaData" required />
+                        <button type="submit" class="btn-book">Adicionar retirada</button>
+                    </form>
+                    <div style="overflow-x:auto;">
+                        <table class="rio-tour-table finance-table">
+                            <thead>
+                                <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="financeRetiradasBody">
+                                <tr><td colspan="4" style="padding:0.75rem;">Nenhuma retirada neste mês.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="finance-block">
+                    <h3>Despesas</h3>
+                    <form id="financeFormDespesa" class="finance-add-form">
+                        <input type="text" id="financeDespesaDesc" placeholder="Descrição." required />
+                        <input type="number" id="financeDespesaValor" min="0.01" step="0.01" placeholder="Valor (R$)" required />
+                        <input type="date" id="financeDespesaData" required />
+                        <label class="finance-parcelas-label">
+                            Parcelas
+                            <input type="number" id="financeDespesaParcelas" min="1" max="60" value="1" />
+                        </label>
+                        <button type="submit" class="btn-book">Adicionar despesa</button>
+                    </form>
+                    <div style="overflow-x:auto;">
+                        <table class="rio-tour-table finance-table">
+                            <thead>
+                                <tr><th>Data</th><th>Descrição</th><th>Parcela</th><th>Valor</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="financeDespesasBody">
+                                <tr><td colspan="5" style="padding:0.75rem;">Nenhuma despesa neste mês.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="finance-block">
+                    <h3>Despesas fixas</h3>
+                    <form id="financeFormDespesaFixa" class="finance-add-form">
+                        <input type="text" id="financeDespesaFixaDesc" placeholder="Descrição." required />
+                        <input type="number" id="financeDespesaFixaValor" min="0.01" step="0.01" placeholder="Valor mensal (R$)" required />
+                        <label class="finance-parcelas-label">
+                            Dia do mês
+                            <input type="number" id="financeDespesaFixaDia" min="1" max="31" value="5" />
+                        </label>
+                        <button type="submit" class="btn-book">Adicionar despesa fixa</button>
+                    </form>
+                    <div style="overflow-x:auto;">
+                        <table class="rio-tour-table finance-table">
+                            <thead>
+                                <tr><th>Descrição</th><th>Valor mensal</th><th>Dia</th><th>Início</th><th>Situação</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="financeDespesasFixasBody">
+                                <tr><td colspan="6" style="padding:0.75rem;">Nenhuma despesa fixa cadastrada.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
@@ -264,6 +364,7 @@
                 <table class="rio-tour-table">
                     <thead>
                         <tr>
+                            <th>Ordem</th>
                             <th>ID</th>
                             <th>Tour</th>
                             <th>Cidade</th>
@@ -277,7 +378,7 @@
                         </tr>
                     </thead>
                     <tbody id="tourManagementBody">
-                        <tr><td colspan="10" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>
+                        <tr><td colspan="11" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -392,6 +493,11 @@
                 <option value="Salvador">Salvador</option>
               </select>
             </label>
+            <label>
+              Pasta de Imagens
+              <input type="text" id="tourModalPastaImagens" placeholder="Ex: CentroHistorico" />
+              <small>Nome exato da pasta em imagem/&lt;cidade&gt;/ — usado para carregar as imagens já existentes deste tour.</small>
+            </label>
             <fieldset>
               <legend>Idiomas</legend>
               <div class="checkbox-row">
@@ -431,12 +537,27 @@
               </select>
             </label>
             <fieldset>
+              <legend>Horários disponíveis para reserva</legend>
+              <div id="tourModalHorarios" class="tour-horarios-list"></div>
+              <div class="tour-horarios-add">
+                <input type="time" id="tourModalHorarioInput" />
+                <button type="button" id="tourModalAddHorario" class="btn-book">Adicionar horário</button>
+              </div>
+            </fieldset>
+            <fieldset>
               <legend>Imagens</legend>
               <div id="tourModalGallery" class="tour-gallery"></div>
               <div class="tour-gallery-upload">
                 <input type="file" id="tourModalImageInput" accept="image/*" multiple />
                 <button type="button" id="tourModalUploadImages" class="btn-book">Enviar Imagens</button>
               </div>
+              <small class="tour-gallery-hint">Na primeira vez, o navegador vai pedir para você selecionar a pasta "imagem" do projeto — depois disso, enviar/excluir/mover salva direto em qualquer tour, sem pedir de novo.</small>
+              <small id="tourModalImageUploadHint" class="tour-gallery-hint" hidden>Seu navegador não suporta salvar arquivos direto em disco. Abra o Gerenciamento no Chrome ou Edge para enviar imagens.</small>
+              <div id="tourModalImagePreview" class="tour-gallery tour-gallery-preview-pending"></div>
+            </fieldset>
+            <fieldset class="tour-avaliacoes-fieldset">
+              <legend>Avaliações dos clientes</legend>
+              <div id="tourModalComments" class="tour-comments-admin-list"></div>
             </fieldset>
             <div class="modal-actions">
               <button type="button" id="tourModalPause" class="btn-book" style="background:#f59e0b; color:#fff;">Pausar</button>
@@ -476,17 +597,78 @@
               <input type="text" id="accountPaisOrigem" placeholder="Brasil" />
             </label>
             <label>
-              Role
-              <select id="accountRole">
-                <option value="cliente_user">cliente_user</option>
-                <option value="admin">admin</option>
-                <option value="super_admin">super_admin</option>
+              Gênero
+              <select id="accountGenero">
+                <option value="">Não informado</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Feminino">Feminino</option>
+                <option value="Outro">Outro</option>
               </select>
+            </label>
+            <label>
+              Role
+              <select id="accountRole"></select>
+            </label>
+            <label>
+              Nova Senha (opcional)
+              <input type="password" id="accountSenha" placeholder="Deixe em branco para manter a senha atual" autocomplete="new-password" />
             </label>
             <div class="modal-actions">
               <button type="button" id="accountDelete" class="btn-book btn-danger">Excluir Perfil</button>
               <button type="button" id="accountCancel" class="btn-book">Cancelar</button>
               <button type="button" id="accountSave" class="btn-book">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de criação de nova conta -->
+    <div id="addAccountModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="addAccountModalTitle" style="z-index:5000;">
+      <div class="modal-content">
+        <h3 id="addAccountModalTitle">Nova Conta</h3>
+        <div class="modal-body">
+          <form id="addAccountForm">
+            <label>
+              E-mail
+              <input type="email" id="newAccountEmail" required />
+            </label>
+            <label>
+              Senha
+              <input type="password" id="newAccountSenha" autocomplete="new-password" required />
+            </label>
+            <label>
+              Nome
+              <input type="text" id="newAccountNome" />
+            </label>
+            <label>
+              Sobrenome
+              <input type="text" id="newAccountSobrenome" />
+            </label>
+            <label>
+              Celular
+              <input type="text" id="newAccountCelular" />
+            </label>
+            <label>
+              País de Origem
+              <input type="text" id="newAccountPaisOrigem" placeholder="Brasil" />
+            </label>
+            <label>
+              Gênero
+              <select id="newAccountGenero">
+                <option value="">Não informado</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Feminino">Feminino</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </label>
+            <label>
+              Role
+              <select id="newAccountRole"></select>
+            </label>
+            <div class="modal-actions">
+              <button type="button" id="addAccountCancel" class="btn-book">Cancelar</button>
+              <button type="button" id="addAccountSave" class="btn-book">Criar Conta</button>
             </div>
           </form>
         </div>
@@ -593,7 +775,8 @@
                 <button type="button" class="floating-calc-key" data-value="2">2</button>
                 <button type="button" class="floating-calc-key" data-value="3">3</button>
                 <button type="button" class="floating-calc-key floating-calc-key--operator" data-value="+">+</button>
-                <button type="button" class="floating-calc-key floating-calc-key--wide" data-value="0">0</button>
+                <button type="button" class="floating-calc-key" data-value="0">0</button>
+                <button type="button" class="floating-calc-key floating-calc-key--operator" data-value="%">%</button>
                 <button type="button" class="floating-calc-key" data-value=","> , </button>
                 <button type="button" class="floating-calc-key floating-calc-key--equals" data-value="=">=</button>
             </div>
@@ -601,8 +784,8 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=3"></script>
-    <script src="../js/Gerenciamento.js?v=2"></script>
+    <script src="../js/Riodejaneiro.js?v=4"></script>
+    <script src="../js/Gerenciamento.js?v=17"></script>
 </body>
 </html>
 
