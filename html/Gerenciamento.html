@@ -1,4 +1,4 @@
-﻿<!-- version 1.0 -->
+<!-- version 1.0 -->
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=20">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=21">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -247,8 +247,17 @@
                     <button type="button" id="financePrevMonth" class="btn-book finance-month-btn" aria-label="Mês anterior">‹</button>
                     <input type="month" id="financeMonth" aria-label="Mês do controle financeiro" />
                     <button type="button" id="financeNextMonth" class="btn-book finance-month-btn" aria-label="Próximo mês">›</button>
+                    <select id="financeCityFilter" aria-label="Cidade do controle financeiro" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);">
+                        <option value="">Geral (todas as cidades)</option>
+                        <option value="Rio de Janeiro">Rio de Janeiro</option>
+                        <option value="Lencois">Lençóis Maranhenses</option>
+                        <option value="Sao Luis">São Luís do Maranhão</option>
+                        <option value="Salvador">Salvador</option>
+                    </select>
                     <button type="button" id="financeReload" class="btn-book" style="margin-left:auto;">Atualizar</button>
                 </div>
+
+                <p id="financeCityLabel" style="margin:0 0 0.75rem; font-weight:700; color:#374151;">Exibindo: Geral (todas as cidades)</p>
 
                 <div class="finance-summary">
                     <div class="finance-card finance-card-entrada">
@@ -281,10 +290,10 @@
                     <div style="overflow-x:auto;">
                         <table class="rio-tour-table finance-table">
                             <thead>
-                                <tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Valor</th><th>Ações</th></tr>
+                                <tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Cidade</th><th>Valor</th><th>Ações</th></tr>
                             </thead>
                             <tbody id="financeEntradasBody">
-                                <tr><td colspan="5" style="padding:0.75rem;">Nenhuma entrada neste mês.</td></tr>
+                                <tr><td colspan="6" style="padding:0.75rem;">Nenhuma entrada neste mês.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -301,10 +310,10 @@
                     <div style="overflow-x:auto;">
                         <table class="rio-tour-table finance-table">
                             <thead>
-                                <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Ações</th></tr>
+                                <tr><th>Data</th><th>Descrição</th><th>Cidade</th><th>Valor</th><th>Ações</th></tr>
                             </thead>
                             <tbody id="financeRetiradasBody">
-                                <tr><td colspan="4" style="padding:0.75rem;">Nenhuma retirada neste mês.</td></tr>
+                                <tr><td colspan="5" style="padding:0.75rem;">Nenhuma retirada neste mês.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -325,10 +334,10 @@
                     <div style="overflow-x:auto;">
                         <table class="rio-tour-table finance-table">
                             <thead>
-                                <tr><th>Data</th><th>Descrição</th><th>Parcela</th><th>Valor</th><th>Ações</th></tr>
+                                <tr><th>Data</th><th>Descrição</th><th>Parcela</th><th>Cidade</th><th>Valor</th><th>Ações</th></tr>
                             </thead>
                             <tbody id="financeDespesasBody">
-                                <tr><td colspan="5" style="padding:0.75rem;">Nenhuma despesa neste mês.</td></tr>
+                                <tr><td colspan="6" style="padding:0.75rem;">Nenhuma despesa neste mês.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -348,10 +357,10 @@
                     <div style="overflow-x:auto;">
                         <table class="rio-tour-table finance-table">
                             <thead>
-                                <tr><th>Descrição</th><th>Valor mensal</th><th>Dia</th><th>Início</th><th>Situação</th><th>Ações</th></tr>
+                                <tr><th>Descrição</th><th>Valor mensal</th><th>Dia</th><th>Cidade</th><th>Início</th><th>Situação</th><th>Ações</th></tr>
                             </thead>
                             <tbody id="financeDespesasFixasBody">
-                                <tr><td colspan="6" style="padding:0.75rem;">Nenhuma despesa fixa cadastrada.</td></tr>
+                                <tr><td colspan="7" style="padding:0.75rem;">Nenhuma despesa fixa cadastrada.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -536,6 +545,13 @@
                 <option value="privado">Privado</option>
               </select>
             </label>
+            <label>
+              Reserva ("Reservar agora")
+              <select id="tourModalCanalReserva">
+                <option value="web">Site (abre o formulário de reserva)</option>
+                <option value="whatsapp">WhatsApp (redireciona com mensagem pronta)</option>
+              </select>
+            </label>
             <fieldset>
               <legend>Horários disponíveis para reserva</legend>
               <div id="tourModalHorarios" class="tour-horarios-list"></div>
@@ -551,8 +567,7 @@
                 <input type="file" id="tourModalImageInput" accept="image/*" multiple />
                 <button type="button" id="tourModalUploadImages" class="btn-book">Enviar Imagens</button>
               </div>
-              <small class="tour-gallery-hint">Na primeira vez, o navegador vai pedir para você selecionar a pasta "imagem" do projeto — depois disso, enviar/excluir/mover salva direto em qualquer tour, sem pedir de novo.</small>
-              <small id="tourModalImageUploadHint" class="tour-gallery-hint" hidden>Seu navegador não suporta salvar arquivos direto em disco. Abra o Gerenciamento no Chrome ou Edge para enviar imagens.</small>
+              <small class="tour-gallery-hint">As imagens são salvas direto na pasta imagem/&lt;cidade&gt;/&lt;pasta&gt; do tour, numeradas automaticamente (img1, img2, …).</small>
               <div id="tourModalImagePreview" class="tour-gallery tour-gallery-preview-pending"></div>
             </fieldset>
             <fieldset class="tour-avaliacoes-fieldset">
@@ -784,8 +799,8 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=4"></script>
-    <script src="../js/Gerenciamento.js?v=17"></script>
+    <script src="../js/Riodejaneiro.js?v=9"></script>
+    <script src="../js/Gerenciamento.js?v=26"></script>
 </body>
 </html>
 

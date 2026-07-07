@@ -1715,6 +1715,31 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay):not(.a
   font-weight: 600;
 }
 
+.user-data-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.user-data-photo-preview {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e8edf2;
+  border: 2px solid #d6dce4;
+}
+
+.user-data-photo-upload {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1a7a4a;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .user-data-form label {
   display: grid;
   gap: 0.25rem;
@@ -2695,6 +2720,14 @@ header {
   font-size: 1.4rem;
   color: #ffffff;
   line-height: 1;
+}
+
+.profile-btn-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 
 .profile-btn:hover {

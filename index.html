@@ -8,26 +8,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <!-- CSS externo -->
-    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
     <div class="main-container" id="inicio">
         <header>
+            <div class="lang-selector" id="langSelector">
+                <button class="lang-btn" type="button" id="langBtn">
+            	<span class="flag flag-pt"></span> Português
+                </button>
+                <ul class="lang-list" id="langList">
+                    <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                    <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                    <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                    <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                    <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                    <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                   </ul>
+            </div>
+
             <div class="nav-left">
-                <div class="lang-selector" id="langSelector">
-                    <button class="lang-btn" type="button" id="langBtn">
-                	<span class="flag flag-pt"></span> Português
-                    </button>
-                    <ul class="lang-list" id="langList">
-                        <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
-                        <li data-lang="en"><span class="flag flag-en"></span> English</li>
-                        <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
-                        <li data-lang="es"><span class="flag flag-es"></span> Español</li>
-                        <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
-                        <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
-                       </ul>
-                </div>
-                
                 <nav>
                     <a href="#inicio" class="active" data-i18n="nav_home">INÍCIO</a>
                     <a href="#sobre" data-i18n="nav_about">SOBRE</a>
@@ -49,7 +49,13 @@
                     <button type="button"><i class="fa fa-search"></i></button>
                 </div>
 
-                <button class="btn-signup" data-i18n="login">LOGIN</button>
+                <div class="profile-menu">
+                    <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-label="Conta"><i class="fa fa-user-circle"></i></button>
+                    <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
+                        <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
+                        <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -130,6 +136,8 @@
     </div>
 
     <script src="js/translations.js"></script>
+    <script src="js/ui-translations.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/auth.js?v=2"></script>
 </body>
 </html>

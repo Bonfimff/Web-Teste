@@ -93,6 +93,14 @@ body::before {
 /* ===================================================== */
 /* HEADER                                                */
 /* ===================================================== */
+/* Precisa vencer ".main-container > *" (z-index:1, mais específica que o
+   z-index:100 daqui embaixo por causa da classe): sem isso, "main" (que vem
+   depois no HTML) desenha por cima do dropdown de idioma, que fica atrás do
+   texto da hero. */
+.main-container > header {
+    z-index: 2;
+}
+
 header {
     display: flex;
     flex-wrap: nowrap;
@@ -259,6 +267,85 @@ nav a.active {
 .btn-signup:hover {
     background: var(--green-main);
     color: white;
+}
+
+/* ─── Menu de perfil (login vira foto do usuário) ────────────────────────── */
+
+.profile-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-btn {
+    border: none;
+    background: transparent;
+    color: var(--green-main);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.3rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.profile-btn i {
+    font-size: 1.6rem;
+    color: var(--green-main);
+    line-height: 1;
+}
+
+.profile-btn-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-btn:hover {
+    opacity: 0.8;
+}
+
+.profile-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.15);
+    padding: 0.6rem 0;
+    min-width: 180px;
+    z-index: 200;
+}
+
+.profile-menu.open .profile-dropdown {
+    display: block;
+}
+
+.profile-item {
+    display: block;
+    padding: 0.65rem 1rem;
+    color: var(--green-main) !important;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.profile-item:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.profile-user-info {
+    color: var(--green-main);
 }
 
 /* ===================================================== */
@@ -868,6 +955,12 @@ main {
 @media (max-width: 900px) {
     header {
         flex-wrap: wrap;
+        /* "space-between" espalharia hambúrguer/idioma/login em 3 espaços
+           iguais; com "flex-start" + margin-left:auto no idioma (abaixo),
+           só um respiro empurra idioma+login juntos pra direita, como
+           busca+login ficavam agrupados antes. */
+        justify-content: flex-start;
+        gap: 0.6rem;
     }
 
     .hamburger {
@@ -899,18 +992,20 @@ main {
         border-bottom: none;
     }
 
+    /* A busca some em telas pequenas; o botão de login (único filho visível
+       que sobra) passa a participar direto do flex do header via
+       display:contents, sem precisar do wrapper .nav-right. */
+    .search-bar {
+        display: none;
+    }
+
     .nav-right {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        flex-wrap: nowrap;
+        display: contents;
+    }
+
+    .btn-signup,
+    .profile-menu {
         order: 2;
-        /* flex-basis 0 (não "auto") faz o algoritmo de quebra de linha
-           considerar este item como "cabe sempre antes de crescer",
-           em vez de usar a largura do conteúdo (busca + login) para
-           decidir se quebra para uma linha própria. */
-        flex: 1 1 0;
-        min-width: 0;
     }
 
     header.menu-open nav {
@@ -933,52 +1028,17 @@ main {
         flex: 1 1 100%;
     }
 
+    /* No lugar da busca (escondida acima): chip compacto, igual ao
+       desktop, só que agora sempre visível na barra do cabeçalho.
+       margin-left:auto empurra idioma+login (que vem logo depois, order:2)
+       juntos pra direita, deixando só o hambúrguer solto à esquerda. */
     .lang-selector {
-        display: none;
-        order: 13;
-        width: 100%;
-        padding: 0;
-        background: none;
-        border-radius: 0;
-    }
-
-    .lang-selector .lang-btn {
-        width: 100%;
-        background: rgba(13, 85, 72, 0.95);
-        border: none;
-        border-radius: 0 0 12px 12px;
-        color: #e9dfc7;
-        padding: 0.9rem 1.2rem;
-        font-size: 1rem;
-        justify-content: flex-start;
-    }
-
-    .lang-selector .lang-list {
-        position: static;
-        background: rgba(13, 85, 72, 0.98);
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        width: 100%;
-        min-width: unset;
-    }
-
-    .lang-selector .lang-list li {
-        color: #e9dfc7;
-        padding: 0.7rem 1.2rem 0.7rem 2rem;
-    }
-
-    .lang-selector .lang-list li:hover {
-        background: rgba(194,178,128,0.2);
-    }
-
-    header.menu-open .lang-selector {
-        display: block;
+        order: 1;
+        margin-left: auto;
     }
 
     header {
         padding: 1rem 1.2rem 0;
-        gap: 0;
     }
 
     main {
@@ -1000,11 +1060,6 @@ main {
         border-left: none;
         padding-left: 0;
         text-align: center;
-    }
-
-    .search-bar {
-        min-width: 120px;
-        flex: 1 1 auto;
     }
 
     .btn-signup {
@@ -1158,4 +1213,316 @@ main {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
     }
+}
+
+/* ─── Modal de login/cadastro (copiado das páginas de cidade) ───────────── */
+
+.register-code-group {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0.9rem;
+}
+
+.register-code-input {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.3rem;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 0.35rem;
+    background: #fff;
+    color: #333;
+}
+
+.register-code-input:focus {
+    outline: none;
+    border-color: #017cff;
+    box-shadow: 0 0 0 2px rgba(1, 124, 255, 0.2);
+}
+
+.register-code-valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2) !important;
+}
+
+.register-code-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2) !important;
+}
+
+body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
+    filter: blur(3px);
+    transition: filter 0.2s ease;
+}
+
+.login-modal-overlay,
+.register-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1500;
+}
+
+.login-modal-overlay.open,
+.register-modal-overlay.open {
+    display: flex;
+}
+
+.login-modal {
+    width: min(420px, 92%);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 18px;
+    padding: 2rem 1.8rem;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    position: relative;
+}
+
+.login-modal__image {
+    width: 100%;
+    max-width: 240px;
+    display: block;
+    margin: 0 auto 1rem;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.login-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.login-modal__title {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+    font-weight: 800;
+}
+
+.login-modal__close {
+    background: transparent;
+    border: none;
+    font-size: 1.35rem;
+    cursor: pointer;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.login-modal__form {
+    display: grid;
+    gap: 1rem;
+}
+
+.login-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.register-step {
+    display: none;
+}
+
+.register-step.active {
+    display: block;
+}
+
+.login-modal__field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.75);
+}
+
+.login-modal__field input,
+.login-modal__field select {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s ease;
+}
+
+.login-modal__field--password .login-modal__password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.login-modal__field--password input {
+    padding-left: 2.5rem;
+}
+
+.login-modal__toggle-password {
+    position: absolute;
+    top: 50%;
+    left: 0.65rem;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-modal__toggle-password:hover {
+    color: rgba(0, 0, 0, 0.85);
+}
+
+.login-modal__field input:focus {
+    border-color: rgba(0, 77, 140, 0.8);
+}
+
+.login-modal__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.login-modal__resend {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.register-resend-button {
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    border: none;
+    background: rgba(11, 77, 139, 0.9);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.register-resend-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.register-resend-button:not(:disabled):hover {
+    background: rgba(11, 77, 139, 1);
+}
+
+.login-modal__actions--row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.login-modal__submit,
+.login-modal__next,
+.login-modal__back {
+    padding: 0.85rem;
+    border-radius: 999px;
+    border: none;
+    background: rgba(11, 77, 139, 0.95);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.login-modal__submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-modal__submit:hover,
+.login-modal__next:hover,
+.login-modal__back:hover {
+    background: rgba(11, 77, 139, 1);
+}
+
+.login-modal__next.loading {
+    position: relative;
+    cursor: wait;
+    opacity: 0.85;
+    padding-right: 2.5rem;
+}
+
+.login-modal__next.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-top-color: transparent;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    animation: login-button-spinner 0.8s linear infinite;
+}
+
+@keyframes login-button-spinner {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+.login-modal__back {
+    background: rgba(0, 0, 0, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.login-modal__back:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.login-modal__forgot {
+    background: transparent;
+    border: none;
+    color: rgba(0, 0, 0, 0.7);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    align-self: flex-start;
+}
+
+.login-modal__forgot.loading {
+    position: relative;
+    opacity: 0.75;
+    cursor: wait;
+}
+
+.login-modal__forgot.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -0.25rem;
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 2px solid rgba(0, 0, 0, 0.35);
+    border-top-color: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    animation: login-button-spinner 0.8s linear infinite;
+}
+
+.login-modal__switch {
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.login-modal__switch button {
+    background: none;
+    border: none;
+    color: rgba(11, 77, 139, 0.95);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 700;
 }

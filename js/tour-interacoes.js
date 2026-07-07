@@ -125,16 +125,88 @@
         rejeitado: '<span class="tour-comment-status tour-comment-status-rejeitado">Não aprovado</span>'
     };
 
-    const MAX_FOTOS_AVALIACAO = 5;
+    const MAX_FOTOS_AVALIACAO = 10;
 
     function renderCommentFotos(fotos) {
         if (!Array.isArray(fotos) || !fotos.length) return '';
+        const fotosAttr = escapeHtml(JSON.stringify(fotos));
         return `
             <div class="tour-comment-fotos">
-                ${fotos.map((url) => `<img src="${escapeHtml(url)}" alt="Foto da avaliação" loading="lazy" />`).join('')}
+                ${fotos.map((url, idx) => `<img src="${escapeHtml(url)}" alt="Foto da avaliação" loading="lazy" data-fotos="${fotosAttr}" data-foto-index="${idx}" />`).join('')}
             </div>
         `;
     }
+
+    // ─── Lightbox: expandir e navegar entre as fotos de uma avaliação ─────
+
+    let lightboxFotos = [];
+    let lightboxIndex = 0;
+
+    function updateLightboxImage() {
+        const lightbox = document.getElementById('tourFotoLightbox');
+        if (!lightbox) return;
+        lightboxIndex = ((lightboxIndex % lightboxFotos.length) + lightboxFotos.length) % lightboxFotos.length;
+        const img = lightbox.querySelector('.tour-foto-lightbox-img');
+        const counter = lightbox.querySelector('.tour-foto-lightbox-counter');
+        img.src = lightboxFotos[lightboxIndex];
+        counter.textContent = `${lightboxIndex + 1} / ${lightboxFotos.length}`;
+        const isSingle = lightboxFotos.length <= 1;
+        lightbox.querySelector('.tour-foto-lightbox-prev').hidden = isSingle;
+        lightbox.querySelector('.tour-foto-lightbox-next').hidden = isSingle;
+    }
+
+    function openLightbox(fotos, startIndex) {
+        lightboxFotos = fotos;
+        lightboxIndex = startIndex;
+
+        let lightbox = document.getElementById('tourFotoLightbox');
+        if (!lightbox) {
+            lightbox = document.createElement('div');
+            lightbox.id = 'tourFotoLightbox';
+            lightbox.className = 'tour-foto-lightbox';
+            lightbox.setAttribute('role', 'dialog');
+            lightbox.setAttribute('aria-label', 'Foto da avaliação');
+            lightbox.innerHTML = `
+                <button type="button" class="tour-foto-lightbox-close" aria-label="Fechar">&times;</button>
+                <button type="button" class="tour-foto-lightbox-prev" aria-label="Foto anterior">&lsaquo;</button>
+                <img class="tour-foto-lightbox-img" alt="Foto da avaliação em tamanho ampliado" />
+                <button type="button" class="tour-foto-lightbox-next" aria-label="Próxima foto">&rsaquo;</button>
+                <span class="tour-foto-lightbox-counter"></span>
+            `;
+            const close = () => { lightbox.classList.remove('open'); };
+            lightbox.querySelector('.tour-foto-lightbox-close').addEventListener('click', close);
+            lightbox.addEventListener('click', (e) => { if (e.target === lightbox) close(); });
+            lightbox.querySelector('.tour-foto-lightbox-prev').addEventListener('click', () => {
+                lightboxIndex -= 1;
+                updateLightboxImage();
+            });
+            lightbox.querySelector('.tour-foto-lightbox-next').addEventListener('click', () => {
+                lightboxIndex += 1;
+                updateLightboxImage();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (!lightbox.classList.contains('open')) return;
+                if (e.key === 'Escape') close();
+                if (e.key === 'ArrowLeft') { lightboxIndex -= 1; updateLightboxImage(); }
+                if (e.key === 'ArrowRight') { lightboxIndex += 1; updateLightboxImage(); }
+            });
+            document.body.appendChild(lightbox);
+        }
+
+        updateLightboxImage();
+        lightbox.classList.add('open');
+    }
+
+    document.addEventListener('click', (event) => {
+        const img = event.target.closest('.tour-comment-fotos img[data-fotos]');
+        if (!img) return;
+        try {
+            const fotos = JSON.parse(img.dataset.fotos);
+            openLightbox(fotos, Number(img.dataset.fotoIndex) || 0);
+        } catch (_e) {
+            // ignore
+        }
+    });
 
     async function uploadComentarioFotos(email, comentarioId, files) {
         for (const file of files) {
@@ -193,8 +265,15 @@
                         <textarea class="tour-comment-input" placeholder="Conte como foi sua experiência..." required></textarea>
                         <label class="tour-comment-fotos-label">
                             Anexar fotos (opcional, até ${MAX_FOTOS_AVALIACAO})
-                            <input type="file" class="tour-comment-fotos-input" accept="image/*" multiple />
+                            <button type="button" class="tour-comment-fotos-btn"><i class="fa fa-camera"></i> Escolher fotos</button>
+                            <input type="file" class="tour-comment-fotos-input" accept="image/*" multiple hidden />
                         </label>
+                        <div class="tour-comment-fotos-preview"></div>
+                        <label class="tour-comment-publico-toggle">
+                            <input type="checkbox" class="tour-comment-publico-input" checked />
+                            Deixar esta avaliação pública
+                        </label>
+                        <p class="tour-comment-publico-hint">Sua avaliação será exibida publicamente para outros visitantes. Desmarque a opção acima se preferir que ela fique privada (visível só para você e para nossa equipe).</p>
                         <button type="submit" class="btn-book tour-comment-submit">Enviar avaliação</button>
                     </form>
                 `;
@@ -221,18 +300,31 @@
             });
 
             const fotosInput = form.querySelector('.tour-comment-fotos-input');
+            const fotosPreview = form.querySelector('.tour-comment-fotos-preview');
+            const fotosBtn = form.querySelector('.tour-comment-fotos-btn');
+            fotosBtn.addEventListener('click', () => fotosInput.click());
             fotosInput.addEventListener('change', () => {
                 if (fotosInput.files.length > MAX_FOTOS_AVALIACAO) {
                     notify(`Você pode anexar no máximo ${MAX_FOTOS_AVALIACAO} fotos.`, 'error');
                     fotosInput.value = '';
+                    fotosPreview.innerHTML = '';
+                    return;
                 }
+                fotosPreview.innerHTML = Array.from(fotosInput.files || [])
+                    .map((file) => `<img src="${URL.createObjectURL(file)}" alt="Prévia da foto selecionada" />`)
+                    .join('');
             });
 
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const comentario = form.querySelector('.tour-comment-input').value.trim();
                 const nota = Number(ratingEl.dataset.value) || null;
+                const publico = form.querySelector('.tour-comment-publico-input').checked;
                 if (!comentario) return;
+                if (!nota) {
+                    notify('Selecione ao menos 1 estrela para enviar a avaliação.', 'error');
+                    return;
+                }
 
                 const submitBtn = form.querySelector('.tour-comment-submit');
                 submitBtn.disabled = true;
@@ -240,7 +332,7 @@
                     const result = await apiFetch('/add_tour_comentario', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, tour_id: tourId, comentario, nota })
+                        body: JSON.stringify({ email, tour_id: tourId, comentario, nota, publico })
                     });
                     if (result && result.success) {
                         const files = Array.from(fotosInput.files || []).slice(0, MAX_FOTOS_AVALIACAO);
@@ -265,6 +357,10 @@
         }
     }
 
+    // tourId -> { card, toggleBtn, panel }, para permitir abrir o painel de
+    // avaliação de um tour específico a partir de fora (ex.: Minhas Reservas).
+    const panelsByTourId = new Map();
+
     function attachCommentsToggle(card, tourId) {
         if (!tourId || !card || card.dataset.commentsAttached === 'true') return;
         const actions = card.querySelector('.rio-tour-actions');
@@ -282,20 +378,72 @@
         panel.hidden = true;
 
         let loaded = false;
-        toggleBtn.addEventListener('click', () => {
-            panel.hidden = !panel.hidden;
-            if (!panel.hidden && !loaded) {
+        const openPanel = () => {
+            panel.hidden = false;
+            if (!loaded) {
                 loaded = true;
                 renderCommentsPanel(panel, tourId);
+            }
+        };
+        toggleBtn.addEventListener('click', () => {
+            if (panel.hidden) {
+                openPanel();
+            } else {
+                panel.hidden = true;
             }
         });
 
         actions.appendChild(toggleBtn);
         actions.insertAdjacentElement('afterend', panel);
+
+        panelsByTourId.set(String(tourId), { card, toggleBtn, panel, openPanel });
+    }
+
+    // Abre (se ainda fechado) e rola até o painel de avaliação de um tour,
+    // usado pelo botão "Avaliar" em Minhas Reservas e pelo aviso pós-tour.
+    function openReviewPanel(tourId) {
+        const entry = panelsByTourId.get(String(tourId));
+        if (!entry) return false;
+        if (entry.panel.hidden) entry.openPanel();
+        entry.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return true;
+    }
+
+    // Aviso não-bloqueante (não usa alert/confirm) perguntando se o cliente
+    // quer avaliar um tour finalizado. Some sozinho ao escolher qualquer opção.
+    function showReviewPromptBanner({ tourName, onAccept, onDismiss }) {
+        document.getElementById('tourReviewPromptBanner')?.remove();
+
+        const banner = document.createElement('div');
+        banner.id = 'tourReviewPromptBanner';
+        banner.className = 'tour-review-prompt';
+        banner.setAttribute('role', 'dialog');
+        banner.setAttribute('aria-label', 'Avaliar tour concluído');
+        banner.innerHTML = `
+            <p class="tour-review-prompt-text">Você concluiu o tour <strong>${escapeHtml(tourName)}</strong>! Gostaria de avaliar sua experiência?</p>
+            <div class="tour-review-prompt-actions">
+                <button type="button" class="tour-review-prompt-yes">Sim</button>
+                <button type="button" class="tour-review-prompt-no">Não</button>
+            </div>
+        `;
+
+        const remove = () => banner.remove();
+        banner.querySelector('.tour-review-prompt-yes').addEventListener('click', () => {
+            remove();
+            if (typeof onAccept === 'function') onAccept();
+        });
+        banner.querySelector('.tour-review-prompt-no').addEventListener('click', () => {
+            remove();
+            if (typeof onDismiss === 'function') onDismiss();
+        });
+
+        document.body.appendChild(banner);
     }
 
     window.TourInteracoes = {
         initRelatosLikes,
-        attachCommentsToggle
+        attachCommentsToggle,
+        openReviewPanel,
+        showReviewPromptBanner
     };
 })();

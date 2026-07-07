@@ -76,7 +76,7 @@
         return DEFAULT_ROLE_PERMISSIONS[currentRole] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
     };
 
-    // Exporta globalmente os helpers jÃ¡ definidos.
+    // Exporta globalmente os helpers já definidos.
     window.normalizeRole = normalizeRole;
     window.getCurrentUserRole = getCurrentUserRole;
     window.getCurrentRolePermissions = getCurrentRolePermissions;
@@ -157,19 +157,19 @@
             if (el) el.style.display = tabs.includes('MEUS DADOS') ? '' : 'none';
         });
 
-        // PermissÃµes funcionais adicionais
+        // Permissões funcionais adicionais
         if (!perms.managePerfis) {
             document.querySelectorAll('.profile-item--admin').forEach(el => { if (el) el.style.display = 'none'; });
         }
 
-        // SituaÃ§Ã£o de pÃ¡ginas (principal / gerenciamento)
+        // Situação de páginas (principal / gerenciamento)
         const isManagementPage = window.location.pathname.endsWith('/html/Gerenciamento.html') || window.location.pathname.endsWith('Gerenciamento.html');
         if (isManagementPage && !allowed) {
             window.location.href = window.location.origin + '/';
         }
 
         if (!pages.includes('Principal') && !isManagementPage) {
-            // se nÃ£o tiver acesso Ã  pÃ¡gina principal, remove aÃ§Ãµes de tour (sÃ³ para controle leve de UI)
+            // se não tiver acesso à página principal, remove ações de tour (só para controle leve de UI)
             document.querySelectorAll('.rio-btn-reserve, .btn-book').forEach(el => { if (el) el.style.display = 'none'; });
         }
 
@@ -218,11 +218,11 @@
         applyRoleBasedControls();
     };
 
-    // Exporta controles apÃ³s definiÃ§Ã£o para evitar acesso antecipado (TDZ).
+    // Exporta controles após definição para evitar acesso antecipado (TDZ).
     window.applyRoleBasedControls = applyRoleBasedControls;
     window.loadRolePermissions = loadRolePermissions;
 
-    // 1. DefiniÃ§Ã£o Ãºnica do endereÃ§o da API
+    // 1. Definição única do endereço da API
     const API_BASE_URL = 'https://api-tour.exksvol.com';
 
     // Disponibiliza globalmente para outros scripts e IIFEs
@@ -234,7 +234,7 @@
         const url = path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
         const defaultOptions = {
             headers: {
-                // NÃ£o definir Content-Type por padrÃ£o para evitar preflight se possÃ­vel
+                // Não definir Content-Type por padrão para evitar preflight se possível
                 ...(options.headers || {})
             },
             ...options
@@ -276,7 +276,7 @@
         }
     };
 
-    // Expor apiFetch globalmente para evitar erro "apiFetch is not defined" em outros mÃ³dulos
+    // Expor apiFetch globalmente para evitar erro "apiFetch is not defined" em outros módulos
     window.apiFetch = apiFetch;
 
     // Award notification: supports either the corner "toast" markup (#awardToast, used by
@@ -444,6 +444,8 @@
                 window.syncMobileProfileUserView?.();
             }
         }
+
+        window.updateProfileAvatar?.();
     };
 
     // Exposto para uso em callbacks no segundo IIFE.
@@ -461,7 +463,7 @@
         loadRolePermissions().then(() => {
             updateProfileMenuUI();
         }).catch((error) => {
-            console.warn('Erro ao carregar permissÃµes de role:', error);
+            console.warn('Erro ao carregar permissões de role:', error);
             updateProfileMenuUI();
         });
 
@@ -505,11 +507,12 @@
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userEmail');
                 localStorage.removeItem('userName');
+                localStorage.removeItem('userPhoto');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('currentRolePermissions');
 
-                // Remove possÃ­veis variÃ¡veis de UI internas (cache temporÃ¡rio, etc.)
-                // e forÃ§a reload para limpar tudo da pÃ¡gina.
+                // Remove possíveis variáveis de UI internas (cache temporário, etc.)
+                // e força reload para limpar tudo da página.
                 menu.classList.remove('open');
                 button.setAttribute('aria-expanded', 'false');
 
@@ -655,7 +658,7 @@
         document.dispatchEvent(ev);
     };
 
-    // Expor para a primeira IIFE poder re-disparar apÃ³s carregar tours do banco
+    // Expor para a primeira IIFE poder re-disparar após carregar tours do banco
     window.dispatchLanguageChange = dispatchLanguageChange;
     window.getCurrentLang = getCurrentLang;
 
@@ -1563,7 +1566,7 @@
         const verifyConfirmationCodeApi = async (email, code) => {
             const fetchFn = typeof apiFetch !== 'undefined' ? apiFetch : window.apiFetch;
         if (typeof fetchFn === 'undefined') {
-            throw new Error('apiFetch nÃ£o encontrado.');
+            throw new Error('apiFetch não encontrado.');
         }
 
         const payload = await fetchFn('/verify_confirmation_code', {
@@ -1864,22 +1867,22 @@
         const resendBtn = overlay.querySelector('.register-resend-button');
         resendBtn?.addEventListener('click', () => {
             if (!pendingRegisterEmail) {
-                alert('E-mail nÃ£o encontrado. RefaÃ§a o passo anterior.');
+                alert('E-mail não encontrado. Refaça o passo anterior.');
                 return;
             }
 
             sendConfirmationCodeApi(pendingRegisterEmail)
                 .then(({ ok, payload }) => {
                     if (!ok) {
-                        alert(payload.message || 'Falha ao reenviar cÃ³digo.');
+                        alert(payload.message || 'Falha ao reenviar código.');
                         return;
                     }
                     alert(strings.register_code_sent);
                     startResendCountdown(60);
                 })
                 .catch((err) => {
-                    console.error('Erro ao reenviar cÃ³digo de confirmaÃ§Ã£o:', err);
-                    alert('Erro ao reenviar cÃ³digo. Tente novamente.');
+                    console.error('Erro ao reenviar código de confirmação:', err);
+                    alert('Erro ao reenviar código. Tente novamente.');
                 });
         });
 
@@ -1905,7 +1908,7 @@
             }
 
             if (!pendingRegisterEmail) {
-                alert('Email nÃ£o confirmado. Volte ao primeiro passo.');
+                alert('Email não confirmado. Volte ao primeiro passo.');
                 return;
             }
 
@@ -1920,8 +1923,8 @@
                     setCodeInputsState('valid');
                     updateSubmitButtonState();
                 } catch (err) {
-                    console.error('Erro na verificaÃ§Ã£o de cÃ³digo:', err);
-                    alert('Erro ao verificar o cÃ³digo. Tente novamente.');
+                    console.error('Erro na verificação de código:', err);
+                    alert('Erro ao verificar o código. Tente novamente.');
                     return;
                 }
             }
@@ -2135,6 +2138,7 @@
                     const name = data.name || email;
                     localStorage.setItem('userRole', role);
                     localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userPhoto', data.foto_perfil || await window.getGravatarUrl(email));
                     localStorage.setItem('userName', name);
                     if (data.phone) {
                         localStorage.setItem('userPhone', data.phone);
@@ -2171,7 +2175,7 @@
                         window.location.reload();
                     }
                 } catch (error) {
-                    console.error('Erro na conexÃ£o:', error);
+                    console.error('Erro na conexão:', error);
 
                     const isOnline = navigator.onLine;
                     const loginOverlay = document.querySelector('.login-modal-overlay');
@@ -2264,7 +2268,7 @@
         const lang = getCurrentLang();
         const strings = translations[lang] || translations.pt;
         const fallbackFooterInfoTitle = window.translationCatalog?.fallbackTexts?.footerInfoTitle || 'Informações';
-        const fallbackFooterInfoBody = window.translationCatalog?.fallbackTexts?.footerInfoBody || '<p>Selecione uma opÃ§Ã£o para ver mais informações.</p>';
+        const fallbackFooterInfoBody = window.translationCatalog?.fallbackTexts?.footerInfoBody || '<p>Selecione uma opção para ver mais informações.</p>';
         const titleEl = document.querySelector('.footer-info-title') || document.querySelector('.rio-footer-card-title');
         const body = document.getElementById('footerInfoBody') || document.getElementById('rioFooterCardBody');
 
@@ -2429,6 +2433,9 @@
                     window.startTourSliders();
                 }
 
+                openReviewFromUrlIfNeeded();
+                checkPendingTourReviewPrompt();
+
                 return tours;
             } catch (error) {
                 console.warn('Erro ao buscar tours no backend:', endpoint, error);
@@ -2523,6 +2530,45 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+    // Foto de perfil padrão do usuário: usa o Gravatar associado ao email
+    // (mesmo serviço usado por WordPress/GitHub — hash SHA-256 do email, sem
+    // precisar de nenhuma API/consentimento do provedor de email). Se o
+    // usuário nunca configurou um Gravatar, cai num avatar gerado
+    // (identicon) em vez de imagem quebrada.
+    const getGravatarUrl = async (email, size = 80) => {
+        const normalized = (email || '').trim().toLowerCase();
+        const data = new TextEncoder().encode(normalized);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
+        return `https://www.gravatar.com/avatar/${hashHex}?s=${size}&d=identicon`;
+    };
+    window.getGravatarUrl = getGravatarUrl;
+
+    const updateProfileAvatar = async () => {
+        const button = document.querySelector('.profile-btn');
+        if (!button) return;
+        const userRole = localStorage.getItem('userRole');
+        if (!userRole) {
+            button.innerHTML = '<i class="fa fa-user-circle"></i>';
+            return;
+        }
+        let userPhoto = localStorage.getItem('userPhoto');
+        // Backfill para sessões abertas antes deste recurso existir.
+        if (!userPhoto) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                userPhoto = await getGravatarUrl(userEmail);
+                localStorage.setItem('userPhoto', userPhoto);
+            }
+        }
+        if (userPhoto) {
+            button.innerHTML = `<img src="${escapeHtml(userPhoto)}" alt="Foto de perfil" class="profile-btn-avatar" />`;
+        } else {
+            button.innerHTML = '<i class="fa fa-user-circle"></i>';
+        }
+    };
+    window.updateProfileAvatar = updateProfileAvatar;
+
     const showGlobalNotification = (message, type = 'info', options = {}) => {
         const currentLang = typeof window.getCurrentLanguage === 'function'
             ? window.getCurrentLanguage()
@@ -2572,7 +2618,7 @@
                         ></video>
                     `;
                 } else {
-                    media.innerHTML = `<img src="${escapeHtml(gifUrl)}" alt="ConfirmaÃ§Ã£o" loading="lazy">`;
+                    media.innerHTML = `<img src="${escapeHtml(gifUrl)}" alt="Confirmação" loading="lazy">`;
                 }
                 media.hidden = false;
             } else {
@@ -2597,6 +2643,140 @@
     };
 
     window.showAppNotification = showGlobalNotification;
+
+    // ─── Aviso pós-tour para avaliar (e botão "Avaliar" em Minhas Reservas) ──
+    const REVIEW_PROMPT_DISMISSED_KEY = 'reviewPromptDismissedIds';
+    const FINALIZED_STATUS_REGEX = /finalizado|finalized|terminado|terminé|completed|concluído|concluido|concluída|concluida|conclu|完了|已完成/i;
+
+    const getDismissedReviewPromptIds = () => {
+        try {
+            return new Set(JSON.parse(localStorage.getItem(REVIEW_PROMPT_DISMISSED_KEY) || '[]'));
+        } catch {
+            return new Set();
+        }
+    };
+
+    const markReviewPromptDismissed = (id) => {
+        const dismissed = getDismissedReviewPromptIds();
+        dismissed.add(String(id));
+        try {
+            localStorage.setItem(REVIEW_PROMPT_DISMISSED_KEY, JSON.stringify(Array.from(dismissed)));
+        } catch {
+            // ignore
+        }
+    };
+
+    const findTourIdByName = (tourName) => {
+        const tours = Array.isArray(getTours()) ? getTours() : [];
+        const normalizedTarget = normalizeTourKey(tourName);
+        const match = tours.find((t) => normalizeTourKey(t.name || t.nome_tour) === normalizedTarget);
+        return match ? match.id : null;
+    };
+
+    // Cada cidade tem sua própria página; um tour pode não estar nos cards
+    // desta página (ex.: usuário está em Salvador, mas a avaliação pendente é
+    // de um tour de Lençóis). Nesse caso, navega até a página certa e pede
+    // pra ela abrir o painel de avaliação assim que os tours carregarem.
+    const CITY_PAGE_BY_CIDADE = {
+        'rio de janeiro': 'Riodejaneiro.html',
+        'lencois': 'Lencoismaranhenses.html',
+        'sao luis': 'Saoluísdomaranhao.html',
+        'salvador': 'Salvador.html'
+    };
+
+    const findTourByName = (tourName) => {
+        const tours = Array.isArray(getTours()) ? getTours() : [];
+        const normalizedTarget = normalizeTourKey(tourName);
+        return tours.find((t) => normalizeTourKey(t.name || t.nome_tour) === normalizedTarget) || null;
+    };
+
+    const goToTourReview = (tourName) => {
+        const tour = findTourByName(tourName);
+        if (!tour || tour.id == null) return;
+
+        const abertoAqui = window.TourInteracoes?.openReviewPanel?.(tour.id);
+        if (abertoAqui) return;
+
+        const paginaAlvo = CITY_PAGE_BY_CIDADE[normalizeTourKey(tour.cidade || '')];
+        if (!paginaAlvo) return;
+
+        const estaEmHtml = (window.location.pathname || '').includes('/html/');
+        const base = estaEmHtml ? paginaAlvo : `html/${paginaAlvo}`;
+        window.location.href = `${base}?avaliar_tour=${tour.id}`;
+    };
+
+    // Ao chegar numa página vinda desse redirecionamento (?avaliar_tour=ID),
+    // abre o painel de avaliação assim que os tours/cards estiverem prontos.
+    const openReviewFromUrlIfNeeded = () => {
+        const params = new URLSearchParams(window.location.search);
+        const tourId = params.get('avaliar_tour');
+        if (!tourId) return;
+
+        window.TourInteracoes?.openReviewPanel?.(Number(tourId));
+
+        params.delete('avaliar_tour');
+        const query = params.toString();
+        const novaUrl = window.location.pathname + (query ? `?${query}` : '') + window.location.hash;
+        window.history.replaceState(null, '', novaUrl);
+    };
+
+    const checkPendingTourReviewPrompt = async () => {
+        const email = (localStorage.getItem('userEmail') || '').trim();
+        if (!email) return;
+
+        let data = null;
+        const endpoints = [
+            `${API_BASE_URL}/get_meus_agendamentos?email=${encodeURIComponent(email)}`,
+            `${API_BASE_URL}/get_agendamentos?email=${encodeURIComponent(email)}`
+        ];
+        for (const url of endpoints) {
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    data = await res.json();
+                    break;
+                }
+            } catch {
+                // tenta próximo endpoint
+            }
+        }
+        if (!data) return;
+
+        const reservations = Array.isArray(data) ? data : (Array.isArray(data?.agendamentos) ? data.agendamentos : []);
+        const dismissed = getDismissedReviewPromptIds();
+        const finalizadas = reservations.filter((r) => (
+            r.id != null && !dismissed.has(String(r.id)) && FINALIZED_STATUS_REGEX.test(String(r.status || ''))
+        ));
+
+        for (const reserva of finalizadas) {
+            const tourId = findTourIdByName(reserva.tour);
+            if (tourId == null) {
+                markReviewPromptDismissed(reserva.id);
+                continue;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/get_tour_comentarios/${tourId}?email=${encodeURIComponent(email)}`);
+                const info = res.ok ? await res.json() : null;
+                if (!info || !info.success || info.ja_avaliou || !info.pode_avaliar) {
+                    markReviewPromptDismissed(reserva.id);
+                    continue;
+                }
+            } catch {
+                continue; // tenta de novo na próxima visita à página
+            }
+
+            window.TourInteracoes?.showReviewPromptBanner?.({
+                tourName: reserva.tour,
+                onAccept: () => {
+                    markReviewPromptDismissed(reserva.id);
+                    goToTourReview(reserva.tour);
+                },
+                onDismiss: () => markReviewPromptDismissed(reserva.id)
+            });
+            break; // só um aviso por vez
+        }
+    };
 
     const openMyReservationsModal = async () => {
         const currentLang = typeof window.getCurrentLanguage === 'function'
@@ -2644,7 +2824,7 @@
         const email = (localStorage.getItem('userEmail') || '').trim();
         const normalizedEmail = email.toLowerCase();
         if (!normalizedEmail) {
-            listEl.innerHTML = '<p class="my-reservations-empty">NÃ£o foi possÃ­vel identificar o usuÃ¡rio.</p>';
+            listEl.innerHTML = '<p class="my-reservations-empty">Não foi possível identificar o usuário.</p>';
             return;
         }
 
@@ -2678,7 +2858,7 @@
         }
 
         if (!data) {
-            listEl.innerHTML = '<p class="my-reservations-empty">NÃ£o foi possÃ­vel carregar as reservas. Tente novamente mais tarde.</p>';
+            listEl.innerHTML = '<p class="my-reservations-empty">Não foi possível carregar as reservas. Tente novamente mais tarde.</p>';
             return;
         }
 
@@ -2686,7 +2866,7 @@
             ? data
             : (Array.isArray(data?.agendamentos) ? data.agendamentos : []);
 
-        // SeguranÃ§a extra no frontend: garante exibiÃ§Ã£o apenas das reservas do usuÃ¡rio atual.
+        // Segurança extra no frontend: garante exibição apenas das reservas do usuário atual.
         const userReservations = rawReservations.filter((reservation) => {
             const reservationEmail = String(
                 reservation?.email || reservation?.cliente_email || reservation?.user_email || ''
@@ -2752,8 +2932,8 @@
             const showActions = !(isCancelled || isFinalized);
             return `
             <div class="my-reservations-item" data-reservation-id="${escapeHtml(String(r.id || ''))}">
-                <strong class="my-reservations-tour">${escapeHtml(r.tour || 'â€”')}</strong>
-                <span class="my-reservations-date">${ui.reservation_list_date_label || 'Data'}: ${escapeHtml(r.data || 'â€”')}</span>
+                <strong class="my-reservations-tour">${escapeHtml(r.tour || '—')}</strong>
+                <span class="my-reservations-date">${ui.reservation_list_date_label || 'Data'}: ${escapeHtml(r.data || '—')}</span>
                 ${r.hora ? `<span class="my-reservations-detail">${ui.reservation_list_time_label || 'Hora'}: ${escapeHtml(r.hora)}</span>` : ''}
                 ${r.idioma ? `<span class="my-reservations-detail">${ui.reservation_list_language_label || 'Idioma'}: ${escapeHtml(r.idioma)}</span>` : ''}
                 ${r.qtd ? `<span class="my-reservations-detail">${ui.reservation_list_people_label || 'Pessoas'}: ${escapeHtml(String(r.qtd))}</span>` : ''}
@@ -2764,10 +2944,22 @@
                         <button type="button" class="btn-edit-reservation" data-reservation-id="${escapeHtml(String(r.id || ''))}" data-reservation-tour="${escapeHtml(String(r.tour || ''))}" data-reservation-date="${escapeHtml(String(r.data || ''))}" data-reservation-hour="${escapeHtml(String(r.hora || ''))}" data-reservation-people="${escapeHtml(String(r.qtd || '1'))}" data-reservation-language="${escapeHtml(String(r.idioma || r.language || ''))}" data-reservation-modality="${escapeHtml(String(r.modalidade || r.modality || ''))}" data-reservation-guide="${escapeHtml(String(r.guia || r.guide || ''))}" data-reservation-name="${escapeHtml(String(r.nome || r.name || ''))}" data-reservation-phone="${escapeHtml(String(r.celular || r.telefone || r.phone || ''))}" data-reservation-email="${escapeHtml(String(r.email || ''))}" data-reservation-status="${escapeHtml(String(r.status || 'Pendente'))}">${ui.action_edit || 'Editar'}</button>
                         <button type="button" class="btn-cancel-reservation" data-reservation-id="${escapeHtml(String(r.id || ''))}">${ui.action_cancel || 'Cancelar'}</button>
                     </div>
-                ` : ''}
+                ` : (isFinalized ? `
+                    <div class="my-reservations-actions">
+                        <button type="button" class="btn-review-reservation" data-reservation-tour="${escapeHtml(String(r.tour || ''))}">${ui.action_review || 'Avaliar'}</button>
+                    </div>
+                ` : '')}
             </div>
         `;
         }).join('');
+
+        listEl.querySelectorAll('.btn-review-reservation').forEach((button) => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                modal.classList.remove('open');
+                goToTourReview(button.getAttribute('data-reservation-tour') || '');
+            });
+        });
 
         const parseDisplayDateToIso = (displayDate) => {
             const value = String(displayDate || '').trim();
@@ -2899,7 +3091,7 @@
             return overlayEl;
         };
 
-        // AÃ§Ãµes de ediÃ§Ã£o e cancelamento de reservas
+        // Ações de edição e cancelamento de reservas
         listEl.querySelectorAll('.btn-cancel-reservation').forEach((button) => {
             button.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -2972,11 +3164,12 @@
     };
 
     window.openMyReservationsModal = openMyReservationsModal;
+    window.fetchToursFromBackend = fetchToursFromBackend;
 
     const openUserDataModal = async () => {
         const tabs = (getCurrentRolePermissions()?.tabs || []).map(tab => String(tab).toUpperCase());
         if (!tabs.includes('MEUS DADOS')) {
-            showGlobalNotification('Seu perfil nÃ£o tem permissÃ£o para acessar Meus Dados.', 'error');
+            showGlobalNotification('Seu perfil não tem permissão para acessar Meus Dados.', 'error');
             return;
         }
 
@@ -2997,6 +3190,13 @@
                     <h3 data-i18n="user_data_title">${strings.user_data_title || 'Meus Dados'}</h3>
                     <div class="user-data-loading" hidden data-i18n="user_data_loading">${strings.user_data_loading || 'Carregando dados...'}</div>
                     <form class="user-data-form">
+                        <div class="user-data-photo">
+                            <img class="user-data-photo-preview" alt="Foto de perfil" src="" />
+                            <label class="user-data-photo-upload">
+                                <span data-i18n="user_data_change_photo">${strings.user_data_change_photo || 'Alterar foto'}</span>
+                                <input type="file" name="foto" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                            </label>
+                        </div>
                         <label><span data-i18n="user_data_name">${strings.user_data_name || 'Nome'}</span><input name="nome" required /></label>
                         <label><span data-i18n="user_data_surname">${strings.user_data_surname || 'Sobrenome'}</span><input name="sobrenome" required /></label>
                         <label><span data-i18n="user_data_phone">${strings.user_data_phone || 'Telefone'}</span><input name="celular" /></label>
@@ -3020,12 +3220,52 @@
                 if (event.target === modal) close();
             });
 
+            const photoInput = modal.querySelector('input[name="foto"]');
+            photoInput?.addEventListener('change', async () => {
+                const file = photoInput.files?.[0];
+                if (!file) return;
+                const email = localStorage.getItem('userEmail');
+                if (!email) return;
+
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('imagem', file);
+
+                const endpointsUploadFoto = [
+                    `${API_BASE_URL}/upload_user_foto`,
+                    'http://127.0.0.1:5000/upload_user_foto',
+                    'https://api.exksvol.com/upload_user_foto'
+                ];
+
+                let uploaded = false;
+                for (const endpoint of endpointsUploadFoto) {
+                    try {
+                        const response = await fetch(endpoint, { method: 'POST', body: formData });
+                        if (!response.ok) continue;
+                        const result = await response.json();
+                        if (result.success && result.foto_perfil) {
+                            localStorage.setItem('userPhoto', result.foto_perfil);
+                            modal.querySelector('.user-data-photo-preview').src = result.foto_perfil;
+                            window.updateProfileAvatar?.();
+                            uploaded = true;
+                            break;
+                        }
+                    } catch (err) {
+                        console.warn('Upload de foto falhou em', endpoint, err);
+                    }
+                }
+
+                if (!uploaded) {
+                    showGlobalNotification('Não foi possível enviar a foto.', 'error');
+                }
+            });
+
             const form = modal.querySelector('.user-data-form');
             form?.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const email = localStorage.getItem('userEmail');
                 if (!email) {
-                    showGlobalNotification('Erro: usuÃ¡rio nÃ£o identificado.', 'error');
+                    showGlobalNotification('Erro: usuário não identificado.', 'error');
                     return;
                 }
 
@@ -3080,7 +3320,7 @@
                     }
                     close();
                 } else {
-                    showGlobalNotification('NÃ£o foi possÃ­vel atualizar seus dados.', 'error');
+                    showGlobalNotification('Não foi possível atualizar seus dados.', 'error');
                 }
             });
 
@@ -3110,6 +3350,8 @@
         form.elements.celular.value = localStorage.getItem('userPhone') || '';
         form.elements.pais_origem.value = localStorage.getItem('userPais') || '';
         form.elements.genero.value = localStorage.getItem('userGenero') || '';
+        const previewImg = modal.querySelector('.user-data-photo-preview');
+        if (previewImg) previewImg.src = localStorage.getItem('userPhoto') || '';
 
         const email = localStorage.getItem('userEmail');
         if (email) {
@@ -3131,18 +3373,22 @@
                     form.elements.celular.value = data.celular || '';
                     form.elements.pais_origem.value = data.pais_origem || '';
                     form.elements.genero.value = data.genero || '';
+                    if (data.foto_perfil && previewImg) previewImg.src = data.foto_perfil;
 
                     localStorage.setItem('userName', data.nome || email);
                     localStorage.setItem('userPhone', data.celular || '');
                     localStorage.setItem('userSobrenome', data.sobrenome || '');
                     localStorage.setItem('userPais', data.pais_origem || '');
                     localStorage.setItem('userGenero', data.genero || '');
+                    if (data.foto_perfil) {
+                        localStorage.setItem('userPhoto', data.foto_perfil);
+                    }
                     if (typeof window.updateProfileMenuUI === 'function') {
                         window.updateProfileMenuUI();
                     }
                     break;
                 } catch (err) {
-                    console.warn('Leitura de dados do usuÃ¡rio falhou em', endpoint, err);
+                    console.warn('Leitura de dados do usuário falhou em', endpoint, err);
                 }
             }
         }
@@ -3171,8 +3417,26 @@
             reservationModal.classList.add('hidden');
         };
 
+        const matchTourByName = (tourName) => getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tourName));
+
+        // Tours com canal_reserva="whatsapp" pulam o formulário do site: o botão
+        // "Reservar agora" abre direto uma conversa no WhatsApp com o tour já
+        // identificado na mensagem, sem exigir login.
+        const openWhatsAppReservation = (tourName) => {
+            const phone = '5521970018590';
+            const mensagem = `Olá! Gostaria de realizar o tour "${tourName}".`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(mensagem)}`, '_blank', 'noopener');
+        };
+
         const openReservationModal = (tourName, languageText, meetingPoint) => {
             if (!reservationModal) return;
+
+            const matchedTour = matchTourByName(tourName);
+            if ((matchedTour?.canal_reserva || 'web').toLowerCase() === 'whatsapp') {
+                openWhatsAppReservation(tourName);
+                return;
+            }
+
             const userRole = localStorage.getItem('userRole');
             const userEmail = localStorage.getItem('userEmail');
             const userName = localStorage.getItem('userName');
@@ -3223,7 +3487,6 @@
                 }
             }
 
-            const matchedTour = getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tourName));
             const horarios = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
 
             if (reservationTime && reservationTimeField) {
@@ -3329,7 +3592,7 @@
                 const selectedTime = reservationTime ? reservationTime.value : '';
 
                 if (!tour || !clientName || !date || !quantity || !language || !phone || !email) {
-                    showGlobalNotification('Preencha todos os campos obrigatÃ³rios para concluir a reserva.', 'error');
+                    showGlobalNotification('Preencha todos os campos obrigatórios para concluir a reserva.', 'error');
                     return;
                 }
 
@@ -3340,7 +3603,7 @@
 
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(email)) {
-                    showGlobalNotification('Por favor, insira um email vÃ¡lido.', 'error');
+                    showGlobalNotification('Por favor, insira um email válido.', 'error');
                     return;
                 }
 
@@ -3351,7 +3614,7 @@
 
                 const phoneRegex = /^[0-9()+\-\s]+$/;
                 if (!phoneRegex.test(phone)) {
-                    showGlobalNotification('O campo celular sÃ³ permite nÃºmeros, +, -, ( ) e espaÃ§os.', 'error');
+                    showGlobalNotification('O campo celular só permite números, +, -, ( ) e espaços.', 'error');
                     return;
                 }
 
