@@ -51,9 +51,12 @@
         if (!button) return;
         const userRole = localStorage.getItem('userRole');
         if (!userRole) {
-            button.innerHTML = '<i class="fa fa-user-circle"></i>';
+            const strings = translations[getCurrentLang()] || translations.pt || {};
+            button.classList.add('profile-btn--login');
+            button.textContent = strings.profile_login || 'Entrar';
             return;
         }
+        button.classList.remove('profile-btn--login');
         let userPhoto = localStorage.getItem('userPhoto');
         if (!userPhoto) {
             const userEmail = localStorage.getItem('userEmail');
@@ -83,6 +86,7 @@
             dropdown.innerHTML = `
                 <div class="profile-user-info" style="padding:8px 12px; font-weight: 600; border-bottom: 1px solid #e0e0e0;"><span data-i18n="profile_hello">Olá</span>, ${escapeHtml(userName)}</div>
                 ${showManagement ? `<a href="#" class="profile-item profile-item--admin" data-profile-action="manage">${strings.profile_manage || 'Gerenciamento'}</a>` : ''}
+                <a href="#" class="profile-item" data-profile-action="my-reservations" data-i18n="profile_my_reservations">${strings.profile_my_reservations || 'Minhas Reservas'}</a>
                 <a href="#" class="profile-item" data-profile-action="logout" data-i18n="profile_logout">${strings.profile_logout || 'Sair'}</a>
             `;
         } else {
@@ -96,6 +100,149 @@
         window.updateProfileAvatar?.();
     };
     window.updateProfileMenuUI = window.updateProfileMenuUI || updateProfileMenuUI;
+
+    // Modal "Minhas Reservas" — versão simplificada da que existe nas páginas
+    // de cidade (Riodejaneiro.js/site-shell.js): mostra a lista e permite
+    // cancelar, mas não editar (o formulário de edição depende da tela de
+    // reserva de uma cidade específica, que a index não tem).
+    const openMyReservationsModal = async () => {
+        const strings = translations[getCurrentLang()] || translations.pt || {};
+
+        let modal = document.getElementById('myReservationsModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'myReservationsModal';
+            modal.className = 'my-reservations-overlay';
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-label', strings.reservation_title || 'Minhas Reservas');
+            modal.innerHTML = `
+                <div class="my-reservations-modal">
+                    <button type="button" class="my-reservations-close" aria-label="Fechar">&times;</button>
+                    <h2 class="my-reservations-title">${strings.reservation_title || 'Minhas Reservas'}</h2>
+                    <div class="my-reservations-list"></div>
+                </div>
+            `;
+            modal.querySelector('.my-reservations-close').addEventListener('click', () => {
+                modal.classList.remove('open');
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('open');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('open')) modal.classList.remove('open');
+            });
+            document.body.appendChild(modal);
+        }
+
+        const listEl = modal.querySelector('.my-reservations-list');
+        modal.classList.add('open');
+        listEl.innerHTML = '<p class="my-reservations-empty">Carregando reservas...</p>';
+
+        const email = (localStorage.getItem('userEmail') || '').trim();
+        const normalizedEmail = email.toLowerCase();
+        if (!normalizedEmail) {
+            listEl.innerHTML = '<p class="my-reservations-empty">Não foi possível identificar o usuário.</p>';
+            return;
+        }
+
+        let data = null;
+        try {
+            data = await apiFetch(`/get_meus_agendamentos?email=${encodeURIComponent(email)}`);
+        } catch {
+            try {
+                data = await apiFetch(`/get_agendamentos?email=${encodeURIComponent(email)}`);
+            } catch {
+                data = null;
+            }
+        }
+
+        if (!data) {
+            listEl.innerHTML = '<p class="my-reservations-empty">Não foi possível carregar as reservas. Tente novamente mais tarde.</p>';
+            return;
+        }
+
+        const rawReservations = Array.isArray(data)
+            ? data
+            : (Array.isArray(data?.agendamentos) ? data.agendamentos : []);
+
+        // Segurança extra no frontend: garante exibição apenas das reservas do usuário atual.
+        const userReservations = rawReservations.filter((reservation) => {
+            const reservationEmail = String(
+                reservation?.email || reservation?.cliente_email || reservation?.user_email || ''
+            ).trim().toLowerCase();
+            return !reservationEmail || reservationEmail === normalizedEmail;
+        });
+
+        if (!userReservations.length) {
+            listEl.innerHTML = '<p class="my-reservations-empty">Nenhuma reserva encontrada.</p>';
+            return;
+        }
+
+        listEl.innerHTML = userReservations.map((r) => {
+            const statusRaw = String(r.status || 'Pendente').trim();
+            const statusKey = statusRaw.toLowerCase();
+            const isPending = /pendente|pending|pendiente|en attente|in attesa|待定/i.test(statusRaw);
+            const isConfirmed = /confirmado|confirmed|confirmé|confermato|已确认/i.test(statusRaw);
+            const isCancelled = /cancelado|canceled|annulé|anulado|已取消|取消/i.test(statusRaw);
+            const isFinalized = /finalizado|finalized|terminado|terminé|completed|concluído|concluido|concluída|concluida|conclu|完了|已完成/i.test(statusRaw);
+            const statusText = isPending
+                ? (strings.reservation_status_pending || 'Confirmação pendente')
+                : isConfirmed
+                    ? (strings.reservation_status_confirmed || 'Confirmado')
+                    : isCancelled
+                        ? (strings.reservation_status_cancelled || 'Cancelado')
+                        : escapeHtml(statusRaw);
+            const statusLabel = `${strings.reservation_status_prefix || 'Status:'} ${statusText}`;
+            const showActions = !(isCancelled || isFinalized);
+
+            return `
+            <div class="my-reservations-item" data-reservation-id="${escapeHtml(String(r.id || ''))}">
+                <strong class="my-reservations-tour">${escapeHtml(r.tour || '—')}</strong>
+                <span class="my-reservations-date">${strings.reservation_list_date_label || 'Data'}: ${escapeHtml(r.data || '—')}</span>
+                ${r.hora ? `<span class="my-reservations-detail">${strings.reservation_list_time_label || 'Hora'}: ${escapeHtml(r.hora)}</span>` : ''}
+                ${r.idioma ? `<span class="my-reservations-detail">${strings.reservation_list_language_label || 'Idioma'}: ${escapeHtml(r.idioma)}</span>` : ''}
+                ${r.qtd ? `<span class="my-reservations-detail">${strings.reservation_list_people_label || 'Pessoas'}: ${escapeHtml(String(r.qtd))}</span>` : ''}
+                <span class="my-reservations-status my-reservations-status--${escapeHtml(statusKey)}">${statusLabel}</span>
+                ${showActions ? `
+                    <div class="my-reservations-actions">
+                        <button type="button" class="btn-cancel-reservation" data-reservation-id="${escapeHtml(String(r.id || ''))}">${strings.action_cancel || 'Cancelar'}</button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        }).join('');
+
+        listEl.querySelectorAll('.btn-cancel-reservation').forEach((button) => {
+            button.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = button.getAttribute('data-reservation-id');
+                if (!id) return;
+                if (!confirm(strings.reservation_confirm_cancel_prompt || 'Deseja cancelar esta reserva? Clique em OK para continuar.')) return;
+                if (!confirm(strings.reservation_confirm_cancel_again_prompt || 'Confirma novamente: realmente deseja cancelar a reserva?')) return;
+
+                let updated = false;
+                try {
+                    const result = await apiFetch('/update_agendamento', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id, status: 'Cancelado', admin_email: email })
+                    });
+                    updated = Boolean(result?.success);
+                } catch (err) {
+                    console.warn('Cancelamento falhou em /update_agendamento', err);
+                }
+
+                if (updated) {
+                    alert(strings.reservation_cancel_success || 'Reserva cancelada com sucesso.');
+                    openMyReservationsModal();
+                } else {
+                    alert(strings.reservation_cancel_failed || 'Não foi possível cancelar a reserva. Tente novamente.');
+                }
+            });
+        });
+    };
+    window.openMyReservationsModal = window.openMyReservationsModal || openMyReservationsModal;
 
     const initProfileMenu = () => {
         const menu = document.querySelector('.profile-menu');
@@ -125,6 +272,11 @@
                 menu.classList.remove('open');
                 button.setAttribute('aria-expanded', 'false');
                 redirectToManagementPage();
+            } else if (action === 'my-reservations') {
+                event.preventDefault();
+                menu.classList.remove('open');
+                button.setAttribute('aria-expanded', 'false');
+                openMyReservationsModal();
             } else if (action === 'logout') {
                 event.preventDefault();
                 localStorage.removeItem('userRole');

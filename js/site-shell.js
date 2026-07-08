@@ -3,6 +3,16 @@
 // Generic logic shared by pages that use the "rio-page" layout pattern. Extracted from
 // js/Riodejaneiro.js, minus the Rio-only tour database rendering and reservation-form intercept.
 (() => {
+    // Esconde o aviso "Informações Importantes" antes do primeiro paint se o
+    // usuário já marcou "não mostrar novamente" nesta página nessa sessão de
+    // navegador — evita o overlay reaparecer a cada carregamento. Chave por
+    // pathname porque cada cidade tem seu próprio texto de aviso.
+    const NOTICE_DISMISS_KEY = `rioNoticeDismissed:${window.location.pathname}`;
+    if (localStorage.getItem(NOTICE_DISMISS_KEY) === '1') {
+        const notice = document.querySelector('.rio-notice');
+        if (notice) notice.style.display = 'none';
+    }
+
     let rolePermissionsMap = {};
 
     const ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT = window.ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT !== false;
@@ -3201,7 +3211,16 @@
                         <label><span data-i18n="user_data_surname">${strings.user_data_surname || 'Sobrenome'}</span><input name="sobrenome" required /></label>
                         <label><span data-i18n="user_data_phone">${strings.user_data_phone || 'Telefone'}</span><input name="celular" /></label>
                         <label><span data-i18n="user_data_country">${strings.user_data_country || 'País'}</span><input name="pais_origem" /></label>
-                        <label><span data-i18n="user_data_gender">${strings.user_data_gender || 'Gênero'}</span><input name="genero" /></label>
+                        <label><span data-i18n="user_data_gender">${strings.user_data_gender || 'Gênero'}</span>
+                            <select name="genero">
+                                <option value="">—</option>
+                                <option value="male" data-i18n="register_gender_male">${strings.register_gender_male || 'Masculino'}</option>
+                                <option value="female" data-i18n="register_gender_female">${strings.register_gender_female || 'Feminino'}</option>
+                                <option value="nonbinary" data-i18n="register_gender_nonbinary">${strings.register_gender_nonbinary || 'Não binário'}</option>
+                                <option value="prefer_not" data-i18n="register_gender_prefer_not">${strings.register_gender_prefer_not || 'Prefiro não informar'}</option>
+                                <option value="other" data-i18n="register_gender_other">${strings.register_gender_other || 'Outro'}</option>
+                            </select>
+                        </label>
                         <div class="user-data-actions">
                             <button type="button" class="user-data-cancel" data-i18n="user_data_cancel">${strings.user_data_cancel || 'Cancelar'}</button>
                             <button type="submit" class="user-data-save" data-i18n="user_data_save">${strings.user_data_save || 'Salvar'}</button>
@@ -3784,12 +3803,24 @@
         initRelatosGallery();
 
         // Intro/notice overlay (eg. "Informações Importantes") used by several destination
-        // pages: clicking its proceed button just hides the overlay.
+        // pages: "Prosseguir" só esconde para esta visita; "Não mostrar novamente"
+        // também grava a preferência pra o overlay não voltar a aparecer nesta página.
+        // Chave calculada de novo aqui (em vez de reaproveitar a constante do topo do
+        // arquivo) porque este trecho vive numa IIFE diferente — são dois módulos
+        // separados no mesmo arquivo, sem escopo compartilhado entre eles.
+        const noticeDismissKey = `rioNoticeDismissed:${window.location.pathname}`;
+        const noticeEl = document.querySelector('.rio-notice');
         const noticeProceedBtn = document.querySelector('.rio-notice .btn-proceed');
+        const noticeDontShowBtn = document.querySelector('.rio-notice .btn-dont-show');
         if (noticeProceedBtn) {
             noticeProceedBtn.addEventListener('click', () => {
-                const notice = noticeProceedBtn.closest('.rio-notice');
-                if (notice) notice.style.display = 'none';
+                if (noticeEl) noticeEl.style.display = 'none';
+            });
+        }
+        if (noticeDontShowBtn) {
+            noticeDontShowBtn.addEventListener('click', () => {
+                localStorage.setItem(noticeDismissKey, '1');
+                if (noticeEl) noticeEl.style.display = 'none';
             });
         }
 

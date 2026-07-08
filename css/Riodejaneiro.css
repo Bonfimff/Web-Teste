@@ -321,7 +321,7 @@ body {
 /* ===================================================== */
 .rio-hero {
     position: relative;
-    min-height: 70vh;
+    min-height: 80vh;
     flex-shrink: 0; /* impede que o flex column da .main-container espreme o hero abaixo do conteúdo real */
     display: flex;
     align-items: flex-start;
@@ -392,12 +392,12 @@ body {
 
 .rio-hero-logo {
   display: block;
-  width: auto;
-  max-width: min(240px, 42vw);
-  height: auto;
+  width: min(240px, 42vw);
+  height: min(240px, 42vw);
+  object-fit: contain;
   margin: 0 auto 0.55rem;
-  opacity: 0.85;
-  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.178));
+  opacity: 1;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.85));
 }
 
 .rio-hero-title {
@@ -554,9 +554,16 @@ body {
     font-size: 0.85rem;
 }
 
+.rio-notice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
 .rio-notice-text .btn-proceed {
     display: inline-block;
-    margin-top: 1.5rem;
     padding: 0.8rem 2rem;
     border-radius: 60px;
     background: #C2B280;
@@ -571,6 +578,24 @@ body {
 .rio-notice-text .btn-proceed:hover {
     background: #b5a370;
     transform: scale(1.03);
+}
+
+.rio-notice-text .btn-dont-show {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border-radius: 60px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+    border: none;
+    transition: color 0.2s;
+}
+
+.rio-notice-text .btn-dont-show:hover {
+    color: #fff;
 }
 
 /* ===================================================== */
@@ -1184,7 +1209,7 @@ body {
     }
 
     .rio-hero {
-        min-height: 50vh;
+        min-height: 60vh;
         padding-top: 70px;
     }
 
@@ -1747,11 +1772,13 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay):not(.a
   color: #33485f;
 }
 
-.user-data-form input {
+.user-data-form input,
+.user-data-form select {
   border: 1px solid #d6dce4;
   border-radius: 8px;
   padding: 0.48rem 0.55rem;
   font-size: 0.92rem;
+  background: #fff;
 }
 
 .user-data-actions {
@@ -2466,7 +2493,7 @@ header {
 
 @media (min-width: 1200px) {
   .rio-hero {
-    min-height: 80vh;
+    min-height: 85vh;
   }
 
   .rio-hero-content {

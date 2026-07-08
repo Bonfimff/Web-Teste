@@ -347,6 +347,36 @@
         });
     };
 
+    // Casa cada card do Rio ao SEU tour por identidade estável (pasta de
+    // imagens, com nome como fallback) — nunca por posição no array. A API
+    // devolve tours de todas as cidades numa lista só, cuja ordem pode não
+    // bater com a ordem dos cards no HTML; casar por índice bruto faz a
+    // legenda de um card aparecer sobre o slideshow de outro tour. Usado em
+    // TODO lugar que escreve o nome/detalhes de um card a partir do banco
+    // (carregarToursDoBanco E applyPageLanguage — a troca de idioma reaplica
+    // os dados do banco por cima do texto estático, então precisa da mesma
+    // lógica de casamento, senão reintroduz o bug na troca de idioma).
+    const tourNameKey = (value) => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+    const buildRioTourMatchers = (allTours) => {
+        const toursRio = (allTours || []).filter(t => (t.cidade || '').trim() === 'Rio de Janeiro');
+        const tourByFolder = new Map();
+        const tourByName = new Map();
+        toursRio.forEach((t) => {
+            const folder = (t.pasta_imagens || '').trim();
+            if (folder && !tourByFolder.has(folder)) tourByFolder.set(folder, t);
+            const nameKey = tourNameKey(t.nome_tour || t.name);
+            if (nameKey && !tourByName.has(nameKey)) tourByName.set(nameKey, t);
+        });
+        return { toursRio, tourByFolder, tourByName };
+    };
+
+    const matchRioTourForCard = (card, matchers) => {
+        const cardFolder = (card.querySelector('.rio-tour-slider')?.dataset.folder || '').trim();
+        const cardNameKey = tourNameKey(card.querySelector('.rio-tour-name')?.textContent);
+        return matchers.tourByFolder.get(cardFolder) || matchers.tourByName.get(cardNameKey) || null;
+    };
+
     const carregarToursDoBanco = async () => {
         const endpoints = [
             '/get_tours_pagina',
@@ -389,33 +419,13 @@
                 // ignore
             }
 
-            // Filtra só os tours desta cidade: a tabela tours_pagina traz tours de
-            // todas as cidades numa lista só (ordenada por cidade), então casar por
-            // índice bruto misturaria tours de Lençóis/São Luís/Salvador nos cards do Rio.
-            const toursRio = tours.filter(t => (t.cidade || '').trim() === 'Rio de Janeiro');
-
-            // Casa cada card ao SEU tour por identidade estável — nunca por posição
-            // no array. A pasta de imagens (data-folder do slideshow == pasta_imagens
-            // do banco) é a chave primária; o nome é fallback. Casar por índice bruto
-            // fazia a legenda de um card aparecer sobre o slideshow de outro tour
-            // assim que a ordem de exibição mudava no admin.
-            const tourNameKey = (value) => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
-            const tourByFolder = new Map();
-            const tourByName = new Map();
-            toursRio.forEach((t) => {
-                const folder = (t.pasta_imagens || '').trim();
-                if (folder && !tourByFolder.has(folder)) tourByFolder.set(folder, t);
-                const nameKey = tourNameKey(t.nome_tour || t.name);
-                if (nameKey && !tourByName.has(nameKey)) tourByName.set(nameKey, t);
-            });
+            const matchers = buildRioTourMatchers(tours);
 
             const cards = document.querySelectorAll('.rio-tour-card');
             const cardsByParent = new Map();
             cards.forEach((card, index) => {
-                const cardFolder = (card.querySelector('.rio-tour-slider')?.dataset.folder || '').trim();
                 const nameEl = card.querySelector('.rio-tour-name');
-                const cardNameKey = tourNameKey(nameEl?.textContent);
-                const tour = tourByFolder.get(cardFolder) || tourByName.get(cardNameKey);
+                const tour = matchRioTourForCard(card, matchers);
                 if (!tour) return;
 
                 const parentEntries = cardsByParent.get(card.parentElement) || [];
@@ -595,8 +605,9 @@
         const footerTitle = document.querySelector('.rio-footer-card-title');
         if (footerTitle) footerTitle.textContent = footerTitleByLang[lang] || footerTitleByLang.pt || 'Informações';
 
+        const languageMatchers = buildRioTourMatchers(toursFromDatabase);
         cards.forEach((card, index) => {
-            const dbTour = toursFromDatabase[index];
+            const dbTour = matchRioTourForCard(card, languageMatchers);
             if (dbTour) {
                 const labels = {
                     pt: { idiomas: 'Idiomas', encontro: 'Encontro', identificacao: 'Identificação' },
@@ -3584,7 +3595,16 @@
                         <label><span data-i18n="user_data_surname">${strings.user_data_surname || 'Sobrenome'}</span><input name="sobrenome" required /></label>
                         <label><span data-i18n="user_data_phone">${strings.user_data_phone || 'Telefone'}</span><input name="celular" /></label>
                         <label><span data-i18n="user_data_country">${strings.user_data_country || 'País'}</span><input name="pais_origem" /></label>
-                        <label><span data-i18n="user_data_gender">${strings.user_data_gender || 'Gênero'}</span><input name="genero" /></label>
+                        <label><span data-i18n="user_data_gender">${strings.user_data_gender || 'Gênero'}</span>
+                            <select name="genero">
+                                <option value="">—</option>
+                                <option value="male" data-i18n="register_gender_male">${strings.register_gender_male || 'Masculino'}</option>
+                                <option value="female" data-i18n="register_gender_female">${strings.register_gender_female || 'Feminino'}</option>
+                                <option value="nonbinary" data-i18n="register_gender_nonbinary">${strings.register_gender_nonbinary || 'Não binário'}</option>
+                                <option value="prefer_not" data-i18n="register_gender_prefer_not">${strings.register_gender_prefer_not || 'Prefiro não informar'}</option>
+                                <option value="other" data-i18n="register_gender_other">${strings.register_gender_other || 'Outro'}</option>
+                            </select>
+                        </label>
                         <div class="user-data-actions">
                             <button type="button" class="user-data-cancel" data-i18n="user_data_cancel">${strings.user_data_cancel || 'Cancelar'}</button>
                             <button type="submit" class="user-data-save" data-i18n="user_data_save">${strings.user_data_save || 'Salvar'}</button>

@@ -351,7 +351,6 @@ const updateProfileMenuByPermissions = (perms) => {
   const showManagement = typeof canAccessManagement === 'function' ? canAccessManagement() : false;
   const managementAction = isManagementPage ? 'principal' : 'manage';
   const managementLabel = isManagementPage ? 'Principal' : 'Gerenciamento';
-  const showPersonalMenuItems = !isManagementPage;
   const managementLink = showManagement
     ? `<a href="#" class="profile-item profile-item--admin" data-profile-action="${managementAction}">${managementLabel}</a>`
     : (isManagementPage ? '<a href="#" class="profile-item" data-profile-action="principal">Principal</a>' : '');
@@ -362,8 +361,8 @@ const updateProfileMenuByPermissions = (perms) => {
       <div style="font-size:0.8rem; color:#6b7280;">Nível de acesso: ${formatRoleLabel(userRole)}</div>
     </div>
     ${managementLink}
-    ${showPersonalMenuItems && canShowMyReservations ? '<a href="#" class="profile-item" data-profile-action="my-reservations" data-i18n="profile_my_reservations">Minhas Reservas</a>' : ''}
-    ${showPersonalMenuItems && canShowMyData ? '<a href="#" class="profile-item" data-profile-action="my-data" data-i18n="profile_my_data">Meus Dados</a>' : ''}
+    ${canShowMyReservations ? '<a href="#" class="profile-item" data-profile-action="my-reservations" data-i18n="profile_my_reservations">Minhas Reservas</a>' : ''}
+    ${canShowMyData ? '<a href="#" class="profile-item" data-profile-action="my-data" data-i18n="profile_my_data">Meus Dados</a>' : ''}
     <a href="#" class="profile-item" data-profile-action="logout" data-i18n="profile_logout">Sair</a>
   `;
 };
@@ -1599,7 +1598,7 @@ const saveTourEditModal = async () => {
 
 let lastLoadedTours = [];
 
-const reorderTours = async (novaOrdemIds) => {
+const reorderTours = async (novaOrdemIds, previousTours) => {
   const adminEmail = localStorage.getItem('userEmail') || '';
   try {
     const response = await fetchWithApiFallback('/reorder_tours', {
@@ -1610,14 +1609,26 @@ const reorderTours = async (novaOrdemIds) => {
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) {
       alert(`Falha ao reordenar tours: ${result.message || response.statusText}`);
+      // A tabela já tinha sido atualizada de forma otimista antes da resposta
+      // do servidor chegar — sem sucesso confirmado, desfaz e volta ao estado
+      // anterior pra não deixar a tela mostrando uma ordem que não foi salva.
+      lastLoadedTours = previousTours;
+      lastMovedTourId = null;
+      renderTourManagementTable(lastLoadedTours);
       return;
     }
-    carregarToursGerenciamento();
   } catch (error) {
     console.error('Erro ao reordenar tours:', error);
     alert('Erro ao reordenar tours. Verifique sua conexão e tente novamente.');
+    lastLoadedTours = previousTours;
+    lastMovedTourId = null;
+    renderTourManagementTable(lastLoadedTours);
   }
 };
+
+// Guarda qual tour foi movido pela última vez, pra destacar a linha dele na
+// próxima renderização da tabela.
+let lastMovedTourId = null;
 
 // A ordem é exclusiva por cidade: mover um tour só pode trocar de posição com
 // outro tour da MESMA cidade, nunca com um tour de outra cidade.
@@ -1634,13 +1645,41 @@ const moveTourOrder = (tourId, direction) => {
   const posA = ids.indexOf(sameCityTours[index].id);
   const posB = ids.indexOf(sameCityTours[targetIndex].id);
   [ids[posA], ids[posB]] = [ids[posB], ids[posA]];
-  reorderTours(ids);
+
+  // Atualização otimista: recalcula a posição de exibição (ordem) a partir da
+  // nova sequência de ids e já reordena a tabela na hora, sem esperar a volta
+  // do servidor. Isso usa exatamente a mesma regra que o backend aplica em
+  // /reorder_tours (posição sequencial por cidade, na ordem dos ids
+  // recebidos), então o resultado local já bate com o que vai ser persistido.
+  const previousTours = lastLoadedTours;
+  const posicaoPorCidade = {};
+  const toursAtualizados = ids.map((id) => {
+    const t = lastLoadedTours.find((t) => String(t.id) === String(id));
+    const posicao = (posicaoPorCidade[t.cidade] || 0) + 1;
+    posicaoPorCidade[t.cidade] = posicao;
+    return { ...t, ordem: posicao };
+  });
+
+  lastLoadedTours = sortToursForTable(toursAtualizados);
+  lastMovedTourId = tourId;
+  renderTourManagementTable(lastLoadedTours);
+
+  reorderTours(ids, previousTours);
 };
 
-const carregarToursGerenciamento = async () => {
-  const remoteTours = await fetchPageToursFromBackend();
-  const tours = Array.isArray(remoteTours) ? remoteTours : getPageTours();
-  lastLoadedTours = tours;
+// A tabela segue sempre esta ordem: cidade em ordem alfabética primeiro,
+// depois a posição de exibição (ordem) dentro da cidade. O backend já devolve
+// os tours nessa ordem, mas o fallback local (getPageTours) não é garantido
+// estar ordenado, então a lista é sempre reordenada aqui antes de renderizar.
+const sortToursForTable = (tours) => {
+  return [...tours].sort((a, b) => {
+    const cidadeCompare = String(a.cidade || '').localeCompare(String(b.cidade || ''), 'pt-BR');
+    if (cidadeCompare !== 0) return cidadeCompare;
+    return (Number(a.ordem) || 0) - (Number(b.ordem) || 0);
+  });
+};
+
+const renderTourManagementTable = (tours) => {
   const tableBody = document.getElementById('tourManagementBody');
   if (!tableBody) return;
 
@@ -1661,7 +1700,9 @@ const carregarToursGerenciamento = async () => {
     const modalidadeLabel = (tour.modalidade || 'free').toLowerCase() === 'privado' ? 'Privado' : 'Aberto (Free)';
 
     // Botões ▲▼ só reordenam dentro da mesma cidade, então ficam desabilitados
-    // no primeiro/último tour DESSA cidade, não da tabela inteira.
+    // no primeiro/último tour DESSA cidade, não da tabela inteira. A posição
+    // exibida é o índice dentro da cidade (1-based), não a coluna `ordem` crua,
+    // pra sempre bater com a ordem visual das linhas mesmo se houver gaps.
     const sameCityTours = tours.filter(t => t.cidade === tour.cidade);
     const sameCityIndex = sameCityTours.findIndex(t => String(t.id) === String(tour.id));
     const isFirstOfCity = sameCityIndex === 0;
@@ -1672,7 +1713,7 @@ const carregarToursGerenciamento = async () => {
         <button type="button" class="tour-order-btn" data-order-dir="-1" ${isFirstOfCity ? 'disabled' : ''} aria-label="Mover para cima">▲</button>
         <button type="button" class="tour-order-btn" data-order-dir="1" ${isLastOfCity ? 'disabled' : ''} aria-label="Mover para baixo">▼</button>
       </td>
-      <td data-label="ID">${tour.id || `tour-${idx}`}</td>
+      <td data-label="Posição">${sameCityIndex + 1}</td>
       <td data-label="Tour">${tour.name || '-'}</td>
       <td data-label="Cidade">${tour.cidade || '-'}</td>
       <td data-label="Idiomas">${tour.languages || '-'}</td>
@@ -1692,8 +1733,19 @@ const carregarToursGerenciamento = async () => {
     });
 
     row.addEventListener('dblclick', () => openTourEditModal(tour));
+    if (String(tour.id) === String(lastMovedTourId)) {
+      row.classList.add('tour-row-moved');
+    }
     tableBody.appendChild(row);
   });
+  lastMovedTourId = null;
+};
+
+const carregarToursGerenciamento = async () => {
+  const remoteTours = await fetchPageToursFromBackend();
+  const tours = sortToursForTable(Array.isArray(remoteTours) ? remoteTours : getPageTours());
+  lastLoadedTours = tours;
+  renderTourManagementTable(tours);
 };
 
 const DEFAULT_ROLE_PERMISSIONS = {
@@ -4399,10 +4451,10 @@ window.addEventListener('DOMContentLoaded', () => {
         const origin = window.location.origin;
         if (action === 'my-reservations') {
           closeMobileMenu();
-          window.location.href = `${origin}/index.html`;
+          window.openMyReservationsModal?.();
         } else if (action === 'my-data') {
           closeMobileMenu();
-          window.location.href = `${origin}/index.html`;
+          window.openUserDataModal?.();
         } else if (action === 'principal') {
           closeMobileMenu();
           window.location.href = `${origin}/index.html`;
@@ -4632,13 +4684,13 @@ window.addEventListener('DOMContentLoaded', () => {
         const action = item.getAttribute('data-profile-action');
         const origin = window.location.origin;
         if (action === 'my-reservations') {
-          window.location.href = `${origin}/index.html`;
+          window.openMyReservationsModal?.();
           closeProfileMenu();
           return;
         }
 
         if (action === 'my-data') {
-          window.location.href = `${origin}/index.html`;
+          window.openUserDataModal?.();
           closeProfileMenu();
           return;
         }
