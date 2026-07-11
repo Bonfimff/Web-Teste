@@ -591,6 +591,14 @@ const mapBackendTourToPageTour = (tour) => {
     identification: tour?.identificacao || tour?.identification || '',
     link: tour?.link_tour || tour?.link || '',
     value: tour?.valor ?? tour?.value ?? 0,
+    periodo: tour?.periodo || '',
+    saida: tour?.saida || '',
+    grupo: tour?.grupo || '',
+    duracao: tour?.duracao || '',
+    inclui: tour?.inclui || '',
+    roteiro: tour?.roteiro || '',
+    pontoEmbarque: tour?.ponto_embarque || '',
+    pontoDesembarque: tour?.ponto_desembarque || '',
     status: normalizeTourStatus(tour?.estado || tour?.status),
     cidade: tour?.cidade || '',
     modalidade: (tour?.modalidade || 'free').toLowerCase(),
@@ -1710,6 +1718,14 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalIdentification').value = tourData.identification || tourData.identificacao || '';
   document.getElementById('tourModalLink').value = tourData.link || tourData.link_tour || '';
   document.getElementById('tourModalValue').value = tourData.value != null ? tourData.value : tourData.valor != null ? tourData.valor : '';
+  document.getElementById('tourModalPeriodo').value = tourData.periodo || '';
+  document.getElementById('tourModalSaida').value = tourData.saida || '';
+  document.getElementById('tourModalGrupo').value = tourData.grupo || '';
+  document.getElementById('tourModalDuracao').value = tourData.duracao || '';
+  document.getElementById('tourModalInclui').value = tourData.inclui || '';
+  document.getElementById('tourModalRoteiro').value = tourData.roteiro || '';
+  document.getElementById('tourModalPontoEmbarque').value = tourData.pontoEmbarque || tourData.ponto_embarque || '';
+  document.getElementById('tourModalPontoDesembarque').value = tourData.pontoDesembarque || tourData.ponto_desembarque || '';
   document.getElementById('tourModalStatus').value = tourData.status || tourData.estado || 'Ativo';
   document.getElementById('tourModalModalidade').value = (tourData.modalidade || 'free').toLowerCase();
   document.getElementById('tourModalCanalReserva').value = (tourData.canal_reserva || tourData.canalReserva || 'web').toLowerCase();
@@ -1777,6 +1793,14 @@ const saveTourEditModal = async () => {
   const identification = document.getElementById('tourModalIdentification').value.trim();
   const link = document.getElementById('tourModalLink').value.trim();
   const value = parseFloat(document.getElementById('tourModalValue').value);
+  const periodo = document.getElementById('tourModalPeriodo').value.trim();
+  const saida = document.getElementById('tourModalSaida').value.trim();
+  const grupo = document.getElementById('tourModalGrupo').value.trim();
+  const duracao = document.getElementById('tourModalDuracao').value.trim();
+  const inclui = document.getElementById('tourModalInclui').value.trim();
+  const roteiro = document.getElementById('tourModalRoteiro').value.trim();
+  const pontoEmbarque = document.getElementById('tourModalPontoEmbarque').value.trim();
+  const pontoDesembarque = document.getElementById('tourModalPontoDesembarque').value.trim();
   const status = document.getElementById('tourModalStatus').value;
   const cidade = document.getElementById('tourModalCidade').value;
   const modalidade = document.getElementById('tourModalModalidade').value;
@@ -1792,6 +1816,14 @@ const saveTourEditModal = async () => {
     identificacao: identification,
     link_tour: link,
     valor: Number.isFinite(value) ? value : 0,
+    periodo,
+    saida,
+    grupo,
+    duracao,
+    inclui,
+    roteiro,
+    ponto_embarque: pontoEmbarque,
+    ponto_desembarque: pontoDesembarque,
     estado: status,
     cidade,
     modalidade,
@@ -1825,6 +1857,14 @@ const saveTourEditModal = async () => {
           identification,
           link,
           value: Number.isFinite(value) ? value : (t.value ?? 0),
+          periodo,
+          saida,
+          grupo,
+          duracao,
+          inclui,
+          roteiro,
+          pontoEmbarque,
+          pontoDesembarque,
           status,
           cidade,
           modalidade,
@@ -2078,6 +2118,197 @@ const carregarCidadeContatoGerenciamento = async () => {
   }
 
   preencherCidadeContatoForm(select.value);
+};
+
+let cidadeVisualAtual = {};
+
+const cidadeVisualBlocoVazio = () => ({
+  logo: { imagem: '' },
+  painel: { modo: 'imagem', imagem: '', cor1: '', cor2: '', degradeTipo: 'linear', cor1Alpha: 100, cor2Alpha: 100 },
+  fundo: { modo: 'imagem', imagem: '', cor1: '', cor2: '', degradeTipo: 'linear', cor1Alpha: 100, cor2Alpha: 100 }
+});
+
+const atualizarCidadeVisualModoUI = (alvo) => {
+  const AlvoCap = alvo === 'painel' ? 'Painel' : 'Fundo';
+  const modoSelect = document.getElementById(`cidadeVisual${AlvoCap}Modo`);
+  const imagemBox = document.getElementById(`cidadeVisual${AlvoCap}ImagemBox`);
+  const corBox = document.getElementById(`cidadeVisual${AlvoCap}CorBox`);
+  const cor2Label = document.getElementById(`cidadeVisual${AlvoCap}Cor2Label`);
+  const cor2AlphaLabel = document.getElementById(`cidadeVisual${AlvoCap}Cor2AlphaLabel`);
+  const degradeTipoLabel = document.getElementById(`cidadeVisual${AlvoCap}DegradeTipoLabel`);
+  if (!modoSelect) return;
+  const modo = modoSelect.value;
+  if (imagemBox) imagemBox.style.display = modo === 'imagem' ? '' : 'none';
+  if (corBox) corBox.style.display = modo === 'imagem' ? 'none' : '';
+  if (cor2Label) cor2Label.style.display = modo === 'degrade' ? '' : 'none';
+  if (cor2AlphaLabel) cor2AlphaLabel.style.display = modo === 'degrade' ? '' : 'none';
+  if (degradeTipoLabel) degradeTipoLabel.style.display = modo === 'degrade' ? '' : 'none';
+};
+
+const preencherCidadeVisualForm = (cidade) => {
+  const visual = cidadeVisualAtual[cidade] || cidadeVisualBlocoVazio();
+
+  const logoPreview = document.getElementById('cidadeVisualLogoPreview');
+  if (logoPreview) {
+    logoPreview.src = visual.logo?.imagem || '';
+    logoPreview.style.display = visual.logo?.imagem ? '' : 'none';
+  }
+
+  ['painel', 'fundo'].forEach((alvo) => {
+    const bloco = visual[alvo] || { modo: 'imagem', imagem: '', cor1: '', cor2: '', degradeTipo: 'linear', cor1Alpha: 100, cor2Alpha: 100 };
+    const AlvoCap = alvo === 'painel' ? 'Painel' : 'Fundo';
+    const modoSelect = document.getElementById(`cidadeVisual${AlvoCap}Modo`);
+    const preview = document.getElementById(`cidadeVisual${AlvoCap}Preview`);
+    const cor1 = document.getElementById(`cidadeVisual${AlvoCap}Cor1`);
+    const cor2 = document.getElementById(`cidadeVisual${AlvoCap}Cor2`);
+    const cor1Alpha = document.getElementById(`cidadeVisual${AlvoCap}Cor1Alpha`);
+    const cor2Alpha = document.getElementById(`cidadeVisual${AlvoCap}Cor2Alpha`);
+    const degradeTipo = document.getElementById(`cidadeVisual${AlvoCap}DegradeTipo`);
+    if (modoSelect) modoSelect.value = bloco.modo || 'imagem';
+    if (preview) {
+      preview.src = bloco.imagem || '';
+      preview.style.display = bloco.imagem ? '' : 'none';
+    }
+    if (cor1) cor1.value = bloco.cor1 || '#000000';
+    if (cor2) cor2.value = bloco.cor2 || '#000000';
+    if (cor1Alpha) cor1Alpha.value = bloco.cor1Alpha ?? 100;
+    if (cor2Alpha) cor2Alpha.value = bloco.cor2Alpha ?? 100;
+    if (degradeTipo) degradeTipo.value = bloco.degradeTipo || 'linear';
+    atualizarCidadeVisualModoUI(alvo);
+  });
+
+  const status = document.getElementById('cidadeVisualStatus');
+  if (status) status.textContent = '';
+};
+
+const uploadCidadeVisualImagem = async (tipo) => {
+  const AlvoCap = tipo === 'logo' ? 'Logo' : (tipo === 'painel' ? 'Painel' : 'Fundo');
+  const input = document.getElementById(`cidadeVisual${AlvoCap}Input`);
+  const select = document.getElementById('cidadeVisualSelect');
+  const status = document.getElementById('cidadeVisualStatus');
+  if (!input || !input.files || !input.files.length || !select) return;
+
+  const cidade = select.value;
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  const formData = new FormData();
+  formData.append('admin_email', adminEmail);
+  formData.append('cidade', cidade);
+  formData.append('tipo', tipo);
+  formData.append('imagem', input.files[0]);
+
+  if (status) status.textContent = 'Enviando...';
+
+  try {
+    const response = await fetchWithApiFallback('/upload_cidade_visual', { method: 'POST', body: formData });
+    const result = await response.json().catch(() => ({}));
+
+    if (response.ok && result.success && result.visual) {
+      cidadeVisualAtual[cidade] = result.visual;
+      preencherCidadeVisualForm(cidade);
+      if (typeof window.applyCidadeVisual === 'function') {
+        window.applyCidadeVisual(cidade, result.visual);
+      }
+      if (status) status.textContent = 'Imagem enviada com sucesso.';
+    } else if (status) {
+      status.textContent = result.message || 'Erro ao enviar imagem.';
+    }
+  } catch (error) {
+    console.error('Erro ao enviar imagem de identidade visual:', error);
+    if (status) status.textContent = 'Erro de conexão ao enviar imagem.';
+  } finally {
+    input.value = '';
+    setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+  }
+};
+
+const initCidadeVisualForm = () => {
+  const select = document.getElementById('cidadeVisualSelect');
+  const saveBtn = document.getElementById('cidadeVisualSave');
+  if (!select || !saveBtn || select.dataset.bound) return;
+  select.dataset.bound = '1';
+
+  select.addEventListener('change', () => preencherCidadeVisualForm(select.value));
+
+  document.querySelectorAll('.cidade-visual-modo').forEach((el) => {
+    el.addEventListener('change', () => atualizarCidadeVisualModoUI(el.dataset.alvo));
+  });
+
+  document.getElementById('cidadeVisualLogoUpload')?.addEventListener('click', () => uploadCidadeVisualImagem('logo'));
+  document.getElementById('cidadeVisualPainelUpload')?.addEventListener('click', () => uploadCidadeVisualImagem('painel'));
+  document.getElementById('cidadeVisualFundoUpload')?.addEventListener('click', () => uploadCidadeVisualImagem('fundo'));
+
+  saveBtn.addEventListener('click', async () => {
+    const cidade = select.value;
+    const status = document.getElementById('cidadeVisualStatus');
+    const adminEmail = localStorage.getItem('userEmail');
+
+    const payload = {
+      cidade,
+      admin_email: adminEmail,
+      painel_modo: document.getElementById('cidadeVisualPainelModo')?.value || 'imagem',
+      painel_cor1: document.getElementById('cidadeVisualPainelCor1')?.value || '',
+      painel_cor2: document.getElementById('cidadeVisualPainelCor2')?.value || '',
+      painel_degrade_tipo: document.getElementById('cidadeVisualPainelDegradeTipo')?.value || 'linear',
+      painel_cor1_alpha: Number(document.getElementById('cidadeVisualPainelCor1Alpha')?.value ?? 100),
+      painel_cor2_alpha: Number(document.getElementById('cidadeVisualPainelCor2Alpha')?.value ?? 100),
+      fundo_modo: document.getElementById('cidadeVisualFundoModo')?.value || 'imagem',
+      fundo_cor1: document.getElementById('cidadeVisualFundoCor1')?.value || '',
+      fundo_cor2: document.getElementById('cidadeVisualFundoCor2')?.value || '',
+      fundo_degrade_tipo: document.getElementById('cidadeVisualFundoDegradeTipo')?.value || 'linear',
+      fundo_cor1_alpha: Number(document.getElementById('cidadeVisualFundoCor1Alpha')?.value ?? 100),
+      fundo_cor2_alpha: Number(document.getElementById('cidadeVisualFundoCor2Alpha')?.value ?? 100)
+    };
+
+    saveBtn.disabled = true;
+    if (status) status.textContent = 'Salvando...';
+
+    try {
+      const response = await fetchWithApiFallback('/update_cidade_visual', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.success && result.visual) {
+        cidadeVisualAtual[cidade] = result.visual;
+        if (status) status.textContent = 'Salvo com sucesso.';
+        if (typeof window.applyCidadeVisual === 'function') {
+          window.applyCidadeVisual(cidade, result.visual);
+        }
+      } else if (status) {
+        status.textContent = result.message || 'Erro ao salvar.';
+      }
+    } catch (error) {
+      console.error('Erro ao salvar identidade visual da cidade:', error);
+      if (status) status.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      saveBtn.disabled = false;
+      setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+    }
+  });
+};
+
+const carregarCidadeVisualGerenciamento = async () => {
+  const select = document.getElementById('cidadeVisualSelect');
+  if (!select) return;
+
+  initCidadeVisualForm();
+
+  try {
+    const response = await fetchWithApiFallback('/get_cidade_visual', { method: 'GET' });
+    const lista = await response.json().catch(() => []);
+    if (Array.isArray(lista)) {
+      cidadeVisualAtual = lista.reduce((acc, item) => {
+        if (item && item.cidade) acc[item.cidade] = item;
+        return acc;
+      }, {});
+    }
+  } catch (error) {
+    console.warn('Não foi possível carregar identidade visual por cidade:', error);
+  }
+
+  preencherCidadeVisualForm(select.value);
 };
 
 let cidadeAvisoAtual = {};
@@ -3040,6 +3271,7 @@ const mostrarSecao = (secao) => {
     'cidadeContatoSection',
     'cidadeAvisoSection',
     'paginaSecaoSection',
+    'cidadeVisualSection',
     'pageManagementToursSection'
   ].forEach((id) => {
     const el = document.getElementById(id);
@@ -3051,6 +3283,7 @@ const mostrarSecao = (secao) => {
     carregarCidadeContatoGerenciamento();
     carregarCidadeAvisoGerenciamento();
     carregarPaginaSecaoGerenciamento();
+    carregarCidadeVisualGerenciamento();
   }
 };
 

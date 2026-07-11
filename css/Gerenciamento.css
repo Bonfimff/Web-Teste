@@ -3042,6 +3042,36 @@ section,
   gap: 0.5rem;
 }
 
+.cidade-visual-bloco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid #e5e9ef;
+}
+
+.cidade-visual-preview {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #d6dce4;
+  background: #f3f5f8;
+}
+
+.cidade-contato-card input[type="color"] {
+  padding: 0.2rem;
+  width: 60px;
+}
+
+.cidade-contato-card input[type="range"] {
+  height: auto;
+  padding: 0;
+  border: none;
+  width: 120px;
+}
+
 .cidade-aviso-item {
   display: flex;
   align-items: center;

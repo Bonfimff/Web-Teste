@@ -23,8 +23,8 @@
 
 /* Fundo fixo próprio de São Luís (substitui o fundo do Rio de Janeiro) */
 .rio-page::before {
-    background-color: #1e2d4a;
-    background-image: url('../imagem/Sao Luis/assets/fundo sao-luis.png');
+    background-color: var(--city-fundo-cor, #1e2d4a);
+    background-image: var(--city-fundo-img, url('../imagem/Sao Luis/assets/fundo sao-luis.png'));
     background-size: cover;
     background-position: center;
 }
@@ -39,7 +39,7 @@
 }
 
 .rio-hero {
-    background: url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp') center/cover no-repeat;
+    background: var(--city-painel-bg, url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp') center/cover no-repeat);
 }
 
 /* Remove padrão Copacabana — exclusivo do Rio; base escura padronizada

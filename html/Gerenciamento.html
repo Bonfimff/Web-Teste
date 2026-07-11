@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=33">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=35">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -484,6 +484,88 @@
                 </div>
             </div>
 
+            <div id="cidadeVisualSection" style="margin-bottom: 1.25rem;">
+                <div id="cidadeVisualCard" class="cidade-contato-card">
+                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Identidade Visual da Cidade</h3>
+                    <label>Cidade
+                        <select id="cidadeVisualSelect">
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Salvador">Salvador</option>
+                            <option value="Sao Luis">São Luís do Maranhão</option>
+                            <option value="Lencois">Lençóis Maranhenses</option>
+                        </select>
+                    </label>
+
+                    <div class="cidade-visual-bloco" style="flex:1 1 100%;">
+                        <strong style="display:block; font-size:0.8rem; color:#33485f; margin-bottom:0.35rem;">Logo</strong>
+                        <img id="cidadeVisualLogoPreview" class="cidade-visual-preview" alt="Prévia da logo" style="display:none;" />
+                        <input type="file" id="cidadeVisualLogoInput" accept="image/*" />
+                        <button type="button" id="cidadeVisualLogoUpload" class="btn-book">Enviar logo</button>
+                    </div>
+
+                    <div class="cidade-visual-bloco" style="flex:1 1 100%;">
+                        <strong style="display:block; font-size:0.8rem; color:#33485f; margin-bottom:0.35rem;">Painel (topo da página)</strong>
+                        <label>Modo
+                            <select id="cidadeVisualPainelModo" class="cidade-visual-modo" data-alvo="painel">
+                                <option value="imagem">Imagem</option>
+                                <option value="solida">Cor sólida</option>
+                                <option value="degrade">Degradê</option>
+                            </select>
+                        </label>
+                        <div id="cidadeVisualPainelImagemBox">
+                            <img id="cidadeVisualPainelPreview" class="cidade-visual-preview" alt="Prévia do painel" style="display:none;" />
+                            <input type="file" id="cidadeVisualPainelInput" accept="image/*" />
+                            <button type="button" id="cidadeVisualPainelUpload" class="btn-book">Enviar imagem</button>
+                        </div>
+                        <div id="cidadeVisualPainelCorBox" style="display:none;">
+                            <label id="cidadeVisualPainelDegradeTipoLabel" style="display:none;">Tipo de degradê
+                                <select id="cidadeVisualPainelDegradeTipo">
+                                    <option value="linear">Linear</option>
+                                    <option value="radial">Radial</option>
+                                    <option value="conic">Cônico</option>
+                                </select>
+                            </label>
+                            <label>Cor 1 <input type="color" id="cidadeVisualPainelCor1" /></label>
+                            <label>Transparência 1 <input type="range" id="cidadeVisualPainelCor1Alpha" min="0" max="100" value="100" /></label>
+                            <label id="cidadeVisualPainelCor2Label" style="display:none;">Cor 2 <input type="color" id="cidadeVisualPainelCor2" /></label>
+                            <label id="cidadeVisualPainelCor2AlphaLabel" style="display:none;">Transparência 2 <input type="range" id="cidadeVisualPainelCor2Alpha" min="0" max="100" value="100" /></label>
+                        </div>
+                    </div>
+
+                    <div class="cidade-visual-bloco" style="flex:1 1 100%;">
+                        <strong style="display:block; font-size:0.8rem; color:#33485f; margin-bottom:0.35rem;">Fundo da página</strong>
+                        <label>Modo
+                            <select id="cidadeVisualFundoModo" class="cidade-visual-modo" data-alvo="fundo">
+                                <option value="imagem">Imagem</option>
+                                <option value="solida">Cor sólida</option>
+                                <option value="degrade">Degradê</option>
+                            </select>
+                        </label>
+                        <div id="cidadeVisualFundoImagemBox">
+                            <img id="cidadeVisualFundoPreview" class="cidade-visual-preview" alt="Prévia do fundo" style="display:none;" />
+                            <input type="file" id="cidadeVisualFundoInput" accept="image/*" />
+                            <button type="button" id="cidadeVisualFundoUpload" class="btn-book">Enviar imagem</button>
+                        </div>
+                        <div id="cidadeVisualFundoCorBox" style="display:none;">
+                            <label id="cidadeVisualFundoDegradeTipoLabel" style="display:none;">Tipo de degradê
+                                <select id="cidadeVisualFundoDegradeTipo">
+                                    <option value="linear">Linear</option>
+                                    <option value="radial">Radial</option>
+                                    <option value="conic">Cônico</option>
+                                </select>
+                            </label>
+                            <label>Cor 1 <input type="color" id="cidadeVisualFundoCor1" /></label>
+                            <label>Transparência 1 <input type="range" id="cidadeVisualFundoCor1Alpha" min="0" max="100" value="100" /></label>
+                            <label id="cidadeVisualFundoCor2Label" style="display:none;">Cor 2 <input type="color" id="cidadeVisualFundoCor2" /></label>
+                            <label id="cidadeVisualFundoCor2AlphaLabel" style="display:none;">Transparência 2 <input type="range" id="cidadeVisualFundoCor2Alpha" min="0" max="100" value="100" /></label>
+                        </div>
+                    </div>
+
+                    <button type="button" id="cidadeVisualSave" class="btn-book">Salvar cores/modo</button>
+                    <span id="cidadeVisualStatus" class="cidade-contato-status"></span>
+                </div>
+            </div>
+
             <div id="pageManagementToursSection" style="overflow-x:auto; margin-bottom: 1.25rem;">
                 <h3 style="margin:0 0 0.5rem; font-size:1rem;">Tours da Página</h3>
                 <table class="rio-tour-table">
@@ -632,19 +714,51 @@
               </div>
             </fieldset>
             <label>
+              Período
+              <input type="text" id="tourModalPeriodo" placeholder="Ex: Junho a Setembro (deixe em branco ou N/U para ocultar)" />
+            </label>
+            <label>
+              Saída
+              <input type="text" id="tourModalSaida" placeholder="Ex: São Luís ou Barreirinhas (deixe em branco ou N/U para ocultar)" />
+            </label>
+            <label>
+              Grupo
+              <input type="text" id="tourModalGrupo" placeholder="Ex: Mínimo 2 pessoas (deixe em branco ou N/U para ocultar)" />
+            </label>
+            <label>
+              Duração
+              <input type="text" id="tourModalDuracao" placeholder="Ex: 2h15 (deixe em branco ou N/U para ocultar)" />
+            </label>
+            <label>
               Encontro
-              <input type="text" id="tourModalMeeting" />
+              <input type="text" id="tourModalMeeting" placeholder="Deixe em branco ou N/U para ocultar" />
             </label>
             <label>
               Identificação
-              <input type="text" id="tourModalIdentification" />
+              <input type="text" id="tourModalIdentification" placeholder="Deixe em branco ou N/U para ocultar" />
             </label>
             <label>
-              Link
+              Ponto de embarque
+              <input type="text" id="tourModalPontoEmbarque" placeholder="Deixe em branco ou N/U para ocultar" />
+            </label>
+            <label>
+              Ponto de desembarque
+              <input type="text" id="tourModalPontoDesembarque" placeholder="Deixe em branco ou N/U para ocultar" />
+            </label>
+            <label>
+              Inclui
+              <textarea id="tourModalInclui" placeholder="Deixe em branco ou N/U para ocultar"></textarea>
+            </label>
+            <label>
+              Roteiro
+              <textarea id="tourModalRoteiro" placeholder="Deixe em branco ou N/U para ocultar"></textarea>
+            </label>
+            <label>
+              Link do local de encontro
               <input type="url" id="tourModalLink" placeholder="https://..." />
             </label>
             <label>
-              Valor
+              Valor por pessoa
               <input type="number" id="tourModalValue" min="0" step="0.01" placeholder="0.00" />
             </label>
             <label>
@@ -915,8 +1029,8 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=19"></script>
-    <script src="../js/Gerenciamento.js?v=50"></script>
+    <script src="../js/Riodejaneiro.js?v=22"></script>
+    <script src="../js/Gerenciamento.js?v=53"></script>
 </body>
 </html>
 

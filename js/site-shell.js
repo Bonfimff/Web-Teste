@@ -2390,6 +2390,14 @@
             identification: tour?.identificacao || '',
             link: tour?.link_tour || tour?.mapUrl || '',
             value: tour?.valor ?? 0,
+            periodo: tour?.periodo || '',
+            saida: tour?.saida || '',
+            grupo: tour?.grupo || '',
+            duracao: tour?.duracao || '',
+            inclui: tour?.inclui || '',
+            roteiro: tour?.roteiro || '',
+            pontoEmbarque: tour?.ponto_embarque || '',
+            pontoDesembarque: tour?.ponto_desembarque || '',
             status: tour?.estado || '',
             cidade: tour?.cidade || '',
             modalidade: (tour?.modalidade || 'free').toLowerCase(),
@@ -2400,6 +2408,72 @@
     };
 
     const normalizeTourKey = (value) => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+    // Campos editáveis em Gerenciamento > Gerenciamento da página > Tours da
+    // Página. Cada um só aparece no card se preenchido — em branco ou "N/U"
+    // (não usar) omite a legenda inteira, sem texto de preenchimento padrão.
+    const TOUR_DETAIL_ICONS = {
+        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', saida: 'fa-route',
+        encontro: 'fa-map-marker-alt', pontoEmbarque: 'fa-bus', pontoDesembarque: 'fa-bus',
+        grupo: 'fa-users', identificacao: 'fa-shirt', inclui: 'fa-check-circle', roteiro: 'fa-list',
+        horarios: 'fa-calendar-check'
+    };
+    const TOUR_DETAIL_LABELS_PT = { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis' };
+    const tourFieldVisible = (value) => {
+        const v = (value ?? '').toString().trim();
+        return !!v && v.toUpperCase() !== 'N/U';
+    };
+    const buildTourDetailsHtml = (tour) => {
+        const rawValues = {
+            periodo: tour.periodo,
+            idiomas: tour.idiomas || tour.languages,
+            duracao: tour.duracao,
+            saida: tour.saida,
+            encontro: tour.encontro || tour.meeting,
+            pontoEmbarque: tour.pontoEmbarque || tour.ponto_embarque,
+            pontoDesembarque: tour.pontoDesembarque || tour.ponto_desembarque,
+            grupo: tour.grupo,
+            identificacao: tour.identificacao || tour.identification,
+            inclui: tour.inclui,
+            roteiro: tour.roteiro,
+            horarios: (tour.horarios || '').split(',').map(h => h.trim()).filter(Boolean).join(', ')
+        };
+
+        let html = '';
+        Object.keys(TOUR_DETAIL_ICONS).forEach((key) => {
+            const raw = rawValues[key];
+            if (!tourFieldVisible(raw)) return;
+            const value = raw.toString().trim();
+            html += `<li><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${TOUR_DETAIL_LABELS_PT[key]}:</strong> ${value}</li>`;
+        });
+
+        const valorRaw = tour.valor ?? tour.value;
+        if (valorRaw != null && valorRaw !== '' && Number(valorRaw) !== 0) {
+            const formatted = Number(valorRaw).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            html += `<li><i class="fa fa-dollar-sign"></i> <strong>Valor:</strong> ${formatted}</li>`;
+        }
+        const estado = (tour.estado || tour.status || '').toString().trim();
+        if (estado && estado.toLowerCase() !== 'ativo') {
+            html += `<li><i class="fa fa-info-circle"></i> <strong>Estado:</strong> ${estado}</li>`;
+        }
+        return html;
+    };
+
+    // O botão "Ver no Mapa" só faz sentido — e só fica habilitado — quando o
+    // tour tem um "Link do local de encontro" preenchido no admin.
+    const applyMapLinkState = (mapLink, url) => {
+        if (!mapLink) return;
+        if (url) {
+            mapLink.href = url;
+            mapLink.style.display = '';
+            mapLink.classList.remove('disabled');
+            mapLink.removeAttribute('aria-disabled');
+            mapLink.style.pointerEvents = '';
+        } else {
+            mapLink.removeAttribute('href');
+            mapLink.style.display = 'none';
+        }
+    };
 
     // Mescla listas de tours sem descartar os tours das outras páginas/cidades:
     // entradas de mesmo nome são atualizadas, as demais são preservadas.
@@ -2444,6 +2518,13 @@
                     if (!cardName) return;
                     const matchedTour = tours.find(t => normalizeTourKey(t.name) === normalizeTourKey(cardName));
                     if (!matchedTour) return;
+
+                    const detailsEl = card.querySelector('.rio-tour-details');
+                    if (detailsEl) {
+                        detailsEl.innerHTML = buildTourDetailsHtml(matchedTour);
+                    }
+
+                    applyMapLinkState(card.querySelector('.rio-link-map'), matchedTour.link || matchedTour.link_tour || '');
 
                     if (folder && Array.isArray(matchedTour.imagens) && matchedTour.imagens.length) {
                         window.tourImagesByFolder[folder] = matchedTour.imagens;

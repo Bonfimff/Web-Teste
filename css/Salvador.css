@@ -23,8 +23,8 @@
 
 /* Fundo fixo próprio de Salvador (substitui o fundo do Rio de Janeiro) */
 .rio-page::before {
-    background-color: #3d2b1f;
-    background-image: url('../imagem/Salvador/assets/fundo salvador.png');
+    background-color: var(--city-fundo-cor, #3d2b1f);
+    background-image: var(--city-fundo-img, url('../imagem/Salvador/assets/fundo salvador.png'));
     background-size: cover;
     background-position: center;
 }
@@ -39,7 +39,7 @@
 }
 
 .rio-hero {
-    background: url('https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp') center/cover no-repeat;
+    background: var(--city-painel-bg, url('https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp') center/cover no-repeat);
 }
 
 /* Remove padrão Copacabana — exclusivo do Rio; base escura padronizada

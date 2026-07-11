@@ -443,35 +443,12 @@
                 const detailsEl = card.querySelector('.rio-tour-details');
                 if (detailsEl) {
                     const currentLang = (typeof window.getCurrentLang === 'function') ? window.getCurrentLang() : 'pt';
-                    const languages = translateTourCardDetailValue('languages', tour.idiomas || tour.languages || 'Português, Inglês e Espanhol', currentLang);
-                    const meeting = translateTourCardDetailValue('meeting', tour.encontro || tour.meeting || 'Não informado', currentLang);
-                    const identification = translateTourCardDetailValue('identification', tour.identificacao || tour.identification || 'Guias com camisetas verdes', currentLang);
-                    const value = tour.valor ?? tour.value;
-                    const estado = (tour.estado || tour.status || '').trim();
-                    let valueLine = '';
-                    if (value != null && value !== '') {
-                        const formatted = Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        valueLine = `<li><i class="fa fa-dollar-sign"></i> <strong>Valor:</strong> ${formatted}</li>`;
-                    }
-                    let stateLine = '';
-                    if (estado && estado.toLowerCase() !== 'ativo') {
-                        stateLine = `<li><i class="fa fa-info-circle"></i> <strong>Estado:</strong> ${estado}</li>`;
-                    }
-
-                    detailsEl.innerHTML = `
-                        <li><i class="fa fa-language"></i> <strong>Idiomas:</strong> ${languages}</li>
-                        <li><i class="fa fa-map-marker-alt"></i> <strong>Encontro:</strong> ${meeting}</li>
-                        <li><i class="fa fa-shirt"></i> <strong>Identificação:</strong> ${identification}</li>
-                        ${valueLine}
-                        ${stateLine}
-                    `;
+                    detailsEl.innerHTML = buildTourDetailsHtml(tour, currentLang);
                 }
 
                 const mapLink = card.querySelector('.rio-link-map');
                 const mapUrl = tour.link_tour || tour.link || '';
-                if (mapLink && mapUrl) {
-                    mapLink.href = mapUrl;
-                }
+                applyMapLinkState(mapLink, mapUrl);
 
                 // Imagens enviadas via admin (Gerenciamento) substituem o slideshow local
                 // hardcoded, casadas pelo mesmo índice de card já usado acima.
@@ -567,6 +544,84 @@
         return value;
     };
 
+    // Campos editáveis em Gerenciamento > Gerenciamento da página > Tours da
+    // Página. Cada um só aparece no card se preenchido — em branco ou "N/U"
+    // (não usar) omite a legenda inteira, sem texto de preenchimento padrão.
+    const TOUR_DETAIL_ICONS = {
+        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', saida: 'fa-route',
+        encontro: 'fa-map-marker-alt', pontoEmbarque: 'fa-bus', pontoDesembarque: 'fa-bus',
+        grupo: 'fa-users', identificacao: 'fa-shirt', inclui: 'fa-check-circle', roteiro: 'fa-list',
+        horarios: 'fa-calendar-check'
+    };
+    const TOUR_DETAIL_LABELS = {
+        pt: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis' },
+        en: { periodo: 'Period', idiomas: 'Languages', duracao: 'Duration', saida: 'Departure', encontro: 'Meeting', pontoEmbarque: 'Pick-up point', pontoDesembarque: 'Drop-off point', grupo: 'Group', identificacao: 'Identification', inclui: 'Includes', roteiro: 'Itinerary', horarios: 'Available times' },
+        fr: { periodo: 'Période', idiomas: 'Langues', duracao: 'Durée', saida: 'Départ', encontro: 'Rendez-vous', pontoEmbarque: "Point d'embarquement", pontoDesembarque: 'Point de débarquement', grupo: 'Groupe', identificacao: 'Identification', inclui: 'Inclus', roteiro: 'Itinéraire', horarios: 'Horaires disponibles' },
+        es: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duración', saida: 'Salida', encontro: 'Encuentro', pontoEmbarque: 'Punto de embarque', pontoDesembarque: 'Punto de desembarque', grupo: 'Grupo', identificacao: 'Identificación', inclui: 'Incluye', roteiro: 'Itinerario', horarios: 'Horarios disponibles' },
+        it: { periodo: 'Periodo', idiomas: 'Lingue', duracao: 'Durata', saida: 'Partenza', encontro: 'Incontro', pontoEmbarque: 'Punto di imbarco', pontoDesembarque: 'Punto di sbarco', grupo: 'Gruppo', identificacao: 'Identificazione', inclui: 'Include', roteiro: 'Itinerario', horarios: 'Orari disponibili' },
+        zh: { periodo: '时期', idiomas: '语言', duracao: '时长', saida: '出发地', encontro: '集合', pontoEmbarque: '上车点', pontoDesembarque: '下车点', grupo: '团体', identificacao: '识别', inclui: '包含', roteiro: '行程', horarios: '可预订时间' }
+    };
+    const tourFieldVisible = (value) => {
+        const v = (value ?? '').toString().trim();
+        return !!v && v.toUpperCase() !== 'N/U';
+    };
+    const buildTourDetailsHtml = (tour, lang) => {
+        const labels = TOUR_DETAIL_LABELS[lang] || TOUR_DETAIL_LABELS.pt;
+        const rawValues = {
+            periodo: tour.periodo,
+            idiomas: tour.idiomas || tour.languages,
+            duracao: tour.duracao,
+            saida: tour.saida,
+            encontro: tour.encontro || tour.meeting,
+            pontoEmbarque: tour.ponto_embarque || tour.pontoEmbarque,
+            pontoDesembarque: tour.ponto_desembarque || tour.pontoDesembarque,
+            grupo: tour.grupo,
+            identificacao: tour.identificacao || tour.identification,
+            inclui: tour.inclui,
+            roteiro: tour.roteiro,
+            horarios: (tour.horarios || '').split(',').map(h => h.trim()).filter(Boolean).join(', ')
+        };
+        const translateKeyByField = { idiomas: 'languages', encontro: 'meeting', identificacao: 'identification' };
+
+        let html = '';
+        Object.keys(TOUR_DETAIL_ICONS).forEach((key) => {
+            const raw = rawValues[key];
+            if (!tourFieldVisible(raw)) return;
+            let value = raw.toString().trim();
+            if (translateKeyByField[key]) {
+                value = translateTourCardDetailValue(translateKeyByField[key], value, lang);
+            }
+            html += `<li><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> ${value}</li>`;
+        });
+
+        const valorRaw = tour.valor ?? tour.value;
+        if (valorRaw != null && valorRaw !== '' && Number(valorRaw) !== 0) {
+            const formatted = Number(valorRaw).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            html += `<li><i class="fa fa-dollar-sign"></i> <strong>Valor:</strong> ${formatted}</li>`;
+        }
+        const estado = (tour.estado || tour.status || '').toString().trim();
+        if (estado && estado.toLowerCase() !== 'ativo') {
+            html += `<li><i class="fa fa-info-circle"></i> <strong>Estado:</strong> ${estado}</li>`;
+        }
+        return html;
+    };
+
+    // O botão "Ver no Mapa" só faz sentido — e só fica habilitado — quando o
+    // tour tem um "Link do local de encontro" preenchido no admin.
+    const applyMapLinkState = (mapLink, url) => {
+        if (!mapLink) return;
+        if (url) {
+            mapLink.href = url;
+            mapLink.style.display = '';
+            mapLink.classList.remove('disabled');
+            mapLink.removeAttribute('aria-disabled');
+            mapLink.style.pointerEvents = '';
+        } else {
+            mapLink.removeAttribute('href');
+            mapLink.style.display = 'none';
+        }
+    };
+
     const applyPageLanguage = (lang) => {
         const t = pageTranslations[lang] || pageTranslations.pt;
         currentFooterInfo = t.footer_info || currentFooterInfo;
@@ -619,34 +674,18 @@
         cards.forEach((card, index) => {
             const dbTour = matchRioTourForCard(card, languageMatchers);
             if (dbTour) {
-                const labels = {
-                    pt: { idiomas: 'Idiomas', encontro: 'Encontro', identificacao: 'Identificação' },
-                    en: { idiomas: 'Languages', encontro: 'Meeting', identificacao: 'Identification' },
-                    fr: { idiomas: 'Langues', encontro: 'Rendez-vous', identificacao: 'Identification' },
-                    es: { idiomas: 'Idiomas', encontro: 'Encuentro', identificacao: 'Identificación' },
-                    it: { idiomas: 'Lingue', encontro: 'Incontro', identificacao: 'Identificazione' },
-                    zh: { idiomas: '语言', encontro: '集合', identificacao: '识别' }
-                }[lang] || { idiomas: 'Idiomas', encontro: 'Encontro', identificacao: 'Identificação' };
-
                 const nameEl = card.querySelector('.rio-tour-name');
                 if (nameEl) nameEl.textContent = dbTour.nome_tour || dbTour.name || '-';
 
                 const detailList = card.querySelector('.rio-tour-details');
                 if (detailList) {
-                    const languages = translateTourCardDetailValue('languages', dbTour.idiomas || dbTour.languages || 'Português, Inglês e Espanhol', lang);
-                    const meeting = translateTourCardDetailValue('meeting', dbTour.encontro || dbTour.meeting || 'Não informado', lang);
-                    const identification = translateTourCardDetailValue('identification', dbTour.identificacao || dbTour.identification || 'Guias com camisetas verdes', lang);
-                    detailList.innerHTML = `
-                        <li><i class="fa fa-language"></i> <strong>${labels.idiomas}:</strong> ${languages}</li>
-                        <li><i class="fa fa-map-marker-alt"></i> <strong>${labels.encontro}:</strong> ${meeting}</li>
-                        <li><i class="fa fa-shirt"></i> <strong>${labels.identificacao}:</strong> ${identification}</li>
-                    `;
+                    detailList.innerHTML = buildTourDetailsHtml(dbTour, lang);
                 }
 
                 const actions = card.querySelectorAll('.rio-tour-actions a');
                 if (actions[0]) {
                     actions[0].innerHTML = (t.cards[index] && t.cards[index].map) ? t.cards[index].map : '<i class="fa fa-map"></i> Ver no Mapa';
-                    if (dbTour.link_tour) actions[0].href = dbTour.link_tour;
+                    applyMapLinkState(actions[0], dbTour.link_tour || '');
                 }
                 if (actions[1]) {
                     const tourStatus = (dbTour.estado || dbTour.status || '').toString().trim().toLowerCase();

@@ -24,8 +24,8 @@
        suavemente. height:100% acima é o fallback para navegadores sem suporte. */
     height: 100dvh;
     z-index: -1;
-    background-color: #02415a;
-    background-image: url('../imagem/Rio de Janeiro/assets/fundo%20rj.png');
+    background-color: var(--city-fundo-cor, #02415a);
+    background-image: var(--city-fundo-img, url('../imagem/Rio de Janeiro/assets/fundo%20rj.png'));
     background-size: cover;
     background-position: center;
     will-change: transform;
@@ -346,7 +346,7 @@ body {
     padding-top: calc(60px + 0.5rem); /* garante que começa logo abaixo do header */
     /* herói mantém sua própria foto acima do fundo do corpo */
     background:
-        url('../imagem/Rio de Janeiro/assets/painel.jpeg') center/cover no-repeat;
+        var(--city-painel-bg, url('../imagem/Rio de Janeiro/assets/painel.jpeg') center/cover no-repeat);
     /* aplicar máscara de transparência na base para fade ao fundo */
     -webkit-mask-image: none;
     mask-image: none;
