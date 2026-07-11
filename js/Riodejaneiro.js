@@ -690,6 +690,7 @@
                 if (actions[1]) {
                     const tourStatus = (dbTour.estado || dbTour.status || '').toString().trim().toLowerCase();
                     const isAvailable = tourStatus === 'ativo' || tourStatus === 'active';
+                    const isWhatsApp = (dbTour.canal_reserva || dbTour.canalReserva || 'web').toLowerCase() === 'whatsapp';
                     if (!isAvailable) {
                         const unavailableText = t.reserve_unavailable || 'Temporariamente indisponível';
                         actions[1].textContent = unavailableText;
@@ -698,7 +699,8 @@
                         actions[1].setAttribute('aria-disabled', 'true');
                         actions[1].style.pointerEvents = 'none';
                     } else {
-                        actions[1].textContent = (t.cards[index] && t.cards[index].reserve) ? t.cards[index].reserve : 'Reservar Agora';
+                        const reserveText = (t.cards[index] && t.cards[index].reserve) ? t.cards[index].reserve : 'Reservar Agora';
+                        actions[1].innerHTML = isWhatsApp ? `<i class="fab fa-whatsapp"></i> ${reserveText}` : reserveText;
                         if (dbTour.link_tour) {
                             actions[1].href = dbTour.link_tour;
                         }

@@ -1588,6 +1588,14 @@ body {
     color: #0b3c6d;
   }
 
+  #tourModalId {
+    color: #0b3c6d;
+  }
+
+  .tour-comments-admin-list p {
+    color: #0b3c6d;
+  }
+
   .modal-body .checkbox-row {
     display: flex;
     gap: 1rem;

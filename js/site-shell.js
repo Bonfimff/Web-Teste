@@ -2401,6 +2401,7 @@
             status: tour?.estado || '',
             cidade: tour?.cidade || '',
             modalidade: (tour?.modalidade || 'free').toLowerCase(),
+            canal_reserva: (tour?.canal_reserva || 'web').toLowerCase(),
             imagens: Array.isArray(tour?.imagens) ? tour.imagens : [],
             ordem: tour?.ordem ?? 0,
             horarios: tour?.horarios || ''
@@ -2525,6 +2526,17 @@
                     }
 
                     applyMapLinkState(card.querySelector('.rio-link-map'), matchedTour.link || matchedTour.link_tour || '');
+
+                    const reserveBtn = card.querySelector('.rio-btn-reserve');
+                    if (reserveBtn) {
+                        if (!reserveBtn.dataset.baseLabel) {
+                            reserveBtn.dataset.baseLabel = reserveBtn.textContent.trim();
+                        }
+                        const isWhatsApp = (matchedTour.canal_reserva || 'web') === 'whatsapp';
+                        reserveBtn.innerHTML = isWhatsApp
+                            ? `<i class="fab fa-whatsapp"></i> ${reserveBtn.dataset.baseLabel}`
+                            : reserveBtn.dataset.baseLabel;
+                    }
 
                     if (folder && Array.isArray(matchedTour.imagens) && matchedTour.imagens.length) {
                         window.tourImagesByFolder[folder] = matchedTour.imagens;
