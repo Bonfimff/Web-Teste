@@ -45,6 +45,17 @@ body {
     display: block !important;
 }
 
+/* Garante full-bleed do topo (header + painel) sem recuo lateral, mesmo padrão
+   usado em Salvador.css/Saoluísdomaranhao.css/Lencoismaranhenses.css. Sem isso,
+   a barra de rolagem interna de .main-container.rio-page rouba ~15px do lado
+   direito do painel, deixando-o mais estreito que o das outras 3 cidades. */
+.rio-page > header,
+.rio-page > .rio-hero {
+    width: 100vw;
+    margin-left: 0;
+    margin-right: 0;
+}
+
 :root {
     --bg: transparent;
 }
@@ -321,7 +332,11 @@ body {
 /* ===================================================== */
 .rio-hero {
     position: relative;
-    min-height: 80vh;
+    /* Em telas "formato PC" (paisagem), o painel não deve cobrir a tela
+       inteira — precisa sobrar uma ponta visível da seção de tours logo
+       abaixo, como dica de que há mais conteúdo por rolar. Por isso aqui é
+       vh puro (sem piso em px que force cobrir 100% da viewport). */
+    min-height: 72vh;
     flex-shrink: 0; /* impede que o flex column da .main-container espreme o hero abaixo do conteúdo real */
     display: flex;
     align-items: flex-start;
@@ -384,7 +399,7 @@ body {
 .rio-hero-content {
     position: relative;
     z-index: 5;
-    max-width: 800px;
+    max-width: 1200px;
     padding: 0.3rem 2rem 2rem;
     margin-top: 0;
     animation: heroIntro 0.9s ease-out forwards;
@@ -491,8 +506,8 @@ body {
     color: #dfeeff; /* branco gelo */
     font-size: clamp(0.98rem, 1.7vw, 1.15rem);
     line-height: 1.85;
-    width: min(100%, 680px);
-    max-width: 680px;
+    width: min(100%, 1100px);
+    max-width: 1100px;
     text-align: center;
     margin: 0.3rem auto 1rem;
     text-shadow: 0 1px 6px rgba(0,0,0,0.35);
@@ -1092,7 +1107,7 @@ body {
     }
 
     .rio-hero {
-        min-height: 55vh;
+        min-height: max(50vh, 630px);
         padding-top: calc(60px + 0.5rem);
     }
 
@@ -1209,7 +1224,7 @@ body {
     }
 
     .rio-hero {
-        min-height: 60vh;
+        min-height: max(45vh, 740px);
         padding-top: 70px;
     }
 
@@ -2493,7 +2508,7 @@ header {
 
 @media (min-width: 1200px) {
   .rio-hero {
-    min-height: 85vh;
+    min-height: 78vh;
   }
 
   .rio-hero-content {

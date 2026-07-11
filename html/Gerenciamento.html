@@ -5,11 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <link rel="apple-touch-icon" href="../imagem/assets/Logo.png">
+    <link rel="icon" type="image/png" href="../imagem/assets/Logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=24">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=33">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -101,6 +102,16 @@
                     <label style="display:flex; flex-direction:column; font-size:0.85rem;">
                         Data final
                         <input type="date" id="filterTo" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);" />
+                    </label>
+                    <label style="display:flex; flex-direction:column; font-size:0.85rem;">
+                        Cidade
+                        <select id="filterCity" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);">
+                            <option value="">Geral (todas as cidades)</option>
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Lencois">Lençóis Maranhenses</option>
+                            <option value="Sao Luis">São Luís do Maranhão</option>
+                            <option value="Salvador">Salvador</option>
+                        </select>
                     </label>
                     <label style="display:flex; flex-direction:column; font-size:0.85rem;">
                         Tour
@@ -207,7 +218,31 @@
                     <label><input type="checkbox" id="roleCheckSelfEdit" /> Alterar próprias informações</label><br />
                     <label><input type="checkbox" id="roleCheckOtherEdit" /> Alterar informações de outros perfis</label><br />
                     <label><input type="checkbox" id="roleCheckConsultas" /> Realizar consultas</label><br />
-                    <label><input type="checkbox" id="roleCheckCarregarReservas" /> Carregar todas as reservas</label>
+                    <label><input type="checkbox" id="roleCheckCarregarReservas" /> Carregar todas as reservas</label><br />
+                    <label><input type="checkbox" id="roleCheckPageContent" /> Gerenciar conteúdo da página (tours, aviso, contato, textos)</label><br />
+                    <label><input type="checkbox" id="roleCheckComentarios" /> Moderar avaliações de clientes</label><br />
+                    <label><input type="checkbox" id="roleCheckFinanceiro" /> Gerenciar financeiro</label>
+                </div>
+
+                <div id="reservasRestricoes" style="margin-top:1rem; color:#1f2937;">
+                    <strong>Restrições de reservas</strong><br />
+                    <span style="font-size:0.85rem; color:#6b7280;">Só valem para quem tem "Gerenciar Reservas" marcado acima.</span><br />
+                    <label><input type="checkbox" class="reservas-city-perm" data-cidade="Rio de Janeiro" /> Rio de Janeiro</label><br />
+                    <label><input type="checkbox" class="reservas-city-perm" data-cidade="Lencois" /> Lençóis Maranhenses</label><br />
+                    <label><input type="checkbox" class="reservas-city-perm" data-cidade="Sao Luis" /> São Luís do Maranhão</label><br />
+                    <label><input type="checkbox" class="reservas-city-perm" data-cidade="Salvador" /> Salvador</label><br />
+                    <span style="font-size:0.8rem; color:#6b7280;">Nenhuma cidade marcada = pode ver/gerenciar todas.</span>
+                </div>
+
+                <div id="financeiroRestricoes" style="margin-top:1rem; color:#1f2937;">
+                    <strong>Restrições do financeiro</strong><br />
+                    <span style="font-size:0.85rem; color:#6b7280;">Só valem para quem tem "Gerenciar financeiro" marcado acima.</span><br />
+                    <label><input type="checkbox" class="finance-city-perm" data-cidade="Rio de Janeiro" /> Rio de Janeiro</label><br />
+                    <label><input type="checkbox" class="finance-city-perm" data-cidade="Lencois" /> Lençóis Maranhenses</label><br />
+                    <label><input type="checkbox" class="finance-city-perm" data-cidade="Sao Luis" /> São Luís do Maranhão</label><br />
+                    <label><input type="checkbox" class="finance-city-perm" data-cidade="Salvador" /> Salvador</label><br />
+                    <span style="font-size:0.8rem; color:#6b7280;">Nenhuma cidade marcada = pode ver/gerenciar todas.</span><br />
+                    <label style="margin-top:0.4rem; display:inline-block;"><input type="checkbox" id="roleCheckFinanceiroSomenteView" /> Somente visualizar (não pode lançar, editar ou excluir entradas/retiradas/despesas)</label>
                 </div>
 
                 <div style="margin-top:1rem; color:#1f2937;">
@@ -237,10 +272,6 @@
         </section>
 
         <section id="pageManagementSection" style="display:none; margin-top:2rem;">
-            <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
-                <!-- Cabeçalho de gerenciamento removido conforme solicitação -->
-            </div>
-
             <div id="financeSection" aria-label="Controle financeiro">
 
                 <div class="finance-month-nav">
@@ -255,6 +286,7 @@
                         <option value="Salvador">Salvador</option>
                     </select>
                     <button type="button" id="financeReload" class="btn-book" style="margin-left:auto;">Atualizar</button>
+                    <button type="button" id="financeDownloadCsv" class="btn-book" title="Baixar as informações deste mês em formato de tabela (CSV)">Baixar tabela</button>
                 </div>
 
                 <p id="financeCityLabel" style="margin:0 0 0.75rem; font-weight:700; color:#374151;">Exibindo: Geral (todas as cidades)</p>
@@ -366,6 +398,90 @@
                     </div>
                 </div>
 
+            </div>
+
+            <div id="cidadeContatoSection" style="margin-bottom: 1.25rem;">
+                <div id="cidadeContatoCard" class="cidade-contato-card">
+                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Contato por Cidade</h3>
+                    <label>Cidade
+                        <select id="cidadeContatoSelect">
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Salvador">Salvador</option>
+                            <option value="Sao Luis">São Luís do Maranhão</option>
+                            <option value="Lencois">Lençóis Maranhenses</option>
+                        </select>
+                    </label>
+                    <label>WhatsApp (só números, com DDI/DDD)
+                        <input type="text" id="cidadeContatoTelefone" placeholder="Ex: 5521999999999" />
+                    </label>
+                    <label>Email
+                        <input type="email" id="cidadeContatoEmail" placeholder="Ex: contato@site.com" />
+                    </label>
+                    <label>URL do YouTube
+                        <input type="url" id="cidadeContatoYoutube" placeholder="Ex: https://www.youtube.com/@canal" />
+                    </label>
+                    <button type="button" id="cidadeContatoSave" class="btn-book">Salvar</button>
+                    <span id="cidadeContatoStatus" class="cidade-contato-status"></span>
+                </div>
+            </div>
+
+            <div id="cidadeAvisoSection" style="margin-bottom: 1.25rem;">
+                <div id="cidadeAvisoCard" class="cidade-contato-card">
+                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Aviso "Informações Importantes"</h3>
+                    <label>Cidade
+                        <select id="cidadeAvisoSelect">
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Salvador">Salvador</option>
+                            <option value="Sao Luis">São Luís do Maranhão</option>
+                            <option value="Lencois">Lençóis Maranhenses</option>
+                        </select>
+                    </label>
+                    <label style="flex:0 0 auto;">
+                        <input type="checkbox" id="cidadeAvisoAtivo" style="width:auto; height:auto;" /> Exibir aviso
+                    </label>
+                    <label style="flex:1 1 100%;">Título
+                        <input type="text" id="cidadeAvisoTitulo" placeholder="Informações Importantes" />
+                    </label>
+                    <div style="flex:1 1 100%;">
+                        <strong style="display:block; font-size:0.8rem; color:#33485f; margin-bottom:0.35rem;">Itens do aviso</strong>
+                        <ul id="cidadeAvisoItens" class="cidade-aviso-itens"></ul>
+                        <button type="button" id="cidadeAvisoAddItem" class="btn-book cidade-aviso-add">+ Adicionar item</button>
+                    </div>
+                    <button type="button" id="cidadeAvisoSave" class="btn-book">Salvar</button>
+                    <span id="cidadeAvisoStatus" class="cidade-contato-status"></span>
+                </div>
+            </div>
+
+            <div id="paginaSecaoSection" style="margin-bottom: 1.25rem;">
+                <div id="paginaSecaoCard" class="cidade-contato-card">
+                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Textos SOBRE / CONTATO / AJUDA</h3>
+                    <label>Página
+                        <select id="paginaSecaoPagina">
+                            <option value="Principal">Principal</option>
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Salvador">Salvador</option>
+                            <option value="Sao Luis">São Luís do Maranhão</option>
+                            <option value="Lencois">Lençóis Maranhenses</option>
+                        </select>
+                    </label>
+                    <label>Seção
+                        <select id="paginaSecaoSecao">
+                            <option value="sobre">Sobre</option>
+                            <option value="contato">Contato</option>
+                            <option value="ajuda">Ajuda</option>
+                        </select>
+                    </label>
+                    <label style="flex:1 1 100%;">Título
+                        <input type="text" id="paginaSecaoTitulo" placeholder="Ex: Sobre" />
+                    </label>
+                    <div style="flex:1 1 100%;">
+                        <strong style="display:block; font-size:0.8rem; color:#33485f; margin-bottom:0.35rem;">Parágrafos</strong>
+                        <ul id="paginaSecaoItens" class="cidade-aviso-itens"></ul>
+                        <button type="button" id="paginaSecaoAddItem" class="btn-book cidade-aviso-add">+ Adicionar parágrafo</button>
+                    </div>
+                    <button type="button" id="paginaSecaoSave" class="btn-book">Salvar</button>
+                    <span id="paginaSecaoStatus" class="cidade-contato-status"></span>
+                </div>
             </div>
 
             <div id="pageManagementToursSection" style="overflow-x:auto; margin-bottom: 1.25rem;">
@@ -799,8 +915,8 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=11"></script>
-    <script src="../js/Gerenciamento.js?v=31"></script>
+    <script src="../js/Riodejaneiro.js?v=19"></script>
+    <script src="../js/Gerenciamento.js?v=50"></script>
 </body>
 </html>
 

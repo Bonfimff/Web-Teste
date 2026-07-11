@@ -238,6 +238,76 @@ console.log('Layout da imagem de referência carregado.');
 })();
 
 /* ===================================================== */
+/* TEXTOS SOBRE / CONTATO / AJUDA (editáveis via Gerenciamento) */
+/* ===================================================== */
+(() => {
+	// Título/texto dessas 3 seções são editáveis em Gerenciamento > Gerenciamento
+	// da página > Textos SOBRE/CONTATO/AJUDA (página "Principal"). Reaplica a cada
+	// troca de idioma porque applyLang() (acima) reescreve o texto padrão a cada vez.
+	const SECOES = ["sobre", "contato", "ajuda"];
+	let overrides = {};
+
+	const applyOverrides = () => {
+		// O admin só digita em português; nos outros idiomas usamos a tradução
+		// automática cacheada em override.traducoes[lang] (ver app.py).
+		const lang = typeof window.getCurrentLanguage === "function" ? window.getCurrentLanguage() : "pt";
+		SECOES.forEach((secao) => {
+			const override = overrides[secao];
+			if (!override) return;
+			const article = document.getElementById(secao);
+			if (!article) return;
+
+			const traducao = lang !== "pt" ? override.traducoes?.[lang] : null;
+			const titulo = (traducao && traducao.titulo) || override.titulo;
+			const texto = (traducao && typeof traducao.texto === "string") ? traducao.texto : override.texto;
+
+			const titleEl = article.querySelector("h2");
+			if (titleEl && titulo) titleEl.textContent = titulo;
+
+			if (texto) {
+				const linhas = texto.split("\n").map((l) => l.trim()).filter(Boolean);
+				if (linhas.length) {
+					article.querySelectorAll("p").forEach((p) => p.remove());
+					const linksDiv = article.querySelector(".site-section-links");
+					linhas.forEach((linha) => {
+						const p = document.createElement("p");
+						p.textContent = linha;
+						article.insertBefore(p, linksDiv || null);
+					});
+				}
+			}
+		});
+	};
+
+	const loadPaginaSecao = async () => {
+		const endpoints = [
+			"https://api-tour.exksvol.com/get_pagina_secao?pagina=Principal",
+			"http://127.0.0.1:5000/get_pagina_secao?pagina=Principal",
+			"https://api.exksvol.com/get_pagina_secao?pagina=Principal"
+		];
+		for (const endpoint of endpoints) {
+			try {
+				const response = await fetch(endpoint);
+				if (!response.ok) continue;
+				const lista = await response.json();
+				if (!Array.isArray(lista)) continue;
+				overrides = lista.reduce((acc, item) => {
+					if (item && item.secao) acc[item.secao] = item;
+					return acc;
+				}, {});
+				applyOverrides();
+				return;
+			} catch (error) {
+				console.warn("Falha ao carregar textos da página em", endpoint, error);
+			}
+		}
+	};
+
+	document.addEventListener("app:language-changed", applyOverrides);
+	loadPaginaSecao();
+})();
+
+/* ===================================================== */
 /* VIDEO CAPSULE SYNC  (split-screen local mp4)          */
 /* Trecho de 0:12 a 2:00, depois repete                  */
 /* ===================================================== */

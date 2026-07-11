@@ -202,11 +202,15 @@
                 savedPermissions = null;
             }
 
+            const defaults = DEFAULT_ROLE_PERMISSIONS[canonicalRole] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+            // O cache em localStorage (gravado no login) pode ser mais antigo
+            // que permissões granulares adicionadas depois — mesclar com os
+            // defaults como base evita perder uma chave nova ausente no cache.
             rolePermissionsMap = {
                 ...rolePermissionsMap,
                 [canonicalRole]: (savedPermissions && typeof savedPermissions === 'object')
-                    ? savedPermissions
-                    : (DEFAULT_ROLE_PERMISSIONS[canonicalRole] || DEFAULT_ROLE_PERMISSIONS.cliente_user)
+                    ? { ...defaults, ...savedPermissions }
+                    : defaults
             };
             applyRoleBasedControls();
             return;
@@ -2282,12 +2286,34 @@
         const titleEl = document.querySelector('.footer-info-title') || document.querySelector('.rio-footer-card-title');
         const body = document.getElementById('footerInfoBody') || document.getElementById('rioFooterCardBody');
 
+        // Título/texto de SOBRE, CONTATO e AJUDA são editáveis por página em
+        // Gerenciamento > Gerenciamento da página > Textos SOBRE/CONTATO/AJUDA.
+        // Se houver override cadastrado para esta página+seção, ele tem prioridade
+        // sobre o texto padrão do catálogo de tradução. O admin só digita em
+        // português; nos outros idiomas usamos a tradução automática cacheada
+        // em override.traducoes[lang] (ver app.py).
+        const override = window.__paginaSecaoOverrides?.[key];
+        const overrideTraducao = override && lang !== 'pt' ? override.traducoes?.[lang] : null;
+        const overrideTitulo = (overrideTraducao && overrideTraducao.titulo) || override?.titulo;
+        const overrideTexto = (overrideTraducao && typeof overrideTraducao.texto === 'string') ? overrideTraducao.texto : override?.texto;
+
         if (titleEl) {
             const titleKey = `footer_${key}_title`;
-            titleEl.textContent = strings[titleKey] || strings.footer_info_title || fallbackFooterInfoTitle;
+            titleEl.textContent = overrideTitulo || strings[titleKey] || strings.footer_info_title || fallbackFooterInfoTitle;
         }
 
         if (!body) return;
+
+        if (overrideTexto) {
+            const linhas = overrideTexto.split('\n').map((l) => l.trim()).filter(Boolean);
+            body.innerHTML = '';
+            linhas.forEach((linha) => {
+                const p = document.createElement('p');
+                p.textContent = linha;
+                body.appendChild(p);
+            });
+            return;
+        }
 
         const bodyKey = `footer_${key}`;
         body.innerHTML = strings[bodyKey] || fallbackFooterInfoBody;
@@ -3442,7 +3468,7 @@
         // "Reservar agora" abre direto uma conversa no WhatsApp com o tour já
         // identificado na mensagem, sem exigir login.
         const openWhatsAppReservation = (tourName) => {
-            const phone = '5521970018590';
+            const phone = window.__cidadeContatoPhone || '5521970018590';
             const mensagem = `Olá! Gostaria de realizar o tour "${tourName}".`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(mensagem)}`, '_blank', 'noopener');
         };
@@ -3747,7 +3773,7 @@
 
         emailLink.addEventListener('click', async () => {
             if (!navigator.clipboard || typeof window.showAppNotification !== 'function') return;
-            const email = 'riobyfoottour@gmail.com';
+            const email = (emailLink.getAttribute('href') || '').replace(/^mailto:/, '').split('?')[0] || 'riobyfoottour@gmail.com';
             const currentLang = typeof window.getCurrentLanguage === 'function'
                 ? window.getCurrentLanguage()
                 : (document.documentElement.lang || 'pt').slice(0, 2);
@@ -3835,8 +3861,187 @@
         }
         // Puxa os tours mantidos pela página de Gerenciamento (links, status e valores atualizados)
         fetchToursFromBackend();
+        loadCidadeContato();
+        loadCidadeAviso();
+        loadPaginaSecao();
         dispatchLanguageChange(getCurrentLang());
     });
+
+    // Telefone (WhatsApp) e email de contato são editáveis por cidade em
+    // Gerenciamento > Gerenciamento da página > Contato por Cidade. Substitui,
+    // na página atual, os links de WhatsApp/email que ainda apontam para o
+    // valor padrão hardcoded pelo valor configurado para a cidade desta página.
+    const applyCidadeContato = (contato) => {
+        if (!contato) return;
+        const telefone = (contato.telefone || '').replace(/\D/g, '');
+        const email = (contato.email || '').trim();
+
+        if (telefone) {
+            document.querySelectorAll('a[href*="wa.me/"]').forEach((a) => {
+                a.setAttribute('href', a.getAttribute('href').replace(/wa\.me\/\d+/, `wa.me/${telefone}`));
+            });
+            document.querySelectorAll('a[href*="api.whatsapp.com/send"]').forEach((a) => {
+                a.setAttribute('href', a.getAttribute('href').replace(/phone=\d+/, `phone=${telefone}`));
+            });
+            window.__cidadeContatoPhone = telefone;
+        }
+
+        if (email) {
+            const previousEmail = window.__cidadeContatoEmail || 'riobyfoottour@gmail.com';
+            document.querySelectorAll('a[href^="mailto:"]').forEach((a) => {
+                const href = a.getAttribute('href');
+                const currentEmail = href.slice(7).split('?')[0];
+                if (currentEmail.toLowerCase() !== previousEmail.toLowerCase()) return;
+                a.setAttribute('href', `mailto:${email}`);
+                if (a.textContent.trim().toLowerCase() === currentEmail.toLowerCase()) {
+                    a.textContent = email;
+                }
+            });
+            window.__cidadeContatoEmail = email;
+        }
+
+        const youtube = (contato.youtube || '').trim();
+        if (youtube) {
+            document.querySelectorAll('a[data-social="youtube"], a[href*="youtube.com"]').forEach((a) => {
+                a.setAttribute('href', youtube);
+            });
+            window.__cidadeContatoYoutube = youtube;
+        }
+    };
+    window.applyCidadeContato = (cidade, contato) => applyCidadeContato(contato);
+
+    const loadCidadeContato = async () => {
+        const cidade = document.getElementById('relatosGallery')?.dataset.cidade;
+        if (!cidade) return;
+
+        const endpoints = [
+            `${API_BASE_URL}/get_cidade_contato`,
+            'http://127.0.0.1:5000/get_cidade_contato',
+            'https://api.exksvol.com/get_cidade_contato'
+        ];
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) continue;
+                const lista = await response.json();
+                if (!Array.isArray(lista)) continue;
+                const contato = lista.find((item) => item && item.cidade === cidade);
+                if (contato) applyCidadeContato(contato);
+                return;
+            } catch (error) {
+                console.warn('Falha ao carregar contato da cidade em', endpoint, error);
+            }
+        }
+    };
+
+    // Aviso "Informações Importantes" editável por cidade em Gerenciamento >
+    // Gerenciamento da página > Aviso "Informações Importantes". Permite
+    // customizar título/texto ou ocultar o aviso por completo.
+    const applyCidadeAviso = (aviso) => {
+        const noticeEl = document.querySelector('.rio-notice');
+        if (!noticeEl || !aviso) return;
+
+        if (aviso.ativo === false) {
+            noticeEl.style.display = 'none';
+            return;
+        }
+
+        const noticeDismissKey = `rioNoticeDismissed:${window.location.pathname}`;
+        if (localStorage.getItem(noticeDismissKey) === '1') return;
+
+        // Cacheado para poder reaplicar (com a tradução certa) quando o
+        // idioma da página trocar, sem precisar buscar de novo na API.
+        window.__cidadeAvisoData = aviso;
+
+        // O admin só digita em português; nos outros idiomas usamos a
+        // tradução automática cacheada em aviso.traducoes[lang] (ver app.py).
+        const lang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
+        const traducao = lang !== 'pt' ? aviso.traducoes?.[lang] : null;
+        const titulo = (traducao && traducao.titulo) || aviso.titulo;
+        const texto = (traducao && typeof traducao.texto === 'string') ? traducao.texto : aviso.texto;
+
+        const titleEl = noticeEl.querySelector('.rio-notice-title');
+        if (titleEl && titulo) titleEl.textContent = titulo;
+
+        const textContainer = noticeEl.querySelector('.rio-notice-text');
+        const actions = noticeEl.querySelector('.rio-notice-actions');
+        if (textContainer && typeof texto === 'string') {
+            const linhas = texto.split('\n').map((l) => l.trim()).filter(Boolean);
+            if (linhas.length) {
+                textContainer.querySelectorAll('p').forEach((p) => p.remove());
+                linhas.forEach((linha) => {
+                    const p = document.createElement('p');
+                    const icon = document.createElement('i');
+                    icon.className = 'fa fa-circle-info';
+                    p.appendChild(icon);
+                    p.appendChild(document.createTextNode(` ${linha}`));
+                    textContainer.insertBefore(p, actions);
+                });
+            }
+        }
+
+        // Marca que o conteúdo do banco já foi aplicado, para as páginas de
+        // cada cidade (Salvador.js/Saoluísdomaranhao.js/Lencoismaranhenses.js)
+        // não sobrescreverem título/texto com o fallback hardcoded ao trocar
+        // de idioma depois disso.
+        window.__cidadeAvisoCarregado = true;
+        noticeEl.style.display = '';
+    };
+    window.applyCidadeAviso = (cidade, aviso) => applyCidadeAviso(aviso);
+
+    const loadCidadeAviso = async () => {
+        const cidade = document.getElementById('relatosGallery')?.dataset.cidade;
+        if (!cidade) return;
+
+        const endpoints = [
+            `${API_BASE_URL}/get_cidade_aviso`,
+            'http://127.0.0.1:5000/get_cidade_aviso',
+            'https://api.exksvol.com/get_cidade_aviso'
+        ];
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) continue;
+                const lista = await response.json();
+                if (!Array.isArray(lista)) continue;
+                const aviso = lista.find((item) => item && item.cidade === cidade);
+                if (aviso) applyCidadeAviso(aviso);
+                return;
+            } catch (error) {
+                console.warn('Falha ao carregar aviso da cidade em', endpoint, error);
+            }
+        }
+    };
+
+    // Título/texto de SOBRE, CONTATO e AJUDA editáveis por página em
+    // Gerenciamento > Gerenciamento da página > Textos SOBRE/CONTATO/AJUDA.
+    // Popula window.__paginaSecaoOverrides, consultado por updateFooterInfo()
+    // sempre que o card de informações do rodapé é preenchido.
+    const loadPaginaSecao = async () => {
+        const pagina = document.getElementById('relatosGallery')?.dataset.cidade;
+        if (!pagina) return;
+
+        const endpoints = [
+            `${API_BASE_URL}/get_pagina_secao?pagina=${encodeURIComponent(pagina)}`,
+            `http://127.0.0.1:5000/get_pagina_secao?pagina=${encodeURIComponent(pagina)}`,
+            `https://api.exksvol.com/get_pagina_secao?pagina=${encodeURIComponent(pagina)}`
+        ];
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) continue;
+                const lista = await response.json();
+                if (!Array.isArray(lista)) continue;
+                window.__paginaSecaoOverrides = lista.reduce((acc, item) => {
+                    if (item && item.secao) acc[item.secao] = item;
+                    return acc;
+                }, {});
+                return;
+            } catch (error) {
+                console.warn('Falha ao carregar textos da página em', endpoint, error);
+            }
+        }
+    };
 })();
 
 

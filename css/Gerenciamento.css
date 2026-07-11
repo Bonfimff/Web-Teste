@@ -1203,12 +1203,14 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #f8fafc;
+  color: #0b3c6d;
 }
 
 .tour-comment-admin-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #0b3c6d;
 }
 
 .tour-comment-admin-stars {
@@ -2992,4 +2994,108 @@ section,
   background: #1a7a4a;
   border-color: #1a7a4a;
   color: #fff;
+}
+
+.cidade-contato-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.cidade-contato-card label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #33485f;
+  font-weight: 600;
+  flex: 1 1 220px;
+}
+
+.cidade-contato-card input,
+.cidade-contato-card select,
+.cidade-contato-card textarea {
+  border: 1px solid #d6dce4;
+  border-radius: 8px;
+  padding: 0.48rem 0.55rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  height: 42px;
+}
+
+.cidade-contato-card textarea {
+  height: auto;
+  min-height: 110px;
+  resize: vertical;
+  width: 100%;
+}
+
+.cidade-aviso-itens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cidade-aviso-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cidade-aviso-item input {
+  flex: 1 1 auto;
+  border: 1px solid #d6dce4;
+  border-radius: 8px;
+  padding: 0.48rem 0.55rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  height: 42px;
+}
+
+.cidade-aviso-item-remove {
+  flex: 0 0 auto;
+  border: 1px solid #c0392b;
+  background: #fff;
+  color: #c0392b;
+  border-radius: 8px;
+  height: 42px;
+  width: 42px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cidade-aviso-item-remove:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+.cidade-aviso-add {
+  margin-top: 0.5rem;
+}
+
+.cidade-aviso-empty {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.cidade-contato-card button {
+  flex: 0 0 auto;
+  height: 42px;
+}
+
+.cidade-contato-status {
+  flex: 0 0 100%;
+  font-size: 0.8rem;
+  color: #1a7a4a;
+  font-weight: 600;
+  min-height: 1.1em;
 }

@@ -137,12 +137,15 @@ const setDismissedImportantInfoItems = (items) => {
   localStorage.setItem(IMPORTANT_INFO_DISMISSED_KEY, JSON.stringify(Array.isArray(items) ? items.slice(-200) : []));
 };
 
-const buildImportantInfoItemId = (item) => [
-  item.timestamp || '',
-  item.action || '',
-  item.reservation_id || '',
-  item.user_email || ''
-].join('::');
+const buildImportantInfoItemId = (item) => {
+  if (item.type === 'review_pending') return `review::${item.id}`;
+  return [
+    item.timestamp || '',
+    item.action || '',
+    item.reservation_id || '',
+    item.user_email || ''
+  ].join('::');
+};
 
 const reservationActivityLabels = {
   add: 'adicionou uma reserva',
@@ -224,6 +227,27 @@ const renderImportantInfoFeed = (items = []) => {
 
   feed.innerHTML = visibleItems.map((item) => {
     const itemId = escapeHtml(buildImportantInfoItemId(item));
+
+    if (item.type === 'review_pending') {
+      const safeName = escapeHtml(item.usuario_nome || 'Cliente');
+      const safeTour = escapeHtml(item.tour_nome || '-');
+      const comentario = item.comentario || '';
+      const safeComment = escapeHtml(comentario.slice(0, 140) + (comentario.length > 140 ? '…' : ''));
+      const safeWhen = escapeHtml(formatReservationActivityTime(item.criado_em) || '');
+      return `
+        <article class="important-info-item important-info-item--review" data-important-info-id="${itemId}" data-review-tour-id="${escapeHtml(String(item.tour_id || ''))}" style="position:relative; padding:0.9rem 1rem; border-radius:14px; background:rgba(255,247,230,0.92); border:1px solid rgba(217,119,6,0.25); box-shadow:0 10px 30px rgba(217,119,6,0.12); cursor:pointer;">
+          <button type="button" class="important-info-dismiss" data-important-info-dismiss="${itemId}" aria-label="Fechar alerta" style="position:absolute; top:0.55rem; right:0.65rem; border:none; background:transparent; color:#6b7280; font-size:1.1rem; line-height:1; cursor:pointer; padding:0.15rem 0.35rem;">×</button>
+          <div style="display:flex; justify-content:space-between; gap:0.75rem; align-items:flex-start; flex-wrap:wrap; padding-right:1.5rem;">
+            <strong style="color:#92400e;">${safeName} enviou uma avaliação pendente de moderação</strong>
+            <span style="font-size:0.82rem; color:#6b7280;">${safeWhen}</span>
+          </div>
+          <div style="margin-top:0.35rem; color:#1f2937; font-size:0.92rem;">Tour: <strong>${safeTour}</strong></div>
+          ${safeComment ? `<div style="margin-top:0.25rem; color:#374151; font-size:0.88rem; font-style:italic;">"${safeComment}"</div>` : ''}
+          <div style="margin-top:0.4rem; color:#92400e; font-size:0.82rem; font-weight:700;">Clique para moderar →</div>
+        </article>
+      `;
+    }
+
     const actionLabel = reservationActivityLabels[item.action] || 'atualizou uma reserva';
     const when = formatReservationActivityTime(item.timestamp);
     const statusText = item.status ? `Status: ${item.status}` : '';
@@ -251,6 +275,14 @@ const renderImportantInfoFeed = (items = []) => {
     `;
   }).join('');
 
+  feed.querySelectorAll('.important-info-item--review').forEach((card) => {
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('[data-important-info-dismiss]')) return;
+      const tourId = card.getAttribute('data-review-tour-id');
+      if (tourId) goToPendingReview(tourId);
+    });
+  });
+
   feed.querySelectorAll('[data-important-info-dismiss]').forEach((button) => {
     button.addEventListener('click', () => {
       const itemId = button.getAttribute('data-important-info-dismiss');
@@ -271,21 +303,54 @@ const renderImportantInfoFeed = (items = []) => {
   });
 };
 
+// Abre o modal de edição do tour direto na aba de comentários, para o admin
+// moderar (aprovar/rejeitar) a avaliação pendente sem precisar procurar o
+// tour manualmente na tabela de Gerenciamento da página.
+const goToPendingReview = async (tourId) => {
+  if (typeof mostrarSecao === 'function') {
+    mostrarSecao('gerenciamento');
+  }
+
+  let tour = (Array.isArray(lastLoadedTours) ? lastLoadedTours : []).find(t => String(t.id) === String(tourId));
+  if (!tour) {
+    const tours = await fetchPageToursFromBackend();
+    tour = (Array.isArray(tours) ? tours : []).find(t => String(t.id) === String(tourId));
+  }
+
+  if (!tour) {
+    alert('Não foi possível localizar o tour desta avaliação.');
+    return;
+  }
+
+  openTourEditModal(tour);
+};
+
+const loadPendingReviews = async (adminEmail) => {
+  try {
+    const response = await fetchWithApiFallback(`/get_pending_tour_comentarios?admin_email=${encodeURIComponent(adminEmail)}`);
+    if (!response.ok) return [];
+    const result = await response.json().catch(() => ({ items: [] }));
+    const items = Array.isArray(result.items) ? result.items : [];
+    return items.map((item) => ({ ...item, type: 'review_pending' }));
+  } catch (error) {
+    console.warn('Falha ao carregar avaliações pendentes de moderação:', error);
+    return [];
+  }
+};
+
 const loadImportantInfoFeed = async () => {
   const currentUserEmail = localStorage.getItem('userEmail') || '';
   if (!currentUserEmail) return;
 
   try {
     const response = await fetchWithApiFallback(`/get_reservation_activity?email=${encodeURIComponent(currentUserEmail)}&limit=12`);
-    if (!response.ok) {
-      renderImportantInfoFeed([]);
-      return;
-    }
+    const items = response.ok ? (await response.json().catch(() => ({ items: [] }))).items : [];
+    const recentItems = (Array.isArray(items) ? items : []).filter(isImportantInfoWithinWindow);
 
-    const result = await response.json().catch(() => ({ items: [] }));
-    const items = Array.isArray(result.items) ? result.items : [];
-    const recentItems = items.filter(isImportantInfoWithinWindow);
-    renderImportantInfoFeed(recentItems);
+    // Avaliações pendentes ficam sempre visíveis (sem janela de 72h) — mesmo
+    // uma avaliação antiga sem moderação continua relevante para o admin.
+    const pendingReviews = await loadPendingReviews(currentUserEmail);
+    renderImportantInfoFeed([...pendingReviews, ...recentItems]);
 
     if (recentItems.length) {
       const newestTimestamp = recentItems[0].timestamp || null;
@@ -326,7 +391,12 @@ const getStoredCurrentRolePermissions = () => {
 const getEffectivePermissionsForRole = (roleName) => {
   const role = normalizeRoleName(roleName || localStorage.getItem('userRole') || 'cliente_user');
   const stored = getStoredCurrentRolePermissions();
-  return stored || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+  const fresh = currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
+  // O cache em localStorage (gravado no login) pode ser mais antigo que
+  // permissões granulares adicionadas depois (ex: manageFinanceiro,
+  // managePageContent, manageComentarios) — mesclar com "fresh" como base
+  // evita que uma chave nova ausente no cache seja lida como false/undefined.
+  return stored ? { ...fresh, ...stored } : fresh;
 };
 
 const formatRoleLabel = (roleName) => {
@@ -483,6 +553,26 @@ const setPageTours = (tours) => {
   } catch {
     // ignore
   }
+};
+
+// As reservas (agendamentos) não guardam a cidade diretamente — só o nome do
+// tour. Como cada tour da página já tem sua cidade cadastrada, cruzamos pelo
+// nome (normalizado) para descobrir a cidade de cada reserva na hora de filtrar.
+// Busca os tours do backend (fonte mais confiável) e cai para o cache local
+// em localStorage só se a requisição falhar — a aba Reservas pode ser aberta
+// sem que a aba Gerenciamento da Página tenha sido visitada antes.
+const buildTourCidadeMap = (tours) => {
+  const map = {};
+  tours.forEach((tour) => {
+    const nome = String(tour.name || '').trim().toLowerCase();
+    if (nome) map[nome] = tour.cidade || '';
+  });
+  return map;
+};
+
+const getTourCidadeMap = async () => {
+  const remoteTours = await fetchPageToursFromBackend();
+  return buildTourCidadeMap(Array.isArray(remoteTours) ? remoteTours : getPageTours());
 };
 
 const normalizeTourStatus = (status) => {
@@ -851,6 +941,8 @@ const renderTourComments = (comentarios) => {
     return;
   }
 
+  const canModerate = !!getEffectivePermissionsForRole()?.manageComentarios;
+
   container.innerHTML = lista.map(c => {
     const status = c.status || 'pendente';
     const fotosHtml = Array.isArray(c.fotos) && c.fotos.length
@@ -862,14 +954,15 @@ const renderTourComments = (comentarios) => {
         <strong>${c.usuario_nome || 'Usuário'}</strong>
         ${c.nota ? `<span class="tour-comment-admin-stars">${'★'.repeat(c.nota)}${'☆'.repeat(5 - c.nota)}</span>` : ''}
         <span class="tour-comment-admin-badge">${TOUR_COMMENT_STATUS_LABEL[status] || status}</span>
-        <button type="button" class="tour-comment-admin-delete" data-comment-id="${c.id}" aria-label="Excluir comentário">&times;</button>
+        ${canModerate ? `<button type="button" class="tour-comment-admin-delete" data-comment-id="${c.id}" aria-label="Excluir comentário">&times;</button>` : ''}
       </div>
       <p>${c.comentario || ''}</p>
       ${fotosHtml}
+      ${canModerate ? `
       <div class="tour-comment-admin-actions">
         ${status !== 'aprovado' ? `<button type="button" class="btn-book tour-comment-admin-approve" data-comment-id="${c.id}">Aprovar</button>` : ''}
         ${status !== 'rejeitado' ? `<button type="button" class="btn-book tour-comment-admin-reject" data-comment-id="${c.id}">Rejeitar</button>` : ''}
-      </div>
+      </div>` : ''}
     </div>
   `;
   }).join('');
@@ -978,6 +1071,69 @@ const FINANCE_CITY_LABELS = {
 };
 const formatFinanceCidade = (cidade) => FINANCE_CITY_LABELS[cidade] || cidade || '-';
 
+// Aplica as restrições finas do financeiro (cidades liberadas e modo
+// somente-visualização) do nível de acesso logado à UI: encolhe o seletor
+// de cidade às cidades permitidas e esconde os formulários/ações de escrita.
+const applyFinanceRestrictions = () => {
+  const perms = currentUserPermissions || {};
+  const cidadesPermitidas = Array.isArray(perms.financeiroCidades) ? perms.financeiroCidades : [];
+  const somenteVisualizacao = !!perms.financeiroSomenteVisualizar;
+
+  const cityFilter = document.getElementById('financeCityFilter');
+  if (cityFilter) {
+    const valorAtual = cityFilter.value;
+    Array.from(cityFilter.options).forEach((opt) => {
+      // A opção "Geral" (value vazio) só some quando há restrição de cidade,
+      // já que "todas as cidades" deixaria de fazer sentido nesse caso.
+      if (!opt.value) {
+        opt.hidden = cidadesPermitidas.length > 0;
+      } else {
+        opt.hidden = cidadesPermitidas.length > 0 && !cidadesPermitidas.includes(opt.value);
+      }
+    });
+    if (cityFilter.selectedOptions[0]?.hidden) {
+      cityFilter.value = cidadesPermitidas[0] || '';
+    }
+    if (!valorAtual && cidadesPermitidas.length === 1) {
+      cityFilter.value = cidadesPermitidas[0];
+    }
+  }
+
+  const financeSection = document.getElementById('financeSection');
+  if (financeSection) {
+    financeSection.classList.toggle('finance-readonly', somenteVisualizacao);
+  }
+  document.querySelectorAll('.finance-add-form').forEach((form) => {
+    form.style.display = somenteVisualizacao ? 'none' : '';
+  });
+};
+
+// Aplica a restrição fina de cidades das reservas (ver "Restrições de
+// reservas" em Contas > Gerenciamento de Níveis de Acesso) à UI: encolhe o
+// seletor de cidade da aba Reservas às cidades permitidas.
+const applyReservasRestrictions = () => {
+  const perms = currentUserPermissions || {};
+  const cidadesPermitidas = Array.isArray(perms.reservasCidades) ? perms.reservasCidades : [];
+
+  const cityFilter = document.getElementById('filterCity');
+  if (cityFilter) {
+    const valorAtual = cityFilter.value;
+    Array.from(cityFilter.options).forEach((opt) => {
+      if (!opt.value) {
+        opt.hidden = cidadesPermitidas.length > 0;
+      } else {
+        opt.hidden = cidadesPermitidas.length > 0 && !cidadesPermitidas.includes(opt.value);
+      }
+    });
+    if (cityFilter.selectedOptions[0]?.hidden) {
+      cityFilter.value = cidadesPermitidas[0] || '';
+    }
+    if (!valorAtual && cidadesPermitidas.length === 1) {
+      cityFilter.value = cidadesPermitidas[0];
+    }
+  }
+};
+
 const setFinanceDateDefaults = () => {
   const mes = getFinanceMonth();
   const hoje = new Date();
@@ -990,6 +1146,7 @@ const setFinanceDateDefaults = () => {
 };
 
 const carregarFinanceiro = async () => {
+  applyFinanceRestrictions();
   const email = localStorage.getItem('userEmail') || '';
   const mes = getFinanceMonth();
   const cidade = getFinanceCity();
@@ -1050,7 +1207,10 @@ const renderFinanceiro = (dados) => {
 
   const lancamentos = Array.isArray(dados.lancamentos) ? dados.lancamentos : [];
 
+  const somenteVisualizacao = !!(dados.somente_visualizacao ?? currentUserPermissions?.financeiroSomenteVisualizar);
+
   const renderAcoes = (l) => {
+    if (somenteVisualizacao) return '';
     const btnEditar = `<button type="button" class="finance-action-btn finance-edit" data-id="${l.id}" title="Editar">✎</button>`;
     // Lançamentos automáticos (tour finalizado, despesa fixa) não podem ser
     // excluídos: a sincronização os recriaria no próximo carregamento. O
@@ -1126,20 +1286,21 @@ const renderFinanceiro = (dados) => {
         <td data-label="Cidade">${escapeHtml(formatFinanceCidade(f.cidade))}</td>
         <td data-label="Início">${formatDataBR(f.data_inicio)}</td>
         <td data-label="Situação">${f.data_fim ? `Encerrada em ${formatDataBR(f.data_fim)}` : '<span class="finance-badge-auto">Ativa</span>'}</td>
-        <td data-label="Ações">
+        <td data-label="Ações">${somenteVisualizacao ? '' : `
           <button type="button" class="finance-action-btn finance-fixa-edit" data-id="${f.id}" title="Editar">✎</button>
           ${f.data_fim ? '' : `<button type="button" class="finance-action-btn finance-fixa-encerrar" data-id="${f.id}" title="Encerrar (para de lançar nos próximos meses)">⏸</button>`}
           <button type="button" class="finance-action-btn finance-delete finance-fixa-delete" data-id="${f.id}" title="Excluir (remove também os lançamentos gerados)">🗑</button>
-        </td>
+        `}</td>
       </tr>
     `),
     7,
     'Nenhuma despesa fixa cadastrada.'
   );
 
-  // Guarda os dados carregados para edição inline
+  // Guarda os dados carregados para edição inline e para a exportação em CSV
   window.lastFinanceLancamentos = lancamentos;
   window.lastFinanceDespesasFixas = fixas;
+  window.lastFinanceTotais = totais;
 
   document.querySelectorAll('.finance-edit').forEach((btn) => {
     btn.addEventListener('click', () => editarLancamentoFinanceiro(Number(btn.dataset.id)));
@@ -1415,6 +1576,94 @@ const shiftFinanceMonth = (delta) => {
   carregarFinanceiro();
 };
 
+// Ponto e vírgula é o separador de campo do CSV — não vírgula, porque o
+// Excel em português usa vírgula como separador decimal (ex: "R$ 1.234,56")
+// e por padrão só quebra corretamente em colunas com ";". Qualquer valor que
+// contenha ";", aspas ou quebra de linha precisa ir entre aspas.
+const csvEscapeField = (value) => {
+  const str = String(value ?? '');
+  return /[",\n;]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+};
+
+const csvRow = (campos) => campos.map(csvEscapeField).join(';');
+
+const downloadFinanceiroCsv = () => {
+  const lancamentos = Array.isArray(window.lastFinanceLancamentos) ? window.lastFinanceLancamentos : [];
+  const fixas = Array.isArray(window.lastFinanceDespesasFixas) ? window.lastFinanceDespesasFixas : [];
+  const totais = window.lastFinanceTotais || {};
+  const mes = getFinanceMonth();
+  const cidadeFiltro = getFinanceCity();
+  const cidadeLabel = cidadeFiltro ? formatFinanceCidade(cidadeFiltro) : 'Geral (todas as cidades)';
+
+  const linhas = [
+    csvRow([`Financeiro - ${mes} - ${cidadeLabel}`])
+  ];
+
+  // Cada tipo de lançamento vira sua própria tabela (título + cabeçalho +
+  // linhas próprios), em vez de uma tabela única com todos misturados —
+  // fica mais fácil de ler/filtrar ao abrir no Excel/Sheets.
+  const origemEntrada = (l) => (l.origem === 'auto_tour' ? 'Automática (tour)' : 'Manual');
+  const origemDespesa = (l) => (l.origem === 'fixa' ? 'Despesa fixa' : (l.parcela_total ? `Parcela ${l.parcela_num}/${l.parcela_total}` : 'Única'));
+
+  const adicionarTabelaLancamentos = (titulo, tipo, colunaOrigem, origemFn) => {
+    const itens = lancamentos.filter((l) => l.tipo === tipo);
+    linhas.push('', csvRow([titulo]), csvRow(['Data', 'Descrição', colunaOrigem, 'Cidade', 'Valor']));
+    if (!itens.length) {
+      linhas.push(csvRow(['(nenhum lançamento no período)']));
+      return;
+    }
+    itens.forEach((l) => {
+      linhas.push(csvRow([
+        formatDataBR(l.data),
+        l.descricao,
+        origemFn(l),
+        formatFinanceCidade(l.cidade),
+        formatBRL(l.valor)
+      ]));
+    });
+  };
+
+  adicionarTabelaLancamentos('Entradas', 'entrada', 'Origem', origemEntrada);
+  adicionarTabelaLancamentos('Retiradas', 'retirada', 'Origem', () => 'Manual');
+  adicionarTabelaLancamentos('Despesas', 'despesa', 'Origem/Parcela', origemDespesa);
+
+  linhas.push(
+    '',
+    csvRow(['Resumo do mês']),
+    csvRow(['Entradas', formatBRL(totais.entradas)]),
+    csvRow(['Retiradas', formatBRL(totais.retiradas)]),
+    csvRow(['Despesas', formatBRL(totais.despesas)]),
+    csvRow(['Saldo do mês', formatBRL(totais.saldo)])
+  );
+
+  if (fixas.length) {
+    linhas.push('', csvRow(['Despesas fixas cadastradas']), csvRow(['Descrição', 'Valor mensal', 'Dia', 'Cidade', 'Início', 'Situação']));
+    fixas.forEach((f) => {
+      linhas.push(csvRow([
+        f.descricao,
+        formatBRL(f.valor),
+        f.dia_lancamento,
+        formatFinanceCidade(f.cidade),
+        formatDataBR(f.data_inicio),
+        f.data_fim ? `Encerrada em ${formatDataBR(f.data_fim)}` : 'Ativa'
+      ]));
+    });
+  }
+
+  // BOM no início para o Excel reconhecer o arquivo como UTF-8 e não
+  // corromper acentos/ç.
+  const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const sufixoCidade = cidadeFiltro ? `_${cidadeFiltro.replace(/\s+/g, '-')}` : '';
+  link.download = `financeiro_${mes}${sufixoCidade}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 const initFinanceControls = () => {
   const monthInput = document.getElementById('financeMonth');
   if (!monthInput) return;
@@ -1426,6 +1675,7 @@ const initFinanceControls = () => {
   document.getElementById('financeNextMonth')?.addEventListener('click', () => shiftFinanceMonth(1));
   document.getElementById('financeReload')?.addEventListener('click', carregarFinanceiro);
   document.getElementById('financeCityFilter')?.addEventListener('change', carregarFinanceiro);
+  document.getElementById('financeDownloadCsv')?.addEventListener('click', downloadFinanceiroCsv);
 
   document.getElementById('financeFormEntrada')?.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -1748,11 +1998,346 @@ const carregarToursGerenciamento = async () => {
   renderTourManagementTable(tours);
 };
 
+let cidadeContatoAtual = {};
+
+const preencherCidadeContatoForm = (cidade) => {
+  const contato = cidadeContatoAtual[cidade] || { telefone: '', email: '', youtube: '' };
+  const telefoneInput = document.getElementById('cidadeContatoTelefone');
+  const emailInput = document.getElementById('cidadeContatoEmail');
+  const youtubeInput = document.getElementById('cidadeContatoYoutube');
+  if (telefoneInput) telefoneInput.value = contato.telefone || '';
+  if (emailInput) emailInput.value = contato.email || '';
+  if (youtubeInput) youtubeInput.value = contato.youtube || '';
+  const status = document.getElementById('cidadeContatoStatus');
+  if (status) status.textContent = '';
+};
+
+const initCidadeContatoForm = () => {
+  const select = document.getElementById('cidadeContatoSelect');
+  const saveBtn = document.getElementById('cidadeContatoSave');
+  if (!select || !saveBtn || select.dataset.bound) return;
+  select.dataset.bound = '1';
+
+  select.addEventListener('change', () => preencherCidadeContatoForm(select.value));
+
+  saveBtn.addEventListener('click', async () => {
+    const cidade = select.value;
+    const telefone = document.getElementById('cidadeContatoTelefone')?.value.trim() || '';
+    const email = document.getElementById('cidadeContatoEmail')?.value.trim() || '';
+    const youtube = document.getElementById('cidadeContatoYoutube')?.value.trim() || '';
+    const status = document.getElementById('cidadeContatoStatus');
+    const adminEmail = localStorage.getItem('userEmail');
+
+    saveBtn.disabled = true;
+    if (status) status.textContent = 'Salvando...';
+
+    try {
+      const response = await fetchWithApiFallback('/update_cidade_contato', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cidade, telefone, email, youtube, admin_email: adminEmail })
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.success) {
+        if (status) status.textContent = 'Salvo com sucesso.';
+        cidadeContatoAtual[cidade] = { cidade, telefone, email, youtube };
+        if (typeof window.applyCidadeContato === 'function') {
+          window.applyCidadeContato(cidade, { telefone, email, youtube });
+        }
+      } else if (status) {
+        status.textContent = result.message || 'Erro ao salvar.';
+      }
+    } catch (error) {
+      console.error('Erro ao salvar contato da cidade:', error);
+      if (status) status.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      saveBtn.disabled = false;
+      setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+    }
+  });
+};
+
+const carregarCidadeContatoGerenciamento = async () => {
+  const select = document.getElementById('cidadeContatoSelect');
+  if (!select) return;
+
+  initCidadeContatoForm();
+
+  try {
+    const response = await fetchWithApiFallback('/get_cidade_contato', { method: 'GET' });
+    const lista = await response.json().catch(() => []);
+    if (Array.isArray(lista)) {
+      cidadeContatoAtual = lista.reduce((acc, item) => {
+        if (item && item.cidade) acc[item.cidade] = item;
+        return acc;
+      }, {});
+    }
+  } catch (error) {
+    console.warn('Não foi possível carregar contatos por cidade:', error);
+  }
+
+  preencherCidadeContatoForm(select.value);
+};
+
+let cidadeAvisoAtual = {};
+let cidadeAvisoItensAtuais = [];
+
+const renderCidadeAvisoItens = () => {
+  const list = document.getElementById('cidadeAvisoItens');
+  if (!list) return;
+
+  if (!cidadeAvisoItensAtuais.length) {
+    list.innerHTML = '<li class="cidade-aviso-empty">Nenhum item. Clique em "Adicionar item".</li>';
+    return;
+  }
+
+  list.innerHTML = cidadeAvisoItensAtuais.map((_, index) => `
+    <li class="cidade-aviso-item" data-index="${index}">
+      <input type="text" class="cidade-aviso-item-input" value="" placeholder="Ex: Para participar do Free Tour é necessário reservar sua vaga." />
+      <button type="button" class="cidade-aviso-item-remove" title="Excluir item" aria-label="Excluir item">&times;</button>
+    </li>
+  `).join('');
+
+  Array.from(list.querySelectorAll('.cidade-aviso-item')).forEach((li) => {
+    const index = Number(li.dataset.index);
+    const input = li.querySelector('.cidade-aviso-item-input');
+    if (input) {
+      input.value = cidadeAvisoItensAtuais[index] || '';
+      input.addEventListener('input', () => {
+        cidadeAvisoItensAtuais[index] = input.value;
+      });
+    }
+    li.querySelector('.cidade-aviso-item-remove')?.addEventListener('click', () => {
+      cidadeAvisoItensAtuais.splice(index, 1);
+      renderCidadeAvisoItens();
+    });
+  });
+};
+
+const preencherCidadeAvisoForm = (cidade) => {
+  const aviso = cidadeAvisoAtual[cidade] || { titulo: 'Informações Importantes', texto: '', ativo: true };
+  const tituloInput = document.getElementById('cidadeAvisoTitulo');
+  const ativoInput = document.getElementById('cidadeAvisoAtivo');
+  if (tituloInput) tituloInput.value = aviso.titulo || 'Informações Importantes';
+  if (ativoInput) ativoInput.checked = aviso.ativo !== false;
+  cidadeAvisoItensAtuais = (aviso.texto || '').split('\n').map(l => l.trim()).filter(Boolean);
+  renderCidadeAvisoItens();
+  const status = document.getElementById('cidadeAvisoStatus');
+  if (status) status.textContent = '';
+};
+
+const initCidadeAvisoForm = () => {
+  const select = document.getElementById('cidadeAvisoSelect');
+  const saveBtn = document.getElementById('cidadeAvisoSave');
+  const addBtn = document.getElementById('cidadeAvisoAddItem');
+  if (!select || !saveBtn || select.dataset.bound) return;
+  select.dataset.bound = '1';
+
+  select.addEventListener('change', () => preencherCidadeAvisoForm(select.value));
+
+  addBtn?.addEventListener('click', () => {
+    cidadeAvisoItensAtuais.push('');
+    renderCidadeAvisoItens();
+    const inputs = document.querySelectorAll('#cidadeAvisoItens .cidade-aviso-item-input');
+    inputs[inputs.length - 1]?.focus();
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    const cidade = select.value;
+    const titulo = document.getElementById('cidadeAvisoTitulo')?.value.trim() || 'Informações Importantes';
+    const texto = cidadeAvisoItensAtuais.map(l => l.trim()).filter(Boolean).join('\n');
+    const ativo = document.getElementById('cidadeAvisoAtivo')?.checked !== false;
+    const status = document.getElementById('cidadeAvisoStatus');
+    const adminEmail = localStorage.getItem('userEmail');
+
+    saveBtn.disabled = true;
+    if (status) status.textContent = 'Salvando...';
+
+    try {
+      const response = await fetchWithApiFallback('/update_cidade_aviso', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cidade, titulo, texto, ativo, admin_email: adminEmail })
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.success) {
+        if (status) status.textContent = 'Salvo com sucesso.';
+        cidadeAvisoAtual[cidade] = { cidade, titulo, texto, ativo };
+        if (typeof window.applyCidadeAviso === 'function') {
+          window.applyCidadeAviso(cidade, { titulo, texto, ativo });
+        }
+      } else if (status) {
+        status.textContent = result.message || 'Erro ao salvar.';
+      }
+    } catch (error) {
+      console.error('Erro ao salvar aviso da cidade:', error);
+      if (status) status.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      saveBtn.disabled = false;
+      setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+    }
+  });
+};
+
+const carregarCidadeAvisoGerenciamento = async () => {
+  const select = document.getElementById('cidadeAvisoSelect');
+  if (!select) return;
+
+  initCidadeAvisoForm();
+
+  try {
+    const response = await fetchWithApiFallback('/get_cidade_aviso', { method: 'GET' });
+    const lista = await response.json().catch(() => []);
+    if (Array.isArray(lista)) {
+      cidadeAvisoAtual = lista.reduce((acc, item) => {
+        if (item && item.cidade) acc[item.cidade] = item;
+        return acc;
+      }, {});
+    }
+  } catch (error) {
+    console.warn('Não foi possível carregar avisos por cidade:', error);
+  }
+
+  preencherCidadeAvisoForm(select.value);
+};
+
+let paginaSecaoAtual = {};
+let paginaSecaoItensAtuais = [];
+
+const paginaSecaoKey = (pagina, secao) => `${pagina}::${secao}`;
+
+const renderPaginaSecaoItens = () => {
+  const list = document.getElementById('paginaSecaoItens');
+  if (!list) return;
+
+  if (!paginaSecaoItensAtuais.length) {
+    list.innerHTML = '<li class="cidade-aviso-empty">Nenhum parágrafo. Clique em "Adicionar parágrafo".</li>';
+    return;
+  }
+
+  list.innerHTML = paginaSecaoItensAtuais.map((_, index) => `
+    <li class="cidade-aviso-item" data-index="${index}">
+      <input type="text" class="cidade-aviso-item-input" value="" placeholder="Ex: Fale com a Travel the World para dúvidas e reservas." />
+      <button type="button" class="cidade-aviso-item-remove" title="Excluir parágrafo" aria-label="Excluir parágrafo">&times;</button>
+    </li>
+  `).join('');
+
+  Array.from(list.querySelectorAll('.cidade-aviso-item')).forEach((li) => {
+    const index = Number(li.dataset.index);
+    const input = li.querySelector('.cidade-aviso-item-input');
+    if (input) {
+      input.value = paginaSecaoItensAtuais[index] || '';
+      input.addEventListener('input', () => {
+        paginaSecaoItensAtuais[index] = input.value;
+      });
+    }
+    li.querySelector('.cidade-aviso-item-remove')?.addEventListener('click', () => {
+      paginaSecaoItensAtuais.splice(index, 1);
+      renderPaginaSecaoItens();
+    });
+  });
+};
+
+const preencherPaginaSecaoForm = (pagina, secao) => {
+  const item = paginaSecaoAtual[paginaSecaoKey(pagina, secao)] || { titulo: '', texto: '' };
+  const tituloInput = document.getElementById('paginaSecaoTitulo');
+  if (tituloInput) tituloInput.value = item.titulo || '';
+  paginaSecaoItensAtuais = (item.texto || '').split('\n').map(l => l.trim()).filter(Boolean);
+  renderPaginaSecaoItens();
+  const status = document.getElementById('paginaSecaoStatus');
+  if (status) status.textContent = '';
+};
+
+const initPaginaSecaoForm = () => {
+  const paginaSelect = document.getElementById('paginaSecaoPagina');
+  const secaoSelect = document.getElementById('paginaSecaoSecao');
+  const saveBtn = document.getElementById('paginaSecaoSave');
+  const addBtn = document.getElementById('paginaSecaoAddItem');
+  if (!paginaSelect || !secaoSelect || !saveBtn || paginaSelect.dataset.bound) return;
+  paginaSelect.dataset.bound = '1';
+
+  const onSelectionChange = () => preencherPaginaSecaoForm(paginaSelect.value, secaoSelect.value);
+  paginaSelect.addEventListener('change', onSelectionChange);
+  secaoSelect.addEventListener('change', onSelectionChange);
+
+  addBtn?.addEventListener('click', () => {
+    paginaSecaoItensAtuais.push('');
+    renderPaginaSecaoItens();
+    const inputs = document.querySelectorAll('#paginaSecaoItens .cidade-aviso-item-input');
+    inputs[inputs.length - 1]?.focus();
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    const pagina = paginaSelect.value;
+    const secao = secaoSelect.value;
+    const titulo = document.getElementById('paginaSecaoTitulo')?.value.trim() || '';
+    const texto = paginaSecaoItensAtuais.map(l => l.trim()).filter(Boolean).join('\n');
+    const status = document.getElementById('paginaSecaoStatus');
+    const adminEmail = localStorage.getItem('userEmail');
+
+    saveBtn.disabled = true;
+    if (status) status.textContent = 'Salvando...';
+
+    try {
+      const response = await fetchWithApiFallback('/update_pagina_secao', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagina, secao, titulo, texto, admin_email: adminEmail })
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.success) {
+        if (status) status.textContent = 'Salvo com sucesso.';
+        paginaSecaoAtual[paginaSecaoKey(pagina, secao)] = { pagina, secao, titulo, texto };
+      } else if (status) {
+        status.textContent = result.message || 'Erro ao salvar.';
+      }
+    } catch (error) {
+      console.error('Erro ao salvar texto da página:', error);
+      if (status) status.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      saveBtn.disabled = false;
+      setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+    }
+  });
+};
+
+const carregarPaginaSecaoGerenciamento = async () => {
+  const paginaSelect = document.getElementById('paginaSecaoPagina');
+  const secaoSelect = document.getElementById('paginaSecaoSecao');
+  if (!paginaSelect || !secaoSelect) return;
+
+  initPaginaSecaoForm();
+
+  try {
+    const response = await fetchWithApiFallback('/get_pagina_secao', { method: 'GET' });
+    const lista = await response.json().catch(() => []);
+    if (Array.isArray(lista)) {
+      paginaSecaoAtual = lista.reduce((acc, item) => {
+        if (item && item.pagina && item.secao) acc[paginaSecaoKey(item.pagina, item.secao)] = item;
+        return acc;
+      }, {});
+    }
+  } catch (error) {
+    console.warn('Não foi possível carregar textos das páginas:', error);
+  }
+
+  preencherPaginaSecaoForm(paginaSelect.value, secaoSelect.value);
+};
+
 const DEFAULT_ROLE_PERMISSIONS = {
   cliente_user: {
     manageReservas: false,
     manageContas: false,
     managePerfis: false,
+    managePageContent: false,
+    manageComentarios: false,
+    manageFinanceiro: false,
+    financeiroCidades: [],
+    financeiroSomenteVisualizar: false,
+    reservasCidades: [],
     pages: ['Principal', 'Reservas'],
     tabs: ['Principal', 'Reservas']
   },
@@ -1764,6 +2349,12 @@ const DEFAULT_ROLE_PERMISSIONS = {
     manageOtherEdit: true,
     manageConsultas: true,
     loadAllReservas: true,
+    managePageContent: true,
+    manageComentarios: true,
+    manageFinanceiro: true,
+    financeiroCidades: [],
+    financeiroSomenteVisualizar: false,
+    reservasCidades: [],
     pages: ['Principal', 'Gerenciamento'],
     tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   },
@@ -1775,6 +2366,12 @@ const DEFAULT_ROLE_PERMISSIONS = {
     manageOtherEdit: true,
     manageConsultas: true,
     loadAllReservas: true,
+    managePageContent: true,
+    manageComentarios: true,
+    manageFinanceiro: true,
+    financeiroCidades: [],
+    financeiroSomenteVisualizar: false,
+    reservasCidades: [],
     pages: ['Principal', 'Gerenciamento'],
     tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   }
@@ -1882,6 +2479,10 @@ const selectRole = (role) => {
   const roleCheckOtherEdit = document.getElementById('roleCheckOtherEdit');
   const roleCheckConsultas = document.getElementById('roleCheckConsultas');
   const roleCheckCarregarReservas = document.getElementById('roleCheckCarregarReservas');
+  const roleCheckPageContent = document.getElementById('roleCheckPageContent');
+  const roleCheckComentarios = document.getElementById('roleCheckComentarios');
+  const roleCheckFinanceiro = document.getElementById('roleCheckFinanceiro');
+  const roleCheckFinanceiroSomenteView = document.getElementById('roleCheckFinanceiroSomenteView');
 
   if (roleCheckReservas) roleCheckReservas.checked = perms.manageReservas;
   if (roleCheckContas) roleCheckContas.checked = perms.manageContas;
@@ -1890,6 +2491,18 @@ const selectRole = (role) => {
   if (roleCheckOtherEdit) roleCheckOtherEdit.checked = perms.manageOtherEdit;
   if (roleCheckConsultas) roleCheckConsultas.checked = perms.manageConsultas;
   if (roleCheckCarregarReservas) roleCheckCarregarReservas.checked = perms.loadAllReservas;
+  if (roleCheckPageContent) roleCheckPageContent.checked = !!perms.managePageContent;
+  if (roleCheckComentarios) roleCheckComentarios.checked = !!perms.manageComentarios;
+  if (roleCheckFinanceiro) roleCheckFinanceiro.checked = !!perms.manageFinanceiro;
+  if (roleCheckFinanceiroSomenteView) roleCheckFinanceiroSomenteView.checked = !!perms.financeiroSomenteVisualizar;
+
+  Array.from(document.querySelectorAll('.finance-city-perm')).forEach((el) => {
+    el.checked = (perms.financeiroCidades || []).includes(el.dataset.cidade);
+  });
+
+  Array.from(document.querySelectorAll('.reservas-city-perm')).forEach((el) => {
+    el.checked = (perms.reservasCidades || []).includes(el.dataset.cidade);
+  });
 
   Array.from(document.querySelectorAll('.page-perm')).forEach((el) => {
     el.checked = (perms.pages || []).includes(el.dataset.page);
@@ -1912,12 +2525,20 @@ const updateSelectedRoleConfig = () => {
   const manageOtherEdit = !!document.getElementById('roleCheckOtherEdit')?.checked;
   const manageConsultas = !!document.getElementById('roleCheckConsultas')?.checked;
   const loadAllReservas = !!document.getElementById('roleCheckCarregarReservas')?.checked;
+  const managePageContent = !!document.getElementById('roleCheckPageContent')?.checked;
+  const manageComentarios = !!document.getElementById('roleCheckComentarios')?.checked;
+  const manageFinanceiro = !!document.getElementById('roleCheckFinanceiro')?.checked;
+  const financeiroSomenteVisualizar = !!document.getElementById('roleCheckFinanceiroSomenteView')?.checked;
 
   const pageChecks = Array.from(document.querySelectorAll('.page-perm'));
   const tabChecks = Array.from(document.querySelectorAll('.tab-perm'));
+  const financeCityChecks = Array.from(document.querySelectorAll('.finance-city-perm'));
+  const reservasCityChecks = Array.from(document.querySelectorAll('.reservas-city-perm'));
 
   const pages = pageChecks.filter(c => c.checked).map(c => c.dataset.page);
   const tabs = tabChecks.filter(c => c.checked).map(c => c.dataset.tab);
+  const financeiroCidades = financeCityChecks.filter(c => c.checked).map(c => c.dataset.cidade);
+  const reservasCidades = reservasCityChecks.filter(c => c.checked).map(c => c.dataset.cidade);
 
   currentRolesConfig[selectedRoleName] = {
     manageReservas,
@@ -1927,6 +2548,12 @@ const updateSelectedRoleConfig = () => {
     manageOtherEdit,
     manageConsultas,
     loadAllReservas,
+    managePageContent,
+    manageComentarios,
+    manageFinanceiro,
+    financeiroCidades,
+    financeiroSomenteVisualizar,
+    reservasCidades,
     pages,
     tabs
   };
@@ -1940,7 +2567,11 @@ const setupRoleCheckboxHandlers = () => {
     'roleCheckSelfEdit',
     'roleCheckOtherEdit',
     'roleCheckConsultas',
-    'roleCheckCarregarReservas'
+    'roleCheckCarregarReservas',
+    'roleCheckPageContent',
+    'roleCheckComentarios',
+    'roleCheckFinanceiro',
+    'roleCheckFinanceiroSomenteView'
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1954,6 +2585,14 @@ const setupRoleCheckboxHandlers = () => {
   });
 
   Array.from(document.querySelectorAll('.tab-perm')).forEach((el) => {
+    el.addEventListener('change', updateSelectedRoleConfig);
+  });
+
+  Array.from(document.querySelectorAll('.finance-city-perm')).forEach((el) => {
+    el.addEventListener('change', updateSelectedRoleConfig);
+  });
+
+  Array.from(document.querySelectorAll('.reservas-city-perm')).forEach((el) => {
     el.addEventListener('change', updateSelectedRoleConfig);
   });
 };
@@ -2000,18 +2639,23 @@ const carregarAgendamentosDoBanco = async () => {
     }
   }
 
+  applyReservasRestrictions();
+
   // filtros aplicados na própria tabela de backend
   const filterFrom = document.getElementById('filterFrom');
   const filterTo = document.getElementById('filterTo');
   const filterTour = document.getElementById('filterTour');
   const filterStatus = document.getElementById('filterStatus');
   const filterModality = document.getElementById('filterModality');
+  const filterCity = document.getElementById('filterCity');
 
   const fromDate = filterFrom?.value ? new Date(filterFrom.value) : null;
   const toDate = filterTo?.value ? new Date(filterTo.value) : null;
   const tourFilter = filterTour?.value || 'all';
   const statusFilter = filterStatus?.value || 'all';
   const modalityFilter = filterModality?.value || 'all';
+  const cityFilter = filterCity?.value || '';
+  const tourCidadeMap = cityFilter ? await getTourCidadeMap() : null;
 
   try {
     const response = await fetchWithApiFallback(`/get_agendamentos?email=${encodeURIComponent(userEmail)}`);
@@ -2055,6 +2699,7 @@ const carregarAgendamentosDoBanco = async () => {
       if (statusFilter !== 'all' && (ag.status || 'Pendente') !== statusFilter) return false;
       if (tourFilter !== 'all' && ag.tour !== tourFilter) return false;
       if (modalityFilter !== 'all' && (ag.modalidade || 'free') !== modalityFilter) return false;
+      if (cityFilter && tourCidadeMap[String(ag.tour || '').trim().toLowerCase()] !== cityFilter) return false;
       return true;
     });
 
@@ -2257,6 +2902,13 @@ const hideAllSections = () => {
 };
 
 const mostrarSecao = (secao) => {
+  // Lembra a última aba escolhida para reabrir nela ao recarregar a página.
+  try {
+    localStorage.setItem('gerenciamentoUltimaSecao', secao);
+  } catch (_err) {
+    // localStorage indisponível (modo privado etc.) — não é crítico, ignora.
+  }
+
   hideAllSections();
 
   const reservations = document.querySelectorAll('.reservas-section');
@@ -2281,6 +2933,10 @@ const mostrarSecao = (secao) => {
     accounts.style.display = secao === 'contas' ? 'block' : 'none';
   }
 
+  // #pageManagementSection é o wrapper compartilhado por #financeSection
+  // (aba Financeiro) e pelos cards de Contato/Aviso/Textos/Tours (aba
+  // Gerenciamento) — precisa ficar visível nas duas abas; os cards
+  // específicos de "Gerenciamento" são escondidos individualmente mais abaixo.
   if (pageManagement) {
     pageManagement.style.display = (secao === 'gerenciamento' || secao === 'financeiro') ? 'block' : 'none';
   }
@@ -2362,8 +3018,39 @@ const mostrarSecao = (secao) => {
     return;
   }
 
-  if (secao === 'gerenciamento') {
+  // Restrições finas dentro da própria aba: a aba "Financeiro" pode estar
+  // visível para o nível de acesso sem que a permissão manageFinanceiro
+  // esteja marcada (ex: perfil que só deve ver a aba mas sem mexer nos
+  // lançamentos) — o backend também recusa, isso só evita a UI carregar
+  // dados que a requisição vai rejeitar de qualquer forma.
+  if (secao === 'financeiro' && !currentUserPermissions.manageFinanceiro) {
+    if (financeSection) {
+      financeSection.innerHTML = '<div class="important-info-empty" style="padding:0.85rem 1rem; border-radius:12px; background:rgba(255,255,255,0.82); color:#4b5563;">Sem permissão para gerenciar o financeiro.</div>';
+    }
+    return;
+  }
+
+  // #financeSection e os cards de Contato/Aviso/Textos/Tours são todos irmãos
+  // dentro de #pageManagementSection (compartilham o wrapper). Por isso esses
+  // 4 cards precisam ser escondidos explicitamente fora da aba "Gerenciamento"
+  // — sem isso, ou eles vazam para a aba Financeiro, ou (se a visibilidade do
+  // wrapper inteiro for restrita só a "gerenciamento") o financeiro some junto.
+  const canManagePageContent = secao === 'gerenciamento' && !!currentUserPermissions.managePageContent;
+  [
+    'cidadeContatoSection',
+    'cidadeAvisoSection',
+    'paginaSecaoSection',
+    'pageManagementToursSection'
+  ].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = canManagePageContent ? '' : 'none';
+  });
+
+  if (secao === 'gerenciamento' && canManagePageContent) {
     carregarToursGerenciamento();
+    carregarCidadeContatoGerenciamento();
+    carregarCidadeAvisoGerenciamento();
+    carregarPaginaSecaoGerenciamento();
   }
 };
 
@@ -3041,6 +3728,7 @@ const initReservationManagement = () => {
   const filterTour = document.getElementById('filterTour');
   const filterStatus = document.getElementById('filterStatus');
   const filterModality = document.getElementById('filterModality');
+  const filterCity = document.getElementById('filterCity');
   const addReservationBtn = document.getElementById('addReservation');
   const modal = document.getElementById('reservationModal');
   const modalTour = document.getElementById('modalTour');
@@ -3150,6 +3838,7 @@ const initReservationManagement = () => {
   if (filterStatus) filterStatus.value = 'all';
   if (filterTour) filterTour.value = 'all';
   if (filterModality) filterModality.value = 'all';
+  if (filterCity) filterCity.value = '';
 
   let activeEditIndex = null;
   let isAdding = false;
@@ -3691,7 +4380,7 @@ const initReservationManagement = () => {
   };
 
   const attachFilters = () => {
-    [filterFrom, filterTo, filterStatus, filterTour, filterModality].forEach(el => {
+    [filterFrom, filterTo, filterStatus, filterTour, filterModality, filterCity].forEach(el => {
       if (!el) return;
       el.addEventListener('change', carregarAgendamentosDoBanco);
     });
@@ -4332,9 +5021,28 @@ window.addEventListener('DOMContentLoaded', () => {
     setupRolesControls();
     initFinanceControls();
 
-    // Inicialmente carregamos apenas a aba de reservas (sem pré-carregar contas ou gerenciamento)
-    mostrarSecao('reservas');
-    carregarAgendamentosDoBanco();
+    // Reabre na última aba visitada (persistida em mostrarSecao), caso ainda
+    // seja permitida para este nível de acesso; senão cai em "reservas".
+    let secaoInicial = 'reservas';
+    try {
+      const salva = localStorage.getItem('gerenciamentoUltimaSecao');
+      const tabPorSecao = { reservas: 'Reservas', contas: 'Contas', gerenciamento: 'Gerenciamento', financeiro: 'Financeiro' };
+      if (salva && tabPorSecao[salva] && (currentUserPermissions?.tabs || []).includes(tabPorSecao[salva])) {
+        secaoInicial = salva;
+      }
+    } catch (_err) {
+      // localStorage indisponível — mantém o padrão "reservas".
+    }
+
+    mostrarSecao(secaoInicial);
+    if (secaoInicial === 'contas') {
+      carregarContasDoBanco();
+      carregarNiveisDeAcesso();
+    } else if (secaoInicial === 'gerenciamento') {
+      carregarAgendamentosDoBanco();
+    } else {
+      carregarAgendamentosDoBanco();
+    }
     loadImportantInfoFeed();
 
     if (importantInfoRefreshTimer) {
