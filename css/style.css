@@ -1534,8 +1534,8 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
     height: auto;
     padding: 0.5rem 1.2rem;
     border-radius: 60px;
-    background: var(--green-main);
-    color: #fff;
+    background: #C2B280;
+    color: #111;
     font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -1545,7 +1545,7 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
 }
 
 .profile-btn.profile-btn--login:hover {
-    background: #0a4d3c;
+    background: #b5a370;
     opacity: 1;
 }
 
