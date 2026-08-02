@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loja - Mega Distrito</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+    <link rel="stylesheet" href="../CSS/apps.css">
+    <link rel="stylesheet" href="../CSS/loja.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="apps-layout">
+
+    <!-- ========================================================
+         HEADER
+    ======================================================== -->
+    <header id="header">
+        <div class="header-container">
+            <a href="../index.html#inicio" class="logo">
+                <span class="logo-icon"><i class="fas fa-shopping-bag"></i></span>
+                <span class="logo-text">Mega <strong>Distrito</strong></span>
+            </a>
+
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Buscar produtos, marcas e muito mais..." autocomplete="off" disabled>
+                <button id="search-btn" aria-label="Buscar" disabled><i class="fas fa-search"></i></button>
+            </div>
+
+            <nav class="header-app-nav" aria-label="Seções">
+                <a class="header-app-link" href="../index.html#inicio" aria-label="Início">
+                    <span class="header-app-icon"><i class="fas fa-house"></i></span>
+                    <span>Início</span>
+                </a>
+                <a class="header-app-link" href="apps.html" aria-label="Apps">
+                    <span class="header-app-icon"><i class="fas fa-grip"></i></span>
+                    <span>Apps</span>
+                </a>
+                <a class="header-app-link" href="feed.html" aria-label="Feed">
+                    <span class="header-app-icon"><i class="fas fa-stream"></i></span>
+                    <span>Feed</span>
+                </a>
+                <a class="header-app-link" href="conta.html" aria-label="Conta">
+                    <span class="header-app-icon"><i class="fas fa-user"></i></span>
+                    <span>Conta</span>
+                </a>
+            </nav>
+
+            <button class="cart-btn" id="cart-btn" aria-label="Abrir carrinho">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========================================================
+         ESTADO: CARREGANDO / NÃO ENCONTRADA
+    ======================================================== -->
+    <div class="loja-status" id="loja-carregando">
+        <i class="fas fa-spinner fa-spin"></i> Carregando loja...
+    </div>
+    <div class="loja-status" id="loja-nao-encontrada" hidden>
+        <i class="fas fa-store-slash"></i>
+        <p>Loja não encontrada.</p>
+        <a href="../index.html" class="btn btn-primary">Voltar para o início</a>
+    </div>
+
+    <!-- ========================================================
+         CONTEÚDO DA LOJA (preenchido pelo JS)
+    ======================================================== -->
+    <main class="loja-page" id="loja-conteudo" hidden>
+
+        <section class="loja-hero" id="loja-hero">
+            <div class="loja-hero-banner" id="loja-hero-banner"></div>
+            <div class="container loja-hero-info">
+                <div class="loja-hero-icon" id="loja-hero-icon"></div>
+                <div class="loja-hero-texto">
+                    <span class="loja-hero-categoria" id="loja-categoria"></span>
+                    <h1 id="loja-nome"></h1>
+                    <p id="loja-subtitulo"></p>
+                    <div class="loja-hero-meta">
+                        <span id="loja-status-aberto" class="loja-status-badge"></span>
+                        <span id="loja-endereco" class="loja-meta-item"></span>
+                        <span id="loja-horario" class="loja-meta-item"></span>
+                    </div>
+                </div>
+                <a id="loja-whatsapp" class="btn btn-whatsapp" target="_blank" rel="noopener noreferrer" hidden>
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="loja-filtros" id="loja-filtros"></div>
+
+            <div class="loja-itens-grid" id="loja-itens-grid"></div>
+            <div class="loja-empty" id="loja-itens-empty" style="display:none;">
+                Nenhum item cadastrado nesta loja ainda.
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================================
+         CARRINHO (SIDEBAR)
+    ======================================================== -->
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="cart-sidebar" id="cart-sidebar" aria-label="Carrinho de compras">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-cart"></i> Meu Carrinho</h3>
+            <button id="close-cart" aria-label="Fechar carrinho"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <strong id="cart-total">R$ 0,00</strong>
+            </div>
+            <button class="btn btn-primary btn-block" id="checkout-btn">
+                Finalizar Compra <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="btn btn-outline btn-block" id="clear-cart-btn">
+                Limpar Carrinho
+            </button>
+        </div>
+    </aside>
+
+    <nav class="floating-bottom-nav" id="floating-bottom-nav" aria-label="Navegação inferior flutuante">
+        <a class="floating-nav-item" data-nav-item="inicio" href="../index.html#inicio" aria-label="Início">
+            <span class="floating-nav-bubble"><i class="fas fa-house"></i></span>
+            <span class="floating-nav-label">Início</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="apps" href="apps.html" aria-label="Apps">
+            <span class="floating-nav-bubble"><i class="fas fa-grip"></i></span>
+            <span class="floating-nav-label">Apps</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="feed" href="feed.html" aria-label="Feed">
+            <span class="floating-nav-bubble"><i class="fas fa-stream"></i></span>
+            <span class="floating-nav-label">Feed</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="usuario" href="conta.html" aria-label="Conta">
+            <span class="floating-nav-bubble"><i class="fas fa-user"></i></span>
+            <span class="floating-nav-label">Conta</span>
+        </a>
+    </nav>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api.js"></script>
+    <script src="../JS/data/produtos.js"></script>
+    <script src="../JS/script.js"></script>
+    <script src="../JS/loja.js"></script>
+</body>
+</html>

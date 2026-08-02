@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serviços - Mega Distrito</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+    <link rel="stylesheet" href="../CSS/apps.css">
+    <link rel="stylesheet" href="../CSS/servicos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="apps-layout">
+
+    <!-- ========================================================
+         HEADER
+    ======================================================== -->
+    <header id="header">
+        <div class="header-container">
+
+            <!-- Logo -->
+            <a href="../index.html#inicio" class="logo">
+                <span class="logo-icon"><i class="fas fa-shopping-bag"></i></span>
+                <span class="logo-text">Mega <strong>Distrito</strong></span>
+            </a>
+
+            <!-- Busca -->
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Buscar produtos, marcas e muito mais..." autocomplete="off">
+                <button id="search-btn" aria-label="Buscar"><i class="fas fa-search"></i></button>
+            </div>
+
+            <!-- Navegação de seções (desktop) -->
+            <nav class="header-app-nav" aria-label="Seções">
+                <a class="header-app-link" href="../index.html#inicio" aria-label="Início">
+                    <span class="header-app-icon"><i class="fas fa-house"></i></span>
+                    <span>Início</span>
+                </a>
+                <a class="header-app-link" href="apps.html" aria-label="Apps">
+                    <span class="header-app-icon"><i class="fas fa-grip"></i></span>
+                    <span>Apps</span>
+                </a>
+                <a class="header-app-link" href="feed.html" aria-label="Feed">
+                    <span class="header-app-icon"><i class="fas fa-stream"></i></span>
+                    <span>Feed</span>
+                </a>
+                <a class="header-app-link" href="conta.html" aria-label="Conta">
+                    <span class="header-app-icon"><i class="fas fa-user"></i></span>
+                    <span>Conta</span>
+                </a>
+            </nav>
+
+            <!-- Carrinho -->
+            <button class="cart-btn" id="cart-btn" aria-label="Abrir carrinho">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </button>
+
+        </div>
+
+        <div class="header-nav-row">
+            <div class="header-nav-inner">
+                <nav class="header-links" aria-label="Navegação principal">
+                    <a href="../index.html#bazar" class="nav-link nav-bazar"><i class="fas fa-tags"></i> Bazar</a>
+                    <a href="#servicos" class="nav-link nav-servicos active"><i class="fas fa-hard-hat"></i> Serviços</a>
+                    <a href="feed.html" class="nav-link">Feed</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================
+         SERVIÇOS LOCAIS  (com sub-abas)
+    ======================================================== -->
+    <section id="servicos" class="section servicos-section" style="padding-top: 100px;">
+        <div class="container">
+
+            <!-- Cabeçalho -->
+            <div class="section-header">
+                <div class="servicos-label"><i class="fas fa-hard-hat"></i> Trabalhadores Locais</div>
+                <h2 class="servicos-title">Serviços em Magé</h2>
+                <p>Serviços, vagas de emprego e currículos da sua cidade em um só lugar.</p>
+            </div>
+
+            <!-- Sub-abas principais -->
+            <div class="servicos-subtabs" id="servicos-subtabs" role="tablist">
+                <button class="subtab-btn active" data-subtab="profissionais" role="tab" aria-selected="true">
+                    <i class="fas fa-tools"></i> Serviços
+                </button>
+                <button class="subtab-btn" data-subtab="vagas" role="tab" aria-selected="false">
+                    <i class="fas fa-search-dollar"></i> Vagas de Emprego
+                </button>
+                <button class="subtab-btn" data-subtab="curriculo" role="tab" aria-selected="false">
+                    <i class="fas fa-id-badge"></i> Meu Currículo
+                </button>
+            </div>
+
+            <!-- PAINEL 1 - PROFISSIONAIS / SERVIÇOS -->
+            <div class="subtab-panel active" id="panel-profissionais" role="tabpanel">
+
+                <!-- Banner de cadastro -->
+                <div class="servicos-banner">
+                    <div class="servicos-banner-text">
+                        <h3><i class="fas fa-briefcase"></i> É prestador de serviço?</h3>
+                        <p>Cadastre seu perfil gratuitamente e seja encontrado por centenas de clientes em Magé e região.</p>
+                    </div>
+                    <button class="btn btn-servicos-hero" onclick="toast('Cadastro de profissionais em breve!')">
+                        <i class="fas fa-user-plus"></i> Cadastrar-se
+                    </button>
+                </div>
+
+                <!-- Destaques: mais bem avaliados / verificados -->
+                <section class="servicos-destaque" aria-label="Profissionais em destaque">
+                    <div class="servicos-destaque-head">
+                        <i class="fas fa-star"></i>
+                        <h4>Profissionais em destaque</h4>
+                    </div>
+                    <div class="servicos-destaque-rail" id="servicos-destaque-rail"></div>
+                </section>
+
+                <!-- Filtros de especialidade -->
+                <div class="filter-tabs" id="servicos-filter-tabs">
+                    <button class="filter-btn filter-servicos active" data-servico-filter="todos">Todos</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="construcao">Construção</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="eletrica">Elétrica</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="hidraulica">Hidráulica</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="limpeza">Limpeza</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="tecnologia">Tecnologia</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="beleza">Beleza</button>
+                    <button class="filter-btn filter-servicos" data-servico-filter="outros">Outros</button>
+                </div>
+
+                <!-- Grid (preenchido pelo JS) -->
+                <div class="servicos-grid" id="servicos-grid"></div>
+
+                <div class="no-results" id="servicos-no-results" style="display:none;">
+                    <i class="fas fa-search"></i>
+                    <p>Nenhum profissional encontrado nesta especialidade.</p>
+                    <button class="btn btn-primary" onclick="resetarServicos()">Ver todos os profissionais</button>
+                </div>
+            </div>
+
+            <!-- ========================================================
+                 PAINEL 2 - VAGAS DE EMPREGO
+            ======================================================== -->
+            <div class="subtab-panel" id="panel-vagas" role="tabpanel">
+
+                <!-- Banner publicar vaga -->
+                <div class="servicos-banner vagas-banner">
+                    <div class="servicos-banner-text">
+                        <h3><i class="fas fa-building"></i> Tem uma vaga para oferecer?</h3>
+                        <p>Publique gratuitamente e encontre o profissional certo na sua cidade.</p>
+                    </div>
+                    <button class="btn btn-servicos-hero" onclick="abrirFormVaga()">
+                        <i class="fas fa-plus-circle"></i> Publicar Vaga
+                    </button>
+                </div>
+
+                <!-- Filtros de área -->
+                <div class="filter-tabs" id="vagas-filter-tabs">
+                    <button class="filter-btn filter-vagas active" data-vaga-filter="todas">Todas</button>
+                    <button class="filter-btn filter-vagas" data-vaga-filter="comercio">Comércio</button>
+                    <button class="filter-btn filter-vagas" data-vaga-filter="servicos">Serviços</button>
+                    <button class="filter-btn filter-vagas" data-vaga-filter="construcao">Construção</button>
+                    <button class="filter-btn filter-vagas" data-vaga-filter="tecnologia">Tecnologia</button>
+                    <button class="filter-btn filter-vagas" data-vaga-filter="saude">Saúde</button>
+                    <button class="filter-btn filter-vagas" data-vaga-filter="outros">Outros</button>
+                </div>
+
+                <!-- Grid de vagas (preenchido pelo JS) -->
+                <div class="vagas-grid" id="vagas-grid"></div>
+
+                <div class="no-results" id="vagas-no-results" style="display:none;">
+                    <i class="fas fa-briefcase"></i>
+                    <p>Nenhuma vaga encontrada nesta área.</p>
+                    <button class="btn btn-primary" onclick="resetarVagas()">Ver todas as vagas</button>
+                </div>
+
+                <!-- Modal: Publicar Vaga -->
+                <div class="modal-overlay" id="modal-vaga" style="display:none;" onclick="fecharFormVaga(event)">
+                    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-vaga-title">
+                        <div class="modal-header modal-purple">
+                            <h3 id="modal-vaga-title"><i class="fas fa-plus-circle"></i> Publicar Vaga</h3>
+                            <button class="modal-close" onclick="fecharFormVaga()" aria-label="Fechar">&times;</button>
+                        </div>
+                        <form class="modal-form" id="form-vaga" onsubmit="enviarVaga(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Cargo / Função *</label>
+                                    <input type="text" id="vaga-cargo" placeholder="Ex: Atendente de Loja" required maxlength="80">
+                                </div>
+                                <div class="form-group">
+                                    <label>Empresa / Contratante *</label>
+                                    <input type="text" id="vaga-empresa" placeholder="Ex: Mercado Central Magé" required maxlength="80">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>área *</label>
+                                    <select id="vaga-area" required>
+                                        <option value="">Selecione.</option>
+                                        <option value="comercio">Comércio</option>
+                                        <option value="servicos">Serviços</option>
+                                        <option value="construcao">Construção</option>
+                                        <option value="tecnologia">Tecnologia</option>
+                                        <option value="saude">Saúde</option>
+                                        <option value="outros">Outros</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Regime de Trabalho *</label>
+                                    <select id="vaga-regime" required>
+                                        <option value="">Selecione.</option>
+                                        <option value="CLT">CLT</option>
+                                        <option value="PJ">PJ</option>
+                                        <option value="Autônomo">Autônomo</option>
+                                        <option value="Estágio">Estágio</option>
+                                        <option value="Temporário">Temporário</option>
+                                        <option value="Freelancer">Freelancer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Salário (ou "A combinar")</label>
+                                    <input type="text" id="vaga-salario" placeholder="Ex: R$ 1.500 ou A combinar" maxlength="40">
+                                </div>
+                                <div class="form-group">
+                                    <label>Bairro / Cidade *</label>
+                                    <input type="text" id="vaga-local" placeholder="Ex: Centro, Magé" required maxlength="60">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Descrição da Vaga *</label>
+                                <textarea id="vaga-desc" rows="3" placeholder="Descreva as atividades, requisitos e benefícios." required maxlength="400"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>WhatsApp para contato *</label>
+                                    <input type="tel" id="vaga-contato" placeholder="(21) 99999-0000" required maxlength="20">
+                                </div>
+                                <div class="form-group" style="justify-content:flex-end; align-self:flex-end;">
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-check"></i> Publicar Vaga
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAINEL 3 - MEU CURRÍCULO -->
+            <div class="subtab-panel" id="panel-curriculo" role="tabpanel">
+
+                <!-- Dois modos: formulário OU visualização do currículo -->
+                <div id="curriculo-form-area">
+                    <div class="curriculo-intro">
+                        <div class="curriculo-intro-icon"><i class="fas fa-id-badge"></i></div>
+                        <div>
+                            <h3>Monte seu Currículo Digital</h3>
+                            <p>Preencha seus dados e apareça para empresas e recrutadores de Magé. Gratuito e fácil!</p>
+                        </div>
+                    </div>
+
+                    <form class="curriculo-form" id="form-curriculo" onsubmit="gerarCurriculo(event)">
+
+                        <!-- Dados pessoais -->
+                        <div class="curriculo-bloco">
+                            <div class="curriculo-bloco-titulo"><i class="fas fa-user"></i> Dados Pessoais</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nome Completo *</label>
+                                    <input type="text" id="cv-nome" placeholder="Seu nome completo" required maxlength="80">
+                                </div>
+                                <div class="form-group">
+                                    <label>Profissão / área *</label>
+                                    <input type="text" id="cv-profissao" placeholder="Ex: Eletricista, Designer." required maxlength="60">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>WhatsApp *</label>
+                                    <input type="tel" id="cv-telefone" placeholder="(21) 99999-0000" required maxlength="20">
+                                </div>
+                                <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input type="email" id="cv-email" placeholder="seu@email.com" maxlength="80">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Bairro / Cidade *</label>
+                                    <input type="text" id="cv-local" placeholder="Ex: Centro, Magé" required maxlength="60">
+                                </div>
+                                <div class="form-group">
+                                    <label>Disponibilidade *</label>
+                                    <select id="cv-disponibilidade" required>
+                                        <option value="">Selecione.</option>
+                                        <option>Imediata</option>
+                                        <option>15 dias</option>
+                                        <option>30 dias</option>
+                                        <option>A combinar</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumo -->
+                        <div class="curriculo-bloco">
+                            <div class="curriculo-bloco-titulo"><i class="fas fa-align-left"></i> Sobre Mim</div>
+                            <div class="form-group">
+                                <textarea id="cv-resumo" rows="3" placeholder="Fale um pouco sobre você, seus objetivos e diferenciais." maxlength="400"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Experiência -->
+                        <div class="curriculo-bloco">
+                            <div class="curriculo-bloco-titulo"><i class="fas fa-briefcase"></i> Experiência Profissional</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Último Cargo</label>
+                                    <input type="text" id="cv-cargo" placeholder="Ex: Ajudante Geral" maxlength="60">
+                                </div>
+                                <div class="form-group">
+                                    <label>Empresa</label>
+                                    <input type="text" id="cv-empresa" placeholder="Ex: Construtora ABC" maxlength="60">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Período</label>
+                                    <input type="text" id="cv-periodo" placeholder="Ex: Jan/2022 - Dez/2024" maxlength="40">
+                                </div>
+                                <div class="form-group">
+                                    <label>Atividades Principais</label>
+                                    <input type="text" id="cv-atividades" placeholder="Ex: Organização de estoque, atendimento." maxlength="120">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formação -->
+                        <div class="curriculo-bloco">
+                            <div class="curriculo-bloco-titulo"><i class="fas fa-graduation-cap"></i> Formação</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nível de Escolaridade *</label>
+                                    <select id="cv-escolaridade" required>
+                                        <option value="">Selecione.</option>
+                                        <option>Ensino Fundamental Incompleto</option>
+                                        <option>Ensino Fundamental Completo</option>
+                                        <option>Ensino Médio Incompleto</option>
+                                        <option>Ensino Médio Completo</option>
+                                        <option>Superior Incompleto</option>
+                                        <option>Superior Completo</option>
+                                        <option>Pós-graduação / MBA</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Curso / Instituição</label>
+                                    <input type="text" id="cv-curso" placeholder="Ex: Técnico em Elétrica - SENAI" maxlength="80">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Habilidades -->
+                        <div class="curriculo-bloco">
+                            <div class="curriculo-bloco-titulo"><i class="fas fa-star"></i> Habilidades</div>
+                            <div class="form-group">
+                                <input type="text" id="cv-habilidades" placeholder="Separe por vírgula: Ex: Pacote Office, CNH B, Excel, Atendimento ao cliente">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">
+                            <i class="fas fa-eye"></i> Gerar Meu Currículo
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Visualização do currículo gerado -->
+                <div id="curriculo-preview" style="display:none;">
+                    <div class="cv-preview-actions">
+                        <button class="btn btn-outline" onclick="editarCurriculo()">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-primary" onclick="toast('Função de impressão disponível em breve! 😊')">
+                            <i class="fas fa-print"></i> Imprimir / PDF
+                        </button>
+                        <button class="btn btn-servicos-hero" onclick="publicarCurriculo()">
+                            <i class="fas fa-share-alt"></i> Publicar no Mega Distrito
+                        </button>
+                    </div>
+                    <!-- Card do currículo gerado (preenchido pelo JS) -->
+                    <div class="cv-card" id="cv-card"></div>
+                </div>
+            </div>
+            <!-- fim sub-abas -->
+
+        </div>
+    </section>
+
+    <!-- ========================================================
+         FOOTER
+    ======================================================== -->
+    <footer id="contato">
+        <div class="footer-container">
+
+            <!-- Sobre -->
+            <div class="footer-col footer-about">
+                <div class="footer-logo">
+                    <i class="fas fa-shopping-bag"></i> Mega Distrito
+                </div>
+                <p>Seu mercado digital local. Qualidade, preço justo e entrega na sua porta, sem complicação.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <!-- Links rápidos -->
+            <div class="footer-col">
+                <h4>Links Rápidos</h4>
+                <ul>
+                    <li><a href="../index.html#inicio">Início</a></li>
+                    <li><a href="../index.html#produtos">Produtos</a></li>
+                    <li><a href="../index.html#categorias">Categorias</a></li>
+                    <li><a href="#contato">Contato</a></li>
+                </ul>
+            </div>
+
+            <!-- Categorias -->
+            <div class="footer-col">
+                <h4>Categorias</h4>
+                <ul>
+                    <li><a href="#">Eletrônicos</a></li>
+                    <li><a href="#">Casa e Cozinha</a></li>
+                    <li><a href="#">Ferramentas</a></li>
+                    <li><a href="#">Moda</a></li>
+                </ul>
+            </div>
+
+            <!-- Contato -->
+            <div class="footer-col">
+                <h4>Contato</h4>
+                <ul class="contact-list">
+                    <li><i class="fas fa-map-marker-alt"></i> Magé, Rio de Janeiro - RJ</li>
+                    <li><i class="fas fa-phone"></i> (21) 99999-0000</li>
+                    <li><i class="fas fa-envelope"></i> contato@mageexpress.com.br</li>
+                    <li><i class="fas fa-clock"></i> Seg-Sex: 08h às 18h</li>
+                </ul>
+            </div>
+
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Mega Distrito. Todos os direitos reservados. Feito com <i class="fas fa-heart" style="color:#e53935;"></i> em Magé - RJ.</p>
+        </div>
+    </footer>
+
+    <!-- ========================================================
+         CARRINHO (SIDEBAR)
+    ======================================================== -->
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="cart-sidebar" id="cart-sidebar" aria-label="Carrinho de compras">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-cart"></i> Meu Carrinho</h3>
+            <button id="close-cart" aria-label="Fechar carrinho"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Lista de itens (preenchida pelo JS) -->
+        <div class="cart-items" id="cart-items"></div>
+
+        <!-- Rodapé do carrinho -->
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <strong id="cart-total">R$ 0,00</strong>
+            </div>
+            <button class="btn btn-primary btn-block" id="checkout-btn">
+                Finalizar Compra <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="btn btn-outline btn-block" id="clear-cart-btn">
+                Limpar Carrinho
+            </button>
+        </div>
+    </aside>
+
+    <!-- Notificação toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Navegação inferior flutuante -->
+    <nav class="floating-bottom-nav" id="floating-bottom-nav" aria-label="Navegação inferior flutuante">
+        <a class="floating-nav-item" data-nav-item="inicio" href="../index.html#inicio" aria-label="Início">
+            <span class="floating-nav-bubble"><i class="fas fa-house"></i></span>
+            <span class="floating-nav-label">Início</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="apps" href="apps.html" aria-label="Apps">
+            <span class="floating-nav-bubble"><i class="fas fa-grip"></i></span>
+            <span class="floating-nav-label">Apps</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="feed" href="feed.html" aria-label="Feed">
+            <span class="floating-nav-bubble"><i class="fas fa-stream"></i></span>
+            <span class="floating-nav-label">Feed</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="usuario" href="conta.html" aria-label="Conta">
+            <span class="floating-nav-bubble"><i class="fas fa-user"></i></span>
+            <span class="floating-nav-label">Conta</span>
+        </a>
+    </nav>
+
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api.js"></script>
+    <script src="../JS/data/categorias.js"></script>
+    <script src="../JS/data/produtos.js"></script>
+    <script src="../JS/data/profissionais.js"></script>
+    <script src="../JS/data/vagas.js"></script>
+    <script src="../JS/script.js"></script>
+    <script src="../JS/servicos.js"></script>
+</body>
+</html>

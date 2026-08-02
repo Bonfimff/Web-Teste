@@ -1,0 +1,343 @@
+/* =========================================================
+   MEGA DISTRITO — Minha Conta
+   ========================================================= */
+
+.conta-page .container {
+	max-width: 720px;
+}
+
+#endereco-abrir-form[hidden] { display: none; }
+
+/* ── Abas (centralizadas no header, mesmo padrão do painel do lojista) ── */
+.conta-tabs {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+	margin: 0 auto;
+	flex-shrink: 0;
+}
+
+.conta-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	border: none;
+	padding: var(--space-2) var(--space-3);
+	font-size: var(--text-sm);
+	font-weight: 600;
+	color: rgba(255, 255, 255, .75);
+	background: transparent;
+	border-bottom: 2px solid transparent;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: color .18s, border-color .18s;
+}
+
+.conta-tab:hover { color: var(--white); }
+
+.conta-tab.active {
+	color: var(--white);
+	font-weight: 700;
+	border-bottom-color: #a5d6a7;
+}
+
+.conta-panel--hidden { display: none; }
+
+.conta-link-btn {
+	display: block;
+	margin: var(--space-2) auto 0;
+	border: none;
+	background: none;
+	color: var(--color-primary);
+	font-size: var(--text-sm);
+	font-weight: 600;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.conta-empty {
+	border: 1px dashed var(--color-border);
+	border-radius: 10px;
+	padding: var(--space-3);
+	font-size: var(--text-sm);
+	color: var(--color-text-muted);
+	text-align: center;
+}
+
+/* ── Filtro de encomendas ── */
+.pedido-filtro {
+	display: flex;
+	gap: var(--space-2);
+	overflow-x: auto;
+	scrollbar-width: none;
+	padding-bottom: var(--space-2);
+	margin-bottom: var(--space-3);
+}
+
+.pedido-filtro::-webkit-scrollbar { display: none; }
+
+.pedido-filtro-chip {
+	flex-shrink: 0;
+	border: 1.5px solid var(--color-border);
+	background: var(--white);
+	color: var(--color-text);
+	border-radius: 999px;
+	padding: var(--space-2) var(--space-3);
+	font-size: var(--text-xs);
+	font-weight: 700;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.pedido-filtro-chip.active {
+	background: var(--blue-dark);
+	border-color: var(--blue-dark);
+	color: var(--white);
+}
+
+/* ── Lista de pedidos ── */
+.pedidos-list { display: grid; gap: var(--space-3); }
+
+.pedido-card {
+	background: var(--white);
+	border: 1px solid var(--color-border);
+	border-radius: 14px;
+	padding: var(--space-3);
+	display: grid;
+	gap: var(--space-2);
+}
+
+.pedido-card-head {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.pedido-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	background: var(--blue-pale);
+	color: var(--blue-dark);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.pedido-info { display: grid; gap: 2px; min-width: 0; }
+
+.pedido-item-nome {
+	margin: 0;
+	color: var(--color-heading);
+	font-size: var(--text-sm);
+}
+
+.pedido-loja {
+	color: var(--color-text-muted);
+	font-size: var(--text-xs);
+}
+
+.pedido-status-badge {
+	font-size: .66rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: .03em;
+	padding: 4px var(--space-2);
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.pedido-status-badge--pagamento { background: var(--color-warning-bg); color: var(--color-warning-strong); }
+.pedido-status-badge--preparando { background: var(--blue-pale); color: var(--blue-dark); }
+.pedido-status-badge--caminho { background: #e3f2fd; color: #1565c0; }
+.pedido-status-badge--avaliar { background: #fff3e0; color: #e65100; }
+.pedido-status-badge--concluido { background: #e8f5e9; color: var(--green-dark); }
+
+.pedido-meta {
+	margin: 0;
+	color: var(--color-text);
+	font-size: var(--text-sm);
+}
+
+.pedido-rastreio {
+	margin: 0;
+	color: var(--color-text-muted);
+	font-size: var(--text-xs);
+	font-weight: 700;
+}
+
+.pedido-actions { display: flex; justify-content: flex-end; }
+
+.pedido-tag {
+	color: var(--color-text-muted);
+	font-size: var(--text-xs);
+	font-weight: 700;
+}
+
+/* ── Avaliação ── */
+.avaliacao-form {
+	width: 100%;
+	display: grid;
+	gap: var(--space-2);
+}
+
+.avaliacao-form-label {
+	font-size: var(--text-xs);
+	font-weight: 700;
+	color: var(--color-heading);
+}
+
+.avaliacao-estrelas { display: flex; gap: 4px; }
+
+.avaliacao-estrela {
+	border: none;
+	background: none;
+	color: var(--gray-300, #ccc);
+	font-size: 1.3rem;
+	cursor: pointer;
+	padding: 0;
+	line-height: 1;
+}
+
+.avaliacao-estrela.is-ativa { color: #f9a825; }
+
+.avaliacao-form textarea {
+	border: 1.5px solid var(--color-border);
+	border-radius: 10px;
+	padding: var(--space-2);
+	font-size: var(--text-sm);
+	font-family: inherit;
+	resize: vertical;
+}
+
+.avaliacao-form-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--space-2);
+}
+
+.avaliacao-form-actions .btn {
+	padding: var(--space-1) var(--space-3);
+	font-size: var(--text-xs);
+}
+
+/* ── Cartões genéricos (Meus Dados / Endereços) ── */
+.conta-card {
+	background: var(--white);
+	border: 1px solid var(--color-border);
+	border-radius: 14px;
+	padding: var(--space-4);
+	display: grid;
+	gap: var(--space-3);
+}
+
+.conta-card-head h4 {
+	margin: 0;
+	color: var(--color-heading);
+	font-size: var(--text-base);
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.conta-card-head p {
+	margin: var(--space-1) 0 0;
+	color: var(--color-text-muted);
+	font-size: var(--text-xs);
+}
+
+.conta-form { display: grid; gap: var(--space-3); }
+.conta-form[hidden] { display: none; }
+
+.conta-field { display: grid; gap: 4px; }
+.conta-field[hidden] { display: none; }
+
+.conta-field span {
+	font-size: var(--text-xs);
+	font-weight: 700;
+	color: var(--color-heading);
+}
+
+.conta-field input,
+.conta-field select {
+	border: 1.5px solid var(--color-border);
+	border-radius: 10px;
+	padding: var(--space-2) var(--space-3);
+	font-size: var(--text-sm);
+	font-family: inherit;
+}
+
+.conta-form .btn { justify-self: start; }
+
+/* ── Endereços ── */
+.enderecos-list { display: grid; gap: var(--space-2); }
+
+.endereco-card {
+	border: 1px solid var(--color-border);
+	border-radius: 12px;
+	padding: var(--space-3);
+	display: grid;
+	gap: 2px;
+}
+
+.endereco-card-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 4px;
+}
+
+.endereco-tag {
+	display: inline-flex;
+	background: var(--green-pale, #e8f5e9);
+	color: var(--green-dark);
+	font-size: .7rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: .02em;
+	padding: 3px var(--space-2);
+	border-radius: 999px;
+}
+
+.endereco-remove-btn {
+	border: none;
+	background: none;
+	color: var(--red, #c62828);
+	font-size: var(--text-xs);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.endereco-remove-btn:hover { text-decoration: underline; }
+
+.endereco-linha {
+	margin: 0;
+	color: var(--color-text);
+	font-size: var(--text-sm);
+}
+
+.endereco-cep { color: var(--color-text-muted); font-size: var(--text-xs); }
+
+.endereco-form {
+	border-top: 1px solid var(--color-border);
+	padding-top: var(--space-3);
+	margin-top: var(--space-1);
+}
+
+.endereco-form-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--space-2);
+}
+
+@media (max-width: 600px) {
+	.pedido-card-head {
+		grid-template-columns: auto 1fr;
+	}
+	.pedido-status-badge {
+		grid-column: 1 / -1;
+		justify-self: start;
+	}
+}

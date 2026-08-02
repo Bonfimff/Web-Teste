@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps - Mega Distrito</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+    <link rel="stylesheet" href="../CSS/apps.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="apps-layout apps-drawer-page">
+
+    <main class="apps-drawer-shell">
+        <header class="apps-drawer-top">
+            <div class="apps-drawer-topbar">
+                <a href="../index.html" class="logo" aria-label="Mega Distrito">
+                    <span class="logo-icon"><i class="fas fa-shopping-bag"></i></span>
+                    <span class="logo-text">Mega <strong>Distrito</strong></span>
+                </a>
+
+                <!-- Navegação de seções (desktop) -->
+                <nav class="header-app-nav" aria-label="Seções">
+                    <a class="header-app-link" href="../index.html#inicio" aria-label="Início">
+                        <span class="header-app-icon"><i class="fas fa-house"></i></span>
+                        <span>Início</span>
+                    </a>
+                    <a class="header-app-link active" href="apps.html" aria-label="Apps">
+                        <span class="header-app-icon"><i class="fas fa-grip"></i><span class="app-drawer-count">0</span></span>
+                        <span>Apps</span>
+                    </a>
+                    <a class="header-app-link" href="feed.html" aria-label="Feed">
+                        <span class="header-app-icon"><i class="fas fa-stream"></i></span>
+                        <span>Feed</span>
+                    </a>
+                    <a class="header-app-link" href="conta.html" aria-label="Conta">
+                        <span class="header-app-icon"><i class="fas fa-user"></i></span>
+                        <span>Conta</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="apps-drawer-tagline">
+                <h1><i class="fas fa-layer-group"></i> Super App da Cidade</h1>
+            </div>
+        </header>
+
+        <section class="apps-home-banner" id="apps-home-banner" aria-label="Destaques">
+            <div class="apps-featured-rail" id="apps-home-banner-rail"></div>
+        </section>
+
+        <section class="apps-pinned-panel" aria-label="Aplicativos fixados">
+            <div class="apps-pinned-header">
+                <h2><i class="fas fa-thumbtack"></i> Meus Apps</h2>
+                <button id="open-app-store-btn" class="apps-store-btn" type="button" aria-label="Abrir loja de aplicativos">
+                    <i class="fas fa-store"></i>
+                    <span>Loja de Apps</span>
+                </button>
+            </div>
+            <div class="apps-grid" id="apps-pinned-grid"></div>
+            <div class="apps-no-results" id="apps-pinned-empty" style="display:none;">
+                <i class="fas fa-grip"></i>
+                <p>Você ainda não fixou nenhum app.</p>
+            </div>
+        </section>
+
+        <section class="apps-store-panel" id="apps-store-panel" aria-label="Loja de aplicativos" style="display:none;">
+            <div class="apps-store-top">
+                <h3><i class="fab fa-google-play"></i> Loja de Aplicativos</h3>
+                <button id="close-app-store-btn" class="apps-store-close" type="button" aria-label="Fechar loja">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="apps-search-panel">
+                <div class="apps-search-box">
+                    <i class="fas fa-search"></i>
+                    <input id="apps-search-input" type="search" placeholder="Buscar apps e serviços" autocomplete="off">
+                </div>
+                <div class="apps-filter-row">
+                    <label for="apps-category-filter">Categoria</label>
+                    <select id="apps-category-filter">
+                        <option value="todas">Todas</option>
+                        <option value="mercado">Mercado</option>
+                        <option value="bazar">Bazar</option>
+                        <option value="servicos">Serviços</option>
+                        <option value="comunidade">Comunidade</option>
+                        <option value="saude">Saúde</option>
+                        <option value="beleza">Beleza</option>
+                        <option value="moda">Moda</option>
+                        <option value="pets">Pets</option>
+                        <option value="lojista">Lojista</option>
+                    </select>
+                </div>
+                <div class="apps-category-tabs" id="apps-category-tabs">
+                    <button class="app-cat-chip active" data-app-cat="todas">Todas</button>
+                    <button class="app-cat-chip" data-app-cat="mercado">Mercado</button>
+                    <button class="app-cat-chip" data-app-cat="bazar">Bazar</button>
+                    <button class="app-cat-chip" data-app-cat="servicos">Serviços</button>
+                    <button class="app-cat-chip" data-app-cat="comunidade">Comunidade</button>
+                    <button class="app-cat-chip" data-app-cat="saude">Saúde</button>
+                    <button class="app-cat-chip" data-app-cat="beleza">Beleza</button>
+                    <button class="app-cat-chip" data-app-cat="moda">Moda</button>
+                    <button class="app-cat-chip" data-app-cat="pets">Pets</button>
+                    <button class="app-cat-chip" data-app-cat="lojista">Lojista</button>
+                </div>
+            </div>
+
+            <section class="apps-featured" id="apps-featured-section" aria-label="Apps em destaque">
+                <div class="apps-section-bar">
+                    <h4><i class="fas fa-star"></i> Em destaque</h4>
+                </div>
+                <div class="apps-featured-rail" id="apps-featured-rail"></div>
+            </section>
+
+            <div class="apps-content">
+                <div class="apps-section-bar">
+                    <h4><i class="fas fa-grip"></i> Todos os apps</h4>
+                </div>
+                <div class="apps-grid" id="apps-store-grid"></div>
+            </div>
+            <div class="apps-no-results" id="apps-store-no-results" style="display:none;">
+                <i class="fas fa-box-open"></i>
+                <p>Nenhum app encontrado para esse filtro.</p>
+            </div>
+        </section>
+    </main>
+
+    <nav class="floating-bottom-nav" id="floating-bottom-nav" aria-label="Navegação inferior flutuante">
+        <a class="floating-nav-item" data-nav-item="inicio" href="../index.html#inicio" aria-label="Início">
+            <span class="floating-nav-bubble"><i class="fas fa-house"></i></span>
+            <span class="floating-nav-label">Início</span>
+        </a>
+        <a class="floating-nav-item active" data-nav-item="apps" href="apps.html" aria-label="Apps">
+            <span class="floating-nav-bubble">
+                <i class="fas fa-grip"></i>
+                <span class="app-drawer-count">0</span>
+            </span>
+            <span class="floating-nav-label">Apps</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="feed" href="feed.html" aria-label="Feed">
+            <span class="floating-nav-bubble"><i class="fas fa-stream"></i></span>
+            <span class="floating-nav-label">Feed</span>
+        </a>
+        <a class="floating-nav-item" data-nav-item="usuario" href="conta.html" aria-label="Conta">
+            <span class="floating-nav-bubble"><i class="fas fa-user"></i></span>
+            <span class="floating-nav-label">Conta</span>
+        </a>
+    </nav>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="../JS/utils.js"></script>
+    <script src="../JS/api.js"></script>
+    <script src="../JS/data/apps-catalogo.js"></script>
+    <script src="../JS/apps.js"></script>
+</body>
+</html>

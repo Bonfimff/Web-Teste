@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Minha Conta - Mega Distrito</title>
+	<link rel="stylesheet" href="../CSS/style.css">
+	<link rel="stylesheet" href="../CSS/apps.css">
+	<link rel="stylesheet" href="../CSS/conta.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="apps-layout">
+
+	<header id="header">
+		<div class="header-container">
+			<a href="../index.html#inicio" class="logo">
+				<span class="logo-icon"><i class="fas fa-shopping-bag"></i></span>
+				<span class="logo-text">Mega <strong>Distrito</strong></span>
+			</a>
+
+			<nav class="header-app-nav" aria-label="Seções" style="margin-left:auto;">
+				<a class="header-app-link" href="../index.html#inicio" aria-label="Início">
+					<span class="header-app-icon"><i class="fas fa-house"></i></span>
+					<span>Início</span>
+				</a>
+				<a class="header-app-link" href="apps.html" aria-label="Apps">
+					<span class="header-app-icon"><i class="fas fa-grip"></i></span>
+					<span>Apps</span>
+				</a>
+				<a class="header-app-link" href="feed.html" aria-label="Feed">
+					<span class="header-app-icon"><i class="fas fa-stream"></i></span>
+					<span>Feed</span>
+				</a>
+				<a class="header-app-link active" href="conta.html" aria-label="Conta">
+					<span class="header-app-icon"><i class="fas fa-user"></i></span>
+					<span>Conta</span>
+				</a>
+			</nav>
+		</div>
+
+		<div class="header-nav-row" id="conta-tabs-row" hidden>
+			<div class="header-nav-inner">
+				<div class="conta-tabs" role="tablist" aria-label="Seções da conta">
+					<button class="conta-tab active" role="tab" type="button" aria-selected="true" aria-controls="painel-encomendas">
+						<i class="fas fa-box"></i> Encomendas
+					</button>
+					<button class="conta-tab" role="tab" type="button" aria-selected="false" aria-controls="painel-dados">
+						<i class="fas fa-user-gear"></i> Meus Dados
+					</button>
+					<button class="conta-tab" role="tab" type="button" aria-selected="false" aria-controls="painel-enderecos">
+						<i class="fas fa-location-dot"></i> Endereços
+					</button>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<main class="section conta-page" style="padding-top: 96px;">
+		<div class="container">
+
+			<!-- Painel: Login / Cadastro (exibido quando não há sessão) -->
+			<div id="painel-auth" class="conta-panel">
+				<section class="conta-card conta-auth-card" aria-label="Entrar ou cadastrar">
+					<div class="conta-card-head">
+						<h4><i class="fas fa-user-lock"></i> <span id="auth-titulo">Entrar</span></h4>
+						<p id="auth-subtitulo">Entre com sua conta para ver pedidos e endereços.</p>
+					</div>
+
+					<form id="auth-form" class="conta-form" onsubmit="return false;">
+						<label class="conta-field" id="auth-campo-nome" hidden>
+							<span>Nome completo</span>
+							<input type="text" id="auth-nome" placeholder="Seu nome">
+						</label>
+						<label class="conta-field">
+							<span>E-mail</span>
+							<input type="email" id="auth-email" placeholder="voce@email.com">
+						</label>
+						<label class="conta-field">
+							<span>Senha</span>
+							<input type="password" id="auth-senha" placeholder="Sua senha">
+						</label>
+
+						<button class="btn btn-primary" id="auth-enviar" type="button">Entrar</button>
+						<button class="btn btn-outline" id="auth-alternar" type="button">Ainda não tenho conta</button>
+						<button class="conta-link-btn" id="auth-esqueci-senha" type="button">Esqueci minha senha</button>
+					</form>
+
+					<form id="recuperar-form" class="conta-form" onsubmit="return false;" hidden>
+						<p id="recuperar-instrucao">Informe seu e-mail para receber um código de recuperação.</p>
+
+						<label class="conta-field">
+							<span>E-mail</span>
+							<input type="email" id="recuperar-email" placeholder="voce@email.com">
+						</label>
+						<label class="conta-field" id="recuperar-campo-codigo" hidden>
+							<span>Código recebido por e-mail</span>
+							<input type="text" id="recuperar-codigo" placeholder="000000" maxlength="6" inputmode="numeric">
+						</label>
+						<label class="conta-field" id="recuperar-campo-nova-senha" hidden>
+							<span>Nova senha</span>
+							<input type="password" id="recuperar-nova-senha" placeholder="Sua nova senha">
+						</label>
+
+						<button class="btn btn-primary" id="recuperar-enviar" type="button">Enviar código</button>
+						<button class="conta-link-btn" id="recuperar-voltar" type="button">Voltar para o login</button>
+					</form>
+
+					<form id="confirmar-form" class="conta-form" onsubmit="return false;" hidden>
+						<p id="confirmar-instrucao">Enviamos um código de confirmação para seu e-mail. Informe-o abaixo para ativar sua conta.</p>
+
+						<label class="conta-field">
+							<span>Código recebido por e-mail</span>
+							<input type="text" id="confirmar-codigo" placeholder="000000" maxlength="6" inputmode="numeric">
+						</label>
+
+						<button class="btn btn-primary" id="confirmar-enviar" type="button">Confirmar cadastro</button>
+						<button class="conta-link-btn" id="confirmar-reenviar" type="button">Reenviar código</button>
+						<button class="conta-link-btn" id="confirmar-voltar" type="button">Voltar para o login</button>
+					</form>
+				</section>
+			</div>
+
+			<!-- Painel: Encomendas -->
+			<div id="painel-encomendas" class="conta-panel conta-panel--hidden">
+				<div class="pedido-filtro" id="pedido-filtro" role="tablist" aria-label="Filtrar encomendas">
+					<button class="pedido-filtro-chip active" type="button" data-status="pagamento">Aguardando pagamento</button>
+					<button class="pedido-filtro-chip" type="button" data-status="preparando">Preparando</button>
+					<button class="pedido-filtro-chip" type="button" data-status="caminho">A caminho</button>
+					<button class="pedido-filtro-chip" type="button" data-status="avaliar">A avaliar</button>
+				</div>
+
+				<div class="pedidos-list" id="pedidos-list" aria-live="polite"></div>
+			</div>
+
+			<!-- Painel: Meus Dados -->
+			<div id="painel-dados" class="conta-panel conta-panel--hidden">
+				<section class="conta-card" aria-label="Meus dados">
+					<div class="conta-card-head">
+						<h4><i class="fas fa-user-gear"></i> Meus Dados</h4>
+						<p>Suas informações de cadastro e acesso.</p>
+					</div>
+
+					<form id="conta-dados-form" class="conta-form" onsubmit="return false;">
+						<label class="conta-field">
+							<span>Nome completo</span>
+							<input type="text" id="conta-nome" value="Ana Paula Ferreira">
+						</label>
+						<label class="conta-field">
+							<span>E-mail</span>
+							<input type="email" id="conta-email" value="ana.ferreira@email.com">
+						</label>
+						<label class="conta-field">
+							<span>Telefone</span>
+							<input type="tel" id="conta-telefone" value="(21) 99876-5432">
+						</label>
+						<label class="conta-field">
+							<span>Nova senha</span>
+							<input type="password" id="conta-senha" placeholder="Deixe em branco para manter a atual">
+						</label>
+
+						<button class="btn btn-primary" id="conta-salvar-dados" type="button">
+							<i class="fas fa-save"></i> Salvar alterações
+						</button>
+						<button class="btn btn-outline" id="conta-sair" type="button">
+							<i class="fas fa-right-from-bracket"></i> Sair da conta
+						</button>
+					</form>
+				</section>
+			</div>
+
+			<!-- Painel: Endereços -->
+			<div id="painel-enderecos" class="conta-panel conta-panel--hidden">
+				<section class="conta-card" aria-label="Endereços">
+					<div class="conta-card-head">
+						<h4><i class="fas fa-location-dot"></i> Endereços de Entrega</h4>
+						<p>Cadastre os endereços onde você recebe suas compras.</p>
+					</div>
+
+					<div class="enderecos-list" id="enderecos-list" aria-live="polite"></div>
+
+					<button class="btn btn-outline" id="endereco-abrir-form" type="button">
+						<i class="fas fa-plus"></i> Adicionar endereço
+					</button>
+
+					<form id="endereco-form" class="conta-form endereco-form" onsubmit="return false;" hidden>
+						<label class="conta-field">
+							<span>Apelido</span>
+							<select id="endereco-apelido">
+								<option value="Casa">Casa</option>
+								<option value="Trabalho">Trabalho</option>
+								<option value="Outro">Outro</option>
+							</select>
+						</label>
+						<label class="conta-field">
+							<span>Rua e número</span>
+							<input type="text" id="endereco-rua" placeholder="Ex: Rua das Flores, 45">
+						</label>
+						<label class="conta-field">
+							<span>Bairro</span>
+							<input type="text" id="endereco-bairro" placeholder="Ex: Centro">
+						</label>
+						<label class="conta-field">
+							<span>Cidade</span>
+							<input type="text" id="endereco-cidade" value="Magé - RJ">
+						</label>
+						<label class="conta-field">
+							<span>CEP</span>
+							<input type="text" id="endereco-cep" placeholder="Ex: 25900-000">
+						</label>
+
+						<div class="endereco-form-actions">
+							<button class="btn btn-outline" id="endereco-cancelar" type="button">Cancelar</button>
+							<button class="btn btn-primary" id="endereco-salvar" type="button">
+								<i class="fas fa-save"></i> Salvar endereço
+							</button>
+						</div>
+					</form>
+				</section>
+			</div>
+
+		</div>
+	</main>
+
+	<nav class="floating-bottom-nav" id="floating-bottom-nav" aria-label="Navegação inferior flutuante">
+		<a class="floating-nav-item" data-nav-item="inicio" href="../index.html#inicio" aria-label="Início">
+			<span class="floating-nav-bubble"><i class="fas fa-house"></i></span>
+			<span class="floating-nav-label">Início</span>
+		</a>
+		<a class="floating-nav-item" data-nav-item="apps" href="apps.html" aria-label="Apps">
+			<span class="floating-nav-bubble"><i class="fas fa-grip"></i></span>
+			<span class="floating-nav-label">Apps</span>
+		</a>
+		<a class="floating-nav-item" data-nav-item="feed" href="feed.html" aria-label="Feed">
+			<span class="floating-nav-bubble"><i class="fas fa-stream"></i></span>
+			<span class="floating-nav-label">Feed</span>
+		</a>
+		<a class="floating-nav-item active" data-nav-item="usuario" href="conta.html" aria-label="Conta">
+			<span class="floating-nav-bubble"><i class="fas fa-user"></i></span>
+			<span class="floating-nav-label">Conta</span>
+		</a>
+	</nav>
+
+	<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+	<script src="../JS/utils.js"></script>
+	<script src="../JS/api.js"></script>
+	<script src="../JS/conta.js"></script>
+</body>
+</html>
