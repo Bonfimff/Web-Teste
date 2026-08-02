@@ -1304,6 +1304,7 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
     margin: 0;
     font-size: clamp(1.2rem, 2.2vw, 1.5rem);
     font-weight: 800;
+    color: #0b3c6d;
 }
 
 .login-modal__close {
