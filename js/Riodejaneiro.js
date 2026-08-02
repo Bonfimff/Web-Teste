@@ -712,6 +712,12 @@
             applyMapLinkState(card.querySelector('.rio-link-map'), tour.link_tour || tour.link || '');
             applyTourVisibility(card, tour);
 
+            const folder = card.querySelector('.rio-tour-slider')?.dataset.folder;
+            if (folder && Array.isArray(tour.imagens) && tour.imagens.length) {
+                window.tourImagesByFolder = window.tourImagesByFolder || {};
+                window.tourImagesByFolder[folder] = tour.imagens;
+            }
+
             grid.appendChild(card);
 
             if (tour.id && typeof window.TourInteracoes !== 'undefined' && window.TourInteracoes) {
@@ -967,7 +973,7 @@
         const toast = document.getElementById('awardToast');
         if (!toast) return;
 
-        let awardConfig = { ativo: true, link: '', imagem: '' };
+        let awardConfig = { ativo: true, link: '', imagem: '', titulo: '', texto: '' };
         try {
             const response = await fetch(`${API_BASE_URL}/get_cidade_award`);
             if (response.ok) {
@@ -984,6 +990,14 @@
         if (awardConfig.imagem) {
             const img = toast.querySelector('.award-toast__icon img');
             if (img) img.src = awardConfig.imagem;
+        }
+        if (awardConfig.titulo) {
+            const titleEl = toast.querySelector('.award-toast__title');
+            if (titleEl) titleEl.textContent = awardConfig.titulo;
+        }
+        if (awardConfig.texto) {
+            const messageEl = toast.querySelector('.award-toast__message');
+            if (messageEl) messageEl.textContent = awardConfig.texto;
         }
 
         toast.addEventListener('click', (event) => {

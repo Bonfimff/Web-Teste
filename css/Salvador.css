@@ -60,13 +60,7 @@
     );
 }
 
-/* Textura sutil de ladrilho colonial */
-.rio-tours::before {
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='none'/%3E%3Crect x='0' y='0' width='20' height='20' fill='%23d2944a' opacity='0.04'/%3E%3Crect x='20' y='20' width='20' height='20' fill='%23d2944a' opacity='0.04'/%3E%3C/svg%3E") repeat;
-    background-size: 40px 40px;
-}
-
-.rio-section-title { color: #f4e7d5; }
+.rio-section-title { color: #0b3c6d; }
 .rio-section-subtitle { color: #f1d7b1; }
 .rio-tour-card { background: #ffffff; border-color: rgba(161,101,32,0.1); }
 .rio-tour-name { color: #5c3a10; }

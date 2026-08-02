@@ -2479,13 +2479,17 @@ const carregarCidadeAvisoGerenciamento = async () => {
 let cidadeAwardAtual = {};
 
 const preencherCidadeAwardForm = (cidade) => {
-  const award = cidadeAwardAtual[cidade] || { ativo: true, link: '', imagem: '' };
+  const award = cidadeAwardAtual[cidade] || { ativo: true, link: '', imagem: '', titulo: '', texto: '' };
   const ativoInput = document.getElementById('cidadeAwardAtivo');
   const linkInput = document.getElementById('cidadeAwardLink');
   const imagemInput = document.getElementById('cidadeAwardImagem');
+  const tituloInput = document.getElementById('cidadeAwardTitulo');
+  const textoInput = document.getElementById('cidadeAwardTexto');
   if (ativoInput) ativoInput.checked = award.ativo !== false;
   if (linkInput) linkInput.value = award.link || '';
   if (imagemInput) imagemInput.value = award.imagem || '';
+  if (tituloInput) tituloInput.value = award.titulo || '';
+  if (textoInput) textoInput.value = award.texto || '';
   const status = document.getElementById('cidadeAwardStatus');
   if (status) status.textContent = '';
 };
@@ -2503,6 +2507,8 @@ const initCidadeAwardForm = () => {
     const ativo = document.getElementById('cidadeAwardAtivo')?.checked !== false;
     const link = document.getElementById('cidadeAwardLink')?.value.trim() || '';
     const imagem = document.getElementById('cidadeAwardImagem')?.value.trim() || '';
+    const titulo = document.getElementById('cidadeAwardTitulo')?.value.trim() || '';
+    const texto = document.getElementById('cidadeAwardTexto')?.value.trim() || '';
     const status = document.getElementById('cidadeAwardStatus');
     const adminEmail = localStorage.getItem('userEmail');
 
@@ -2513,13 +2519,13 @@ const initCidadeAwardForm = () => {
       const response = await fetchWithApiFallback('/update_cidade_award', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cidade, ativo, link, imagem, admin_email: adminEmail })
+        body: JSON.stringify({ cidade, ativo, link, imagem, titulo, texto, admin_email: adminEmail })
       });
       const result = await response.json().catch(() => ({}));
 
       if (response.ok && result.success) {
         if (status) status.textContent = 'Salvo com sucesso.';
-        cidadeAwardAtual[cidade] = { cidade, ativo, link, imagem };
+        cidadeAwardAtual[cidade] = { cidade, ativo, link, imagem, titulo, texto };
       } else if (status) {
         status.textContent = result.message || 'Erro ao salvar.';
       }

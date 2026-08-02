@@ -307,7 +307,7 @@
         const modal = !toast ? document.getElementById('awardModal') : null;
         if (!toast && !modal) return;
 
-        let awardConfig = { ativo: true, link: '', imagem: '' };
+        let awardConfig = { ativo: true, link: '', imagem: '', titulo: '', texto: '' };
         try {
             const cidadeAtual = document.getElementById('relatosGallery')?.dataset.cidade;
             const endpoint = `${API_BASE_URL}/get_cidade_award`;
@@ -327,6 +327,14 @@
             if (awardConfig.imagem) {
                 const img = toast.querySelector('.award-toast__icon img');
                 if (img) img.src = awardConfig.imagem;
+            }
+            if (awardConfig.titulo) {
+                const titleEl = toast.querySelector('.award-toast__title');
+                if (titleEl) titleEl.textContent = awardConfig.titulo;
+            }
+            if (awardConfig.texto) {
+                const messageEl = toast.querySelector('.award-toast__message');
+                if (messageEl) messageEl.textContent = awardConfig.texto;
             }
             let awardToastTimer = null;
             toast.addEventListener('click', (event) => {
@@ -356,6 +364,14 @@
         if (awardConfig.imagem) {
             const img = modal.querySelector('.hs-modal__leftImage img');
             if (img) img.src = awardConfig.imagem;
+        }
+        if (awardConfig.titulo) {
+            const titleEl = document.getElementById('awardTitle');
+            if (titleEl) titleEl.textContent = awardConfig.titulo;
+        }
+        if (awardConfig.texto) {
+            const descEl = modal.querySelector('.js-hs-description');
+            if (descEl) descEl.textContent = awardConfig.texto;
         }
 
         const countdownEl = document.getElementById('awardCountdown');
@@ -2710,6 +2726,12 @@
             card.querySelector('.rio-tour-details').innerHTML = buildTourDetailsHtml(tour, lang);
             applyMapLinkState(card.querySelector('.rio-link-map'), tour.link || tour.link_tour || '');
             applyTourVisibility(card, tour);
+
+            const folder = card.querySelector('.rio-tour-slider')?.dataset.folder;
+            if (folder && Array.isArray(tour.imagens) && tour.imagens.length) {
+                window.tourImagesByFolder = window.tourImagesByFolder || {};
+                window.tourImagesByFolder[folder] = tour.imagens;
+            }
 
             grid.appendChild(card);
 

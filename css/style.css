@@ -37,7 +37,7 @@ body::before {
     height: 100%;
     height: 100dvh;
     z-index: -2;
-    background: url("../imagem/assets/Papel-de-fundo.png") center center / cover no-repeat;
+    background: url("../imagem/Rio de Janeiro/assets/fundo rj.png") center center / cover no-repeat;
     pointer-events: none;
 }
 
@@ -70,7 +70,7 @@ body::before {
     height: 100%;
     height: 100dvh;
     z-index: -2;
-    background: url("../imagem/assets/Papel-de-fundo.png") center center / cover no-repeat;
+    background: url("../imagem/Rio de Janeiro/assets/fundo rj.png") center center / cover no-repeat;
     pointer-events: none;
 }
 
@@ -796,7 +796,7 @@ main {
     width: 92px;
     height: 92px;
     border-radius: 14px;
-    object-fit: cover;
+    object-fit: contain;
     border: 1px solid rgba(13, 85, 72, 0.35);
 }
 

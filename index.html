@@ -1,322 +1,162 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mega Distrito - Tudo que você precisa, aqui em Magé</title>
-    <link rel="stylesheet" href="CSS/style.css">
-    <link rel="stylesheet" href="CSS/apps.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Travel the World · Experiências</title>
+    <link rel="apple-touch-icon" href="imagem/assets/Logo.png?v=2">
+    <link rel="icon" type="image/png" href="imagem/assets/Logo.png?v=2">
+    <!-- Google Fonts + Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="css/style.css?v=16">
+    <!-- Remove a imagem de fundo (ondas) só na página inicial; as demais
+         páginas continuam usando body::before/.main-container::after de
+         style.css normalmente. -->
+    <style>
+        body::before,
+        .main-container::after {
+            background-image: none;
+        }
+    </style>
+    <!-- Pré-carrega as imagens de painel de cada cidade para evitar loading
+         perceptível ao entrar na página da cidade (ver js/preload-paineis.js
+         para as imagens configuradas dinamicamente pelo admin). -->
+    <link rel="preload" as="image" href="imagem/Rio de Janeiro/assets/painel.jpeg">
+    <link rel="preload" as="image" href="https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp">
+    <link rel="preload" as="image" href="https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp">
+    <link rel="preload" as="image" href="imagem/Lencois/assets/painel.jpeg">
 </head>
-<body class="apps-layout">
-
-    <!-- ========================================================
-         HEADER
-    ======================================================== -->
-    <header id="header">
-        <div class="header-container">
-
-            <!-- Logo -->
-            <a href="#inicio" class="logo">
-                <span class="logo-icon"><i class="fas fa-shopping-bag"></i></span>
-                <span class="logo-text">Mega <strong>Distrito</strong></span>
-            </a>
-
-            <!-- Busca (protagonista, estilo marketplace) -->
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="Buscar produtos, marcas e muito mais..." autocomplete="off">
-                <button id="search-btn" aria-label="Buscar"><i class="fas fa-search"></i></button>
+<body>
+    <div class="main-container" id="inicio">
+        <header>
+            <div class="lang-selector" id="langSelector">
+                <button class="lang-btn" type="button" id="langBtn">
+            	<span class="flag flag-pt"></span> Português
+                </button>
+                <ul class="lang-list" id="langList">
+                    <li data-lang="pt"><span class="flag flag-pt"></span> Português</li>
+                    <li data-lang="en"><span class="flag flag-en"></span> English</li>
+                    <li data-lang="fr"><span class="flag flag-fr"></span> Français</li>
+                    <li data-lang="es"><span class="flag flag-es"></span> Español</li>
+                    <li data-lang="it"><span class="flag flag-it"></span> Italiano</li>
+                    <li data-lang="zh"><span class="flag flag-zh"></span> 中文(普通话)</li>
+                   </ul>
             </div>
 
-            <!-- Navegação de seções (desktop) -->
-            <nav class="header-app-nav" aria-label="Seções">
-                <a class="header-app-link active" href="#inicio" aria-label="Início">
-                    <span class="header-app-icon"><i class="fas fa-house"></i></span>
-                    <span>Início</span>
-                </a>
-                <a class="header-app-link" href="HTML/apps.html" aria-label="Apps">
-                    <span class="header-app-icon"><i class="fas fa-grip"></i><span class="app-drawer-count">0</span></span>
-                    <span>Apps</span>
-                </a>
-                <a class="header-app-link" href="HTML/feed.html" aria-label="Feed">
-                    <span class="header-app-icon"><i class="fas fa-stream"></i></span>
-                    <span>Feed</span>
-                </a>
-                <a class="header-app-link" href="HTML/conta.html" aria-label="Conta">
-                    <span class="header-app-icon"><i class="fas fa-user"></i></span>
-                    <span>Conta</span>
-                </a>
-            </nav>
-
-            <!-- Carrinho -->
-            <button class="cart-btn" id="cart-btn" aria-label="Abrir carrinho">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count" id="cart-count">0</span>
-            </button>
-
-        </div>
-
-        <!-- Linha de navegação + localização -->
-        <div class="header-nav-row">
-            <div class="header-nav-inner">
-                <span class="header-location">
-                    <i class="fas fa-map-marker-alt"></i> Entrega em <strong>Magé e região</strong>
-                </span>
-                <nav class="header-links" aria-label="Navegação principal">
-                    <a href="#bazar"      class="nav-link nav-bazar"><i class="fas fa-tags"></i> Bazar</a>
-                    <a href="HTML/servicos.html" class="nav-link nav-servicos"><i class="fas fa-hard-hat"></i> Serviços</a>
-                    <a href="HTML/feed.html" class="nav-link">Feed</a>
+            <div class="nav-left">
+                <nav>
+                    <a href="#inicio" class="active" data-i18n="nav_home">INÍCIO</a>
+                    <a href="#sobre" data-i18n="nav_about">SOBRE</a>
+                    <a href="#contato" data-i18n="nav_contact">CONTATO</a>
+                    <a href="#ajuda" data-i18n="nav_help">AJUDA</a>
                 </nav>
             </div>
-        </div>
-    </header>
 
-    <!-- ========================================================
-         BANNER PRINCIPAL
-    ======================================================== -->
-    <section id="inicio" class="banner">
-        <div class="banner-inner">
-            <div class="banner-content">
-                <span class="banner-badge"><i class="fas fa-bolt"></i> Novidades toda semana</span>
-                <h1>Tudo que você precisa, <span>aqui em Magé</span></h1>
-                <p>Os melhores preços da cidade com entrega rápida para todo o município.</p>
-                <a href="#produtos" class="btn btn-white">Ver ofertas <i class="fas fa-arrow-right"></i></a>
-            </div>
-            <div class="banner-deco" aria-hidden="true">
-                <div class="banner-circle"><i class="fas fa-store"></i></div>
-            </div>
-        </div>
-    </section>
+  
 
-    <!-- ========================================================
-         TRILHO DE CATEGORIAS
-    ======================================================== -->
-    <section id="categorias" class="cat-rail-section" data-nav-anchor>
-        <div class="container">
-            <div class="cat-rail" id="categories-grid"></div>
-        </div>
-    </section>
+            <!-- Botão hamburger para mobile -->
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
 
-    <!-- ========================================================
-         PRODUTOS
-    ======================================================== -->
-    <section id="produtos" class="section section-alt">
-        <div class="container">
-            <div class="section-bar">
-                <h2><i class="fas fa-bolt"></i> Ofertas do Dia</h2>
-                <button type="button" class="section-link" onclick="resetarFiltros()">Ver tudo <i class="fas fa-chevron-right"></i></button>
-            </div>
-
-            <!-- Filtros por categoria -->
-            <div class="filter-tabs" id="filter-tabs">
-                <button class="filter-btn active" data-filter="todos">Todos</button>
-                <button class="filter-btn" data-filter="eletronicos">Eletrônicos</button>
-                <button class="filter-btn" data-filter="casa">Casa</button>
-                <button class="filter-btn" data-filter="ferramentas">Ferramentas</button>
-                <button class="filter-btn" data-filter="moda">Moda</button>
-            </div>
-
-            <!-- Grid de produtos (preenchido pelo JS) -->
-            <div class="products-grid" id="products-grid"></div>
-
-            <!-- Mensagem de nenhum resultado -->
-            <div class="no-results" id="no-results" style="display:none;">
-                <i class="fas fa-search"></i>
-                <p>Nenhum produto encontrado para sua busca.</p>
-                <button class="btn btn-primary" onclick="resetarFiltros()">Ver todos os produtos</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ========================================================
-         BAZAR - PRODUTOS USADOS
-    ======================================================== -->
-    <section id="bazar" class="section bazar-section">
-        <div class="container">
-
-            <!-- Cabeçalho da seção -->
-            <div class="section-bar">
-                <h2 class="bazar-title"><i class="fas fa-recycle"></i> Bazar — Usados</h2>
-                <button type="button" class="section-link section-link-bazar" onclick="resetarBazar()">Ver tudo <i class="fas fa-chevron-right"></i></button>
-            </div>
-
-            <!-- Destaque do bazar -->
-            <div class="bazar-banner">
-                <div class="bazar-banner-text">
-                    <h3><i class="fas fa-hand-holding-usd"></i> Quer vender algo?</h3>
-                    <p>Anuncie seu produto usado gratuitamente e alcance compradores em Magé e região.</p>
+            <div class="nav-right" id="navRight">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar" data-i18n-placeholder="search_placeholder">
+                    <button type="button"><i class="fa fa-search"></i></button>
                 </div>
-                <button class="btn btn-bazar-hero" onclick="toast('Em breve você poderá anunciar seus produtos aqui!')">
-                    <i class="fas fa-plus-circle"></i> Anunciar Produto
-                </button>
-            </div>
 
-            <!-- Filtros do bazar -->
-            <div class="filter-tabs" id="bazar-filter-tabs">
-                <button class="filter-btn filter-bazar active" data-bazar-filter="todos">Todos</button>
-                <button class="filter-btn filter-bazar" data-bazar-filter="eletronicos">Eletrônicos</button>
-                <button class="filter-btn filter-bazar" data-bazar-filter="casa">Casa</button>
-                <button class="filter-btn filter-bazar" data-bazar-filter="ferramentas">Ferramentas</button>
-                <button class="filter-btn filter-bazar" data-bazar-filter="moda">Moda</button>
-                <button class="filter-btn filter-bazar" data-bazar-filter="outros">Outros</button>
-            </div>
-
-            <!-- Grid de produtos usados (preenchido pelo JS) -->
-            <div class="bazar-grid" id="bazar-grid"></div>
-
-            <!-- Sem resultados -->
-            <div class="no-results" id="bazar-no-results" style="display:none;">
-                <i class="fas fa-search"></i>
-                <p>Nenhum item encontrado nesta categoria.</p>
-                <button class="btn btn-primary" onclick="resetarBazar()">Ver todos os itens</button>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- ========================================================
-         FOOTER
-    ======================================================== -->
-    <footer id="contato">
-        <div class="footer-container">
-
-            <!-- Sobre -->
-            <div class="footer-col footer-about">
-                <div class="footer-logo">
-                    <i class="fas fa-shopping-bag"></i> Mega Distrito
+                <div class="profile-menu">
+                    <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false" aria-label="Conta"><i class="fa fa-user-circle"></i></button>
+                    <div class="profile-dropdown" id="profileDropdown" role="menu" aria-label="Opções de conta">
+                        <a href="#" class="profile-item" data-profile-action="login" data-i18n="profile_login">Entrar</a>
+                        <a href="#" class="profile-item" data-profile-action="register" data-i18n="profile_register">Cadastrar</a>
+                    </div>
                 </div>
-                <p>Seu mercado digital local. Qualidade, preço justo e entrega na sua porta, sem complicação.</p>
-                <div class="social-links">
-                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </header>
+  
+        <main>
+            <div class="hero-text">
+                <h1 class="hero-title" data-i18n="hero_title">Free Walking Tour</h1>
+                <div class="subtitle" data-i18n="hero_subtitle">Sua próxima grande aventura começa aqui. Descubra destinos surpreendentes e viva roteiros inesquecíveis. <br> Aproveite também nossa experiência exclusiva nos Lençóis Maranhenses.</div>
+
+                <div class="city-title" data-i18n="choose_city">Escolha a cidade:</div>
+                <div class="city-list">
+                    <a class="city-card" href="html/Riodejaneiro.html">
+                        <span class="city-thumb city-thumb-rio"></span>
+                        <span class="city-name" data-i18n="city_rio">Rio de Janeiro</span>
+                    </a>
+                    <a class="city-card" href="html/Salvador.html">
+                        <span class="city-thumb city-thumb-salvador"></span>
+                        <span class="city-name" data-i18n="city_salvador">Salvador</span>
+                    </a>
+                    <a class="city-card" href="html/Saolu%C3%ADsdomaranhao.html">
+                        <span class="city-thumb city-thumb-saoluis"></span>
+                        <span class="city-name" data-i18n="city_saoluis">São Luís do Maranhão</span>
+                    </a>
+                    <a class="city-card" href="html/Lencoismaranhenses.html">
+                        <span class="city-thumb city-thumb-lencois"></span>
+                        <span class="city-name" data-i18n="city_lencois">Lençóis Maranhenses</span>
+                    </a>
+                </div>
+
+                <div class="social-icons">
+                    
+                
+                    <a href="https://www.instagram.com/tourbyfootbrasil/?hl=en" aria-label="Instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/5521970018590" aria-label="WhatsApp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
                     <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
                 </div>
             </div>
 
-            <!-- Links rápidos -->
-            <div class="footer-col">
-                <h4>Links Rápidos</h4>
-                <ul>
-                    <li><a href="#inicio">Início</a></li>
-                    <li><a href="#produtos">Produtos</a></li>
-                    <li><a href="#categorias">Categorias</a></li>
-                    <li><a href="#contato">Contato</a></li>
-                </ul>
+            <div class="hero-images" aria-hidden="true">
+                <div class="capsule capsule-left">
+                    <video class="capsule-video" muted playsinline>
+                        <source src="videos/video1.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="capsule capsule-center">
+                    <video class="capsule-video" muted playsinline>
+                        <source src="videos/video1.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="capsule capsule-right">
+                    <video class="capsule-video" muted playsinline>
+                        <source src="videos/video1.mp4" type="video/mp4">
+                    </video>
+                </div>
             </div>
+        </main>
 
-            <!-- Categorias -->
-            <div class="footer-col">
-                <h4>Categorias</h4>
-                <ul>
-                    <li><a href="#">Eletrônicos</a></li>
-                    <li><a href="#">Casa e Cozinha</a></li>
-                    <li><a href="#">Ferramentas</a></li>
-                    <li><a href="#">Moda</a></li>
-                </ul>
-            </div>
+        <section class="site-sections is-empty" aria-label="Informações do site" id="infoSections">
+            <article class="site-section-card is-hidden" id="sobre">
+                <h2 data-i18n="about_title">Sobre</h2>
+                <p data-i18n="about_text">Somos uma equipe apaixonada por experiências locais autênticas, conectando viajantes a guias especialistas em cada destino.</p>
+            </article>
 
-            <!-- Contato -->
-            <div class="footer-col">
-                <h4>Contato</h4>
-                <ul class="contact-list">
-                    <li><i class="fas fa-map-marker-alt"></i> Magé, Rio de Janeiro - RJ</li>
-                    <li><i class="fas fa-phone"></i> (21) 99999-0000</li>
-                    <li><i class="fas fa-envelope"></i> contato@mageexpress.com.br</li>
-                    <li><i class="fas fa-clock"></i> Seg-Sex: 08h às 18h</li>
-                </ul>
-            </div>
+            <article class="site-section-card is-hidden" id="contato">
+                <h2 data-i18n="contact_title">Contato</h2>
+                <p data-i18n="contact_text">Fale com a Travel the World para dúvidas, parcerias e reservas personalizadas.</p>
+                <div class="site-section-links">
+                    <a href="mailto:contato@traveltheworld.com">contato@traveltheworld.com</a>
+                    <a href="https://wa.me/5521970018590" target="_blank" rel="noopener">WhatsApp: +55 21 97001-8590</a>
+                </div>
+            </article>
 
-        </div>
-        <div class="footer-bottom">
-            <p>© 2026 Mega Distrito. Todos os direitos reservados. Feito com <i class="fas fa-heart" style="color:#e53935;"></i> em Magé - RJ.</p>
-        </div>
-    </footer>
+            <article class="site-section-card is-hidden" id="ajuda">
+                <h2 data-i18n="help_title">Ajuda</h2>
+                <p data-i18n="help_text">Precisa de suporte com idioma, horários, cancelamentos ou ponto de encontro? Nossa equipe está pronta para ajudar.</p>
+            </article>
+        </section>
 
-    <!-- ========================================================
-         CARRINHO (SIDEBAR)
-    ======================================================== -->
-    <div class="overlay" id="overlay"></div>
-
-    <aside class="cart-sidebar" id="cart-sidebar" aria-label="Carrinho de compras">
-        <div class="cart-header">
-            <h3><i class="fas fa-shopping-cart"></i> Meu Carrinho</h3>
-            <button id="close-cart" aria-label="Fechar carrinho"><i class="fas fa-times"></i></button>
-        </div>
-
-        <!-- Lista de itens (preenchida pelo JS) -->
-        <div class="cart-items" id="cart-items"></div>
-
-        <!-- Rodapé do carrinho -->
-        <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total:</span>
-                <strong id="cart-total">R$ 0,00</strong>
-            </div>
-            <button class="btn btn-primary btn-block" id="checkout-btn">
-                Finalizar Compra <i class="fas fa-arrow-right"></i>
-            </button>
-            <button class="btn btn-outline btn-block" id="clear-cart-btn">
-                Limpar Carrinho
-            </button>
-        </div>
-    </aside>
-
-    <!-- Gaveta de aplicativos -->
-    <div class="app-overlay" id="app-overlay"></div>
-
-    <nav class="floating-bottom-nav" id="floating-bottom-nav" aria-label="Navegação inferior flutuante">
-        <a class="floating-nav-item active" data-nav-item="inicio" href="#inicio" aria-label="Início">
-            <span class="floating-nav-bubble"><i class="fas fa-house"></i></span>
-            <span class="floating-nav-label">Início</span>
-        </a>
-        <a class="floating-nav-item" data-nav-item="apps" href="HTML/apps.html" aria-label="Abrir aba Apps">
-            <span class="floating-nav-bubble">
-                <i class="fas fa-grip"></i>
-                <span class="app-drawer-count">0</span>
-            </span>
-            <span class="floating-nav-label">Apps</span>
-        </a>
-        <a class="floating-nav-item" data-nav-item="feed" href="HTML/feed.html" aria-label="Feed">
-            <span class="floating-nav-bubble"><i class="fas fa-stream"></i></span>
-            <span class="floating-nav-label">Feed</span>
-        </a>
-        <a class="floating-nav-item" data-nav-item="usuario" href="HTML/conta.html" aria-label="Conta">
-            <span class="floating-nav-bubble"><i class="fas fa-user"></i></span>
-            <span class="floating-nav-label">Conta</span>
-        </a>
-    </nav>
-
-    <aside class="app-drawer" id="app-drawer" aria-label="Gaveta de aplicativos">
-        <div class="app-drawer-header">
-            <h3><i class="fas fa-grip"></i> Gaveta de Apps</h3>
-            <button id="close-app-drawer" aria-label="Fechar gaveta"><i class="fas fa-times"></i></button>
-        </div>
-
-        <div class="app-drawer-content" id="app-drawer-content"></div>
-    </aside>
-
-    <!-- Notificação toast -->
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-    <!-- Página de detalhes do produto (tela cheia) -->
-    <div class="pd-modal" id="pd-modal" role="dialog" aria-modal="true" aria-label="Detalhes do produto">
-        <div class="pd-topbar">
-            <button class="pd-voltar" id="pd-close" type="button">
-                <i class="fas fa-arrow-left"></i> Voltar
-            </button>
-        </div>
-        <div class="pd-content" id="pd-content"></div>
     </div>
 
-    <script src="JS/utils.js"></script>
-    <script src="JS/api.js"></script>
-    <script src="JS/data/categorias.js"></script>
-    <script src="JS/data/produtos.js"></script>
-    <script src="JS/data/apps-catalogo.js"></script>
-    <script src="JS/data/lojas.js"></script>
-    <script src="JS/script.js"></script>
-    <script src="JS/produto-detalhe.js"></script>
-    <script src="JS/apps.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/ui-translations.js"></script>
+    <script src="js/script.js?v=2"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/preload-paineis.js?v=1"></script>
 </body>
 </html>
