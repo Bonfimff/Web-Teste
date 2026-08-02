@@ -295,6 +295,8 @@ body {
 }
 
 .mobile-lang-list {
+  display: block;
+  position: static;
   list-style: none;
   margin: 0;
   padding: 0;

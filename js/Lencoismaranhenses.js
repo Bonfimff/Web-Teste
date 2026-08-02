@@ -1,16 +1,20 @@
 (() => {
     const pageKey = 'Lencoismaranhenses';
     const pageTranslations = window.pageTranslations?.[pageKey] || {};
-    const applyTourCard = (card, name, details, reserveLabel, sub) => {
+    const applyTourCard = (card, name, details, reserveLabel, sub, lang) => {
         if (!card) return;
-        const nameEl = card.querySelector('.rio-tour-name');
-        if (nameEl && name) {
-            nameEl.innerHTML = sub ? `${name} <span class="rio-tour-name-sub">${sub}</span>` : name;
+        const hasDynamicDetails = typeof window.applyDynamicTourDetailsToCard === 'function'
+            && window.applyDynamicTourDetailsToCard(card, lang);
+        if (!hasDynamicDetails) {
+            const nameEl = card.querySelector('.rio-tour-name');
+            if (nameEl && name) {
+                nameEl.innerHTML = sub ? `${name} <span class="rio-tour-name-sub">${sub}</span>` : name;
+            }
+            const detailItems = card.querySelectorAll('.rio-tour-details li');
+            (details || []).forEach((html, index) => {
+                if (detailItems[index]) detailItems[index].innerHTML = html;
+            });
         }
-        const detailItems = card.querySelectorAll('.rio-tour-details li');
-        (details || []).forEach((html, index) => {
-            if (detailItems[index]) detailItems[index].innerHTML = html;
-        });
         const reserveBtn = card.querySelector('.rio-btn-reserve');
         if (reserveBtn && reserveLabel) reserveBtn.textContent = reserveLabel;
     };
@@ -58,8 +62,8 @@
             if (sectionSubtitle) sectionSubtitle.textContent = t.section_subtitle;
 
             const cards = toursSection.querySelectorAll('.rio-tour-card');
-            applyTourCard(cards[0], t.names?.[0], t.card1_details, t.reserve);
-            applyTourCard(cards[1], t.names?.[1], t.card2_details, t.reserve);
+            applyTourCard(cards[0], t.names?.[0], t.card1_details, t.reserve, null, lang);
+            applyTourCard(cards[1], t.names?.[1], t.card2_details, t.reserve, null, lang);
         }
 
         // Expedições Compartilhadas
@@ -69,7 +73,7 @@
             if (sectionTitle) sectionTitle.textContent = t.shared_section_title;
             const cards = sharedSection.querySelectorAll('.rio-tour-card');
             (t.shared_tours || []).forEach((tour, index) => {
-                applyTourCard(cards[index], tour.name, tour.details, t.reserve);
+                applyTourCard(cards[index], tour.name, tour.details, t.reserve, null, lang);
             });
         }
 
@@ -80,7 +84,7 @@
             if (sectionTitle) sectionTitle.textContent = t.private_section_title;
             const cards = privateSection.querySelectorAll('.rio-tour-card');
             (t.private_tours || []).forEach((tour, index) => {
-                applyTourCard(cards[index], tour.name, tour.details, t.reserve, tour.sub);
+                applyTourCard(cards[index], tour.name, tour.details, t.reserve, tour.sub, lang);
             });
         }
 

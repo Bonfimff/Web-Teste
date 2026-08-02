@@ -45,12 +45,16 @@
 
             const card = toursSection.querySelector('.rio-tour-card');
             if (card) {
-                const nameEl = card.querySelector('.rio-tour-name');
-                if (nameEl) nameEl.textContent = t.tour_name;
-                const detailItems = card.querySelectorAll('.rio-tour-details li');
-                (t.details || []).forEach((html, index) => {
-                    if (detailItems[index]) detailItems[index].innerHTML = html;
-                });
+                const hasDynamicDetails = typeof window.applyDynamicTourDetailsToCard === 'function'
+                    && window.applyDynamicTourDetailsToCard(card, lang);
+                if (!hasDynamicDetails) {
+                    const nameEl = card.querySelector('.rio-tour-name');
+                    if (nameEl) nameEl.textContent = t.tour_name;
+                    const detailItems = card.querySelectorAll('.rio-tour-details li');
+                    (t.details || []).forEach((html, index) => {
+                        if (detailItems[index]) detailItems[index].innerHTML = html;
+                    });
+                }
                 const mapLink = card.querySelector('.rio-link-map');
                 if (mapLink) mapLink.innerHTML = t.map;
                 const reserveBtn = card.querySelector('.rio-btn-reserve');

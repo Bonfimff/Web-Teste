@@ -424,6 +424,7 @@
             }
 
             const matchers = buildRioTourMatchers(tours);
+            const matchedTourIds = new Set();
 
             const cards = document.querySelectorAll('.rio-tour-card');
             const cardsByParent = new Map();
@@ -431,6 +432,9 @@
                 const nameEl = card.querySelector('.rio-tour-name');
                 const tour = matchRioTourForCard(card, matchers);
                 if (!tour) return;
+
+                if (tour.id != null) matchedTourIds.add(tour.id);
+                applyTourVisibility(card, tour);
 
                 const parentEntries = cardsByParent.get(card.parentElement) || [];
                 parentEntries.push({ card, ordem: tour.ordem ?? index, originalIndex: index });
@@ -469,6 +473,8 @@
                     .sort((a, b) => (a.ordem - b.ordem) || (a.originalIndex - b.originalIndex))
                     .forEach(({ card }) => parent.appendChild(card));
             });
+
+            appendMissingRioTourCards(matchers.toursRio, matchedTourIds);
 
             if (typeof window.startTourSliders === 'function') {
                 window.startTourSliders();
@@ -548,18 +554,18 @@
     // Página. Cada um só aparece no card se preenchido — em branco ou "N/U"
     // (não usar) omite a legenda inteira, sem texto de preenchimento padrão.
     const TOUR_DETAIL_ICONS = {
-        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', saida: 'fa-route',
+        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', diasSemana: 'fa-calendar-week', saida: 'fa-route',
         encontro: 'fa-map-marker-alt', pontoEmbarque: 'fa-bus', pontoDesembarque: 'fa-bus',
         grupo: 'fa-users', identificacao: 'fa-shirt', inclui: 'fa-check-circle', roteiro: 'fa-list',
         horarios: 'fa-calendar-check'
     };
     const TOUR_DETAIL_LABELS = {
-        pt: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis' },
-        en: { periodo: 'Period', idiomas: 'Languages', duracao: 'Duration', saida: 'Departure', encontro: 'Meeting', pontoEmbarque: 'Pick-up point', pontoDesembarque: 'Drop-off point', grupo: 'Group', identificacao: 'Identification', inclui: 'Includes', roteiro: 'Itinerary', horarios: 'Available times' },
-        fr: { periodo: 'Période', idiomas: 'Langues', duracao: 'Durée', saida: 'Départ', encontro: 'Rendez-vous', pontoEmbarque: "Point d'embarquement", pontoDesembarque: 'Point de débarquement', grupo: 'Groupe', identificacao: 'Identification', inclui: 'Inclus', roteiro: 'Itinéraire', horarios: 'Horaires disponibles' },
-        es: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duración', saida: 'Salida', encontro: 'Encuentro', pontoEmbarque: 'Punto de embarque', pontoDesembarque: 'Punto de desembarque', grupo: 'Grupo', identificacao: 'Identificación', inclui: 'Incluye', roteiro: 'Itinerario', horarios: 'Horarios disponibles' },
-        it: { periodo: 'Periodo', idiomas: 'Lingue', duracao: 'Durata', saida: 'Partenza', encontro: 'Incontro', pontoEmbarque: 'Punto di imbarco', pontoDesembarque: 'Punto di sbarco', grupo: 'Gruppo', identificacao: 'Identificazione', inclui: 'Include', roteiro: 'Itinerario', horarios: 'Orari disponibili' },
-        zh: { periodo: '时期', idiomas: '语言', duracao: '时长', saida: '出发地', encontro: '集合', pontoEmbarque: '上车点', pontoDesembarque: '下车点', grupo: '团体', identificacao: '识别', inclui: '包含', roteiro: '行程', horarios: '可预订时间' }
+        pt: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', diasSemana: 'Dias da semana', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis', valor: 'Valor', estado: 'Estado' },
+        en: { periodo: 'Period', idiomas: 'Languages', duracao: 'Duration', diasSemana: 'Days of the week', saida: 'Departure', encontro: 'Meeting', pontoEmbarque: 'Pick-up point', pontoDesembarque: 'Drop-off point', grupo: 'Group', identificacao: 'Identification', inclui: 'Includes', roteiro: 'Itinerary', horarios: 'Available times', valor: 'Price', estado: 'Status' },
+        fr: { periodo: 'Période', idiomas: 'Langues', duracao: 'Durée', diasSemana: 'Jours de la semaine', saida: 'Départ', encontro: 'Rendez-vous', pontoEmbarque: "Point d'embarquement", pontoDesembarque: 'Point de débarquement', grupo: 'Groupe', identificacao: 'Identification', inclui: 'Inclus', roteiro: 'Itinéraire', horarios: 'Horaires disponibles', valor: 'Prix', estado: 'Statut' },
+        es: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duración', diasSemana: 'Días de la semana', saida: 'Salida', encontro: 'Encuentro', pontoEmbarque: 'Punto de embarque', pontoDesembarque: 'Punto de desembarque', grupo: 'Grupo', identificacao: 'Identificación', inclui: 'Incluye', roteiro: 'Itinerario', horarios: 'Horarios disponibles', valor: 'Precio', estado: 'Estado' },
+        it: { periodo: 'Periodo', idiomas: 'Lingue', duracao: 'Durata', diasSemana: 'Giorni della settimana', saida: 'Partenza', encontro: 'Incontro', pontoEmbarque: 'Punto di imbarco', pontoDesembarque: 'Punto di sbarco', grupo: 'Gruppo', identificacao: 'Identificazione', inclui: 'Include', roteiro: 'Itinerario', horarios: 'Orari disponibili', valor: 'Prezzo', estado: 'Stato' },
+        zh: { periodo: '时期', idiomas: '语言', duracao: '时长', diasSemana: '星期几', saida: '出发地', encontro: '集合', pontoEmbarque: '上车点', pontoDesembarque: '下车点', grupo: '团体', identificacao: '识别', inclui: '包含', roteiro: '行程', horarios: '可预订时间', valor: '价格', estado: '状态' }
     };
     const tourFieldVisible = (value) => {
         const v = (value ?? '').toString().trim();
@@ -571,6 +577,7 @@
             periodo: tour.periodo,
             idiomas: tour.idiomas || tour.languages,
             duracao: tour.duracao,
+            diasSemana: tour.dias_semana || tour.diasSemana,
             saida: tour.saida,
             encontro: tour.encontro || tour.meeting,
             pontoEmbarque: tour.ponto_embarque || tour.pontoEmbarque,
@@ -597,11 +604,11 @@
         const valorRaw = tour.valor ?? tour.value;
         if (valorRaw != null && valorRaw !== '' && Number(valorRaw) !== 0) {
             const formatted = Number(valorRaw).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            html += `<li><i class="fa fa-dollar-sign"></i> <strong>Valor:</strong> ${formatted}</li>`;
+            html += `<li><i class="fa fa-dollar-sign"></i> <strong>${labels.valor}:</strong> ${formatted}</li>`;
         }
         const estado = (tour.estado || tour.status || '').toString().trim();
         if (estado && estado.toLowerCase() !== 'ativo') {
-            html += `<li><i class="fa fa-info-circle"></i> <strong>Estado:</strong> ${estado}</li>`;
+            html += `<li><i class="fa fa-info-circle"></i> <strong>${labels.estado}:</strong> ${estado}</li>`;
         }
         return html;
     };
@@ -619,6 +626,101 @@
         } else {
             mapLink.removeAttribute('href');
             mapLink.style.display = 'none';
+        }
+    };
+
+    // Tour com estado "Oculto" some da página pública (diferente de "Pausado",
+    // que mantém o card visível mas desabilita a reserva).
+    const applyTourVisibility = (card, tour) => {
+        const estado = (tour.estado || tour.status || '').toString().trim().toLowerCase();
+        card.style.display = (estado === 'oculto' || estado === 'hidden') ? 'none' : '';
+    };
+
+    // Tour criado em Gerenciamento > "+ Adicionar Tour" sem card correspondente
+    // no HTML estático da página: monta um card do zero e insere na grid certa
+    // (grid[0] = tours gratuitos, grid[1] = pagos — mesma convenção das duas
+    // divs .rio-tours-grid já existentes em #tours).
+    const createRioTourCardElement = (tour) => {
+        const card = document.createElement('article');
+        card.className = 'rio-tour-card';
+
+        const imagesDiv = document.createElement('div');
+        imagesDiv.className = 'rio-tour-images';
+        const slider = document.createElement('div');
+        slider.className = 'rio-tour-slider';
+        slider.dataset.folder = (tour.pasta_imagens || '').trim() || `tour-${tour.id}`;
+        slider.setAttribute('aria-label', `Slideshow ${tour.nome_tour || ''}`);
+        imagesDiv.appendChild(slider);
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'rio-tour-info';
+
+        const nameEl = document.createElement('h4');
+        nameEl.className = 'rio-tour-name';
+        nameEl.textContent = tour.nome_tour || tour.name || '';
+
+        const detailsEl = document.createElement('ul');
+        detailsEl.className = 'rio-tour-details';
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'rio-tour-actions';
+
+        const mapLink = document.createElement('a');
+        mapLink.target = '_blank';
+        mapLink.rel = 'noopener';
+        mapLink.className = 'rio-link-map';
+        mapLink.innerHTML = '<i class="fa fa-map"></i> Ver no Mapa';
+
+        const reserveLink = document.createElement('a');
+        reserveLink.href = '#';
+        reserveLink.target = '_blank';
+        reserveLink.rel = 'noopener';
+        reserveLink.className = 'btn-book rio-btn-reserve';
+        reserveLink.textContent = 'Reservar Agora';
+
+        actionsDiv.appendChild(mapLink);
+        actionsDiv.appendChild(reserveLink);
+        infoDiv.appendChild(nameEl);
+        infoDiv.appendChild(detailsEl);
+        infoDiv.appendChild(actionsDiv);
+
+        card.appendChild(imagesDiv);
+        card.appendChild(infoDiv);
+
+        window.__bindRioReserveButton?.(reserveLink);
+
+        return card;
+    };
+
+    // Insere cards para tours cadastrados no admin que ainda não têm um
+    // bloco correspondente no HTML estático (ver createRioTourCardElement).
+    const appendMissingRioTourCards = (toursRio, matchedTourIds) => {
+        const pending = toursRio.filter((t) => t.id != null && !matchedTourIds.has(t.id));
+        if (!pending.length) return;
+
+        const grids = document.querySelectorAll('#tours .rio-tours-grid');
+        if (!grids.length) return;
+
+        pending.forEach((tour) => {
+            const isPaid = (tour.modalidade || 'free').toLowerCase() !== 'free';
+            const grid = (isPaid && grids[1]) ? grids[1] : grids[0];
+            const card = createRioTourCardElement(tour);
+            if (isPaid) card.classList.add('rio-tour-paid');
+
+            const currentLang = (typeof window.getCurrentLang === 'function') ? window.getCurrentLang() : 'pt';
+            card.querySelector('.rio-tour-details').innerHTML = buildTourDetailsHtml(tour, currentLang);
+            applyMapLinkState(card.querySelector('.rio-link-map'), tour.link_tour || tour.link || '');
+            applyTourVisibility(card, tour);
+
+            grid.appendChild(card);
+
+            if (tour.id && typeof window.TourInteracoes !== 'undefined' && window.TourInteracoes) {
+                window.TourInteracoes.attachCommentsToggle(card, tour.id);
+            }
+        });
+
+        if (typeof window.startTourSliders === 'function') {
+            window.startTourSliders();
         }
     };
 
@@ -674,6 +776,8 @@
         cards.forEach((card, index) => {
             const dbTour = matchRioTourForCard(card, languageMatchers);
             if (dbTour) {
+                applyTourVisibility(card, dbTour);
+
                 const nameEl = card.querySelector('.rio-tour-name');
                 if (nameEl) nameEl.textContent = dbTour.nome_tour || dbTour.name || '-';
 
@@ -795,9 +899,20 @@
     function updateFooterCardContent(key = 'contato') {
         const body = document.getElementById('rioFooterCardBody');
         if (!body) return;
+
+        // O texto padrão do cartão (antes do usuário clicar em SOBRE/CONTATO/AJUDA)
+        // é editável em Gerenciamento > Textos SOBRE/CONTATO/AJUDA, seção
+        // "Informações". Se cadastrado, tem prioridade sobre o texto de contato
+        // usado como padrão histórico (ver window.updateFooterInfo em baixo).
+        if (window.__paginaSecaoOverrides?.informacoes && typeof window.updateFooterInfo === 'function') {
+            window.updateFooterInfo('informacoes');
+            return;
+        }
+
         const info = currentFooterInfo?.[key];
         body.innerHTML = info || '<p>Selecione uma opção para ver mais informações.</p>';
     }
+    window.__refreshFooterCardDefault = () => updateFooterCardContent();
 
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', (e) => {
@@ -843,17 +958,54 @@
         }, durationMs);
     };
 
-    const initAwardToast = () => {
+    // Link/ícone e ativo/inativo são editáveis em Gerenciamento > Card de
+    // Premiação. O card só aparece DEPOIS do aviso "Informações Importantes"
+    // ser fechado (ou de imediato se esse aviso não existir/já estiver
+    // escondido) — window.__showAwardCard é chamado pelos handlers do aviso
+    // mais abaixo, não por um timer cego.
+    const initAwardToast = async () => {
         const toast = document.getElementById('awardToast');
         if (!toast) return;
+
+        let awardConfig = { ativo: true, link: '', imagem: '' };
+        try {
+            const response = await fetch(`${API_BASE_URL}/get_cidade_award`);
+            if (response.ok) {
+                const lista = await response.json();
+                const found = Array.isArray(lista) ? lista.find((item) => item && item.cidade === 'Rio de Janeiro') : null;
+                if (found) awardConfig = found;
+            }
+        } catch (error) {
+            console.warn('Falha ao carregar card de premiação em', error);
+        }
+
+        if (awardConfig.ativo === false) return;
+
+        if (awardConfig.imagem) {
+            const img = toast.querySelector('.award-toast__icon img');
+            if (img) img.src = awardConfig.imagem;
+        }
 
         toast.addEventListener('click', (event) => {
             const close = event.target.closest('[data-close-award]');
             if (close) {
                 toast.classList.remove('visible');
                 if (awardToastTimer) clearTimeout(awardToastTimer);
+                return;
             }
+            if (awardConfig.link) window.open(awardConfig.link, '_blank', 'noopener');
         });
+
+        let alreadySeen = false;
+        try { alreadySeen = sessionStorage.getItem('awardModalSeen') === '1'; } catch (e) {}
+        if (alreadySeen) return;
+
+        window.__showAwardCard = () => {
+            if (window.__awardCardShown) return;
+            window.__awardCardShown = true;
+            showAwardToast();
+            try { sessionStorage.setItem('awardModalSeen', '1'); } catch (e) {}
+        };
     };
 
     initAwardToast();
@@ -1164,6 +1316,22 @@
         // Reload the page after switching language so all content reflects the selection.
         window.location.reload();
     };
+
+    // Troca de idioma feita em OUTRA aba (ex.: home ou outra cidade aberta ao
+    // mesmo tempo): o evento "storage" só dispara nas abas que NÃO fizeram a
+    // mudança. Recarrega para reaplicar tudo (tours, textos, cartão de
+    // informações etc.) do mesmo jeito que já acontece na aba que trocou.
+    // Importante: por essa altura o localStorage já mudou (é por isso que o
+    // evento disparou), então comparar com getCurrentLang() de novo compararia
+    // o valor novo com ele mesmo — por isso o idioma já aplicado nesta aba é
+    // capturado uma única vez aqui, no carregamento.
+    const langAppliedOnLoad = getCurrentLang();
+    window.addEventListener('storage', (event) => {
+        if (event.key !== storageKey || !event.newValue) return;
+        if (normalizeLang(event.newValue) !== langAppliedOnLoad) {
+            window.location.reload();
+        }
+    });
 
     const initLanguageSelector = () => {
         const wrapper = document.querySelector('#langSelector');
@@ -2790,6 +2958,7 @@
         const bodyKey = `footer_${key}`;
         body.innerHTML = strings[bodyKey] || fallbackFooterInfoBody;
     };
+    window.updateFooterInfo = updateFooterInfo;
 
     const getReservations = () => {
         try {
@@ -3993,7 +4162,14 @@
             reservationModal.classList.remove('hidden');
         };
 
-        document.querySelectorAll('.rio-btn-reserve').forEach(button => {
+        // Extraída como função nomeada (em vez de só um forEach inline) porque
+        // cards de tour criados dinamicamente (ver "+ Adicionar Tour" no admin,
+        // window.__bindRioReserveButton em carregarToursDoBanco) precisam do
+        // mesmo binding — o forEach abaixo só alcança os botões que já existem
+        // no HTML estático no momento em que a página carrega.
+        const bindReserveButton = (button) => {
+            if (!button || button.dataset.reserveBound === 'true') return;
+            button.dataset.reserveBound = 'true';
             button.addEventListener('click', (event) => {
                 if (button.classList.contains('disabled') || button.getAttribute('aria-disabled') === 'true') {
                     event.preventDefault();
@@ -4007,7 +4183,9 @@
                 const meetingText = meetingTextRaw.replace(/^\s*(Encontro|Meeting|Rendez-vous|Encuentro|Incontro|集合)\s*:\s*/i, '').trim();
                 openReservationModal(tourName, languageText, meetingText);
             });
-        });
+        };
+        document.querySelectorAll('.rio-btn-reserve').forEach(bindReserveButton);
+        window.__bindRioReserveButton = bindReserveButton;
 
         if (reservationCancel) {
             reservationCancel.addEventListener('click', (event) => {
@@ -4249,13 +4427,30 @@
         if (noticeProceedBtn) {
             noticeProceedBtn.addEventListener('click', () => {
                 if (noticeEl) noticeEl.style.display = 'none';
+                window.__showAwardCard?.();
             });
         }
         if (noticeDontShowBtn) {
             noticeDontShowBtn.addEventListener('click', () => {
                 localStorage.setItem(noticeDismissKey, '1');
                 if (noticeEl) noticeEl.style.display = 'none';
+                window.__showAwardCard?.();
             });
+        }
+
+        // Se o aviso não existir ou já estiver escondido (caso mais comum no
+        // Rio — ver comentário acima), dispara o card de premiação direto;
+        // senão, os handlers de Prosseguir/Não mostrar novamente acima cuidam
+        // disso quando o usuário fechar o aviso. Pequeno atraso extra porque
+        // window.__showAwardCard só existe depois do fetch assíncrono em
+        // initAwardToast() resolver.
+        const isNoticeVisible = () => {
+            if (!noticeEl) return false;
+            if (noticeEl.style.display === 'none') return false;
+            return getComputedStyle(noticeEl).display !== 'none';
+        };
+        if (!isNoticeVisible()) {
+            setTimeout(() => window.__showAwardCard?.(), 700);
         }
 
         const initializePageContent = async () => {
@@ -4276,7 +4471,11 @@
         if (!document.body.classList.contains('gerenciamento-page')) {
             loadCidadeContato();
             loadCidadeAviso();
-            loadPaginaSecao();
+            loadPaginaSecao().then(() => {
+                if (typeof window.__refreshFooterCardDefault === 'function') {
+                    window.__refreshFooterCardDefault();
+                }
+            });
         }
     });
 
@@ -4355,6 +4554,7 @@
 
         if (aviso.ativo === false) {
             noticeEl.style.display = 'none';
+            window.__showAwardCard?.();
             return;
         }
 

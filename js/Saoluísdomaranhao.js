@@ -50,12 +50,16 @@
 
             const freeCard = toursSection.querySelector('.rio-tours-grid .rio-tour-card:not(.rio-tour-paid)');
             if (freeCard) {
-                const nameEl = freeCard.querySelector('.rio-tour-name');
-                if (nameEl && t.names?.[0]) nameEl.textContent = t.names[0];
-                const detailItems = freeCard.querySelectorAll('.rio-tour-details li');
-                (t.card1_details || []).forEach((html, index) => {
-                    if (detailItems[index]) detailItems[index].innerHTML = html;
-                });
+                const hasDynamicDetails = typeof window.applyDynamicTourDetailsToCard === 'function'
+                    && window.applyDynamicTourDetailsToCard(freeCard, lang);
+                if (!hasDynamicDetails) {
+                    const nameEl = freeCard.querySelector('.rio-tour-name');
+                    if (nameEl && t.names?.[0]) nameEl.textContent = t.names[0];
+                    const detailItems = freeCard.querySelectorAll('.rio-tour-details li');
+                    (t.card1_details || []).forEach((html, index) => {
+                        if (detailItems[index]) detailItems[index].innerHTML = html;
+                    });
+                }
                 const mapLink = freeCard.querySelector('.rio-link-map');
                 if (mapLink) mapLink.innerHTML = t.card1_map;
                 const reserveBtn = freeCard.querySelector('.rio-btn-reserve');
@@ -64,12 +68,16 @@
 
             const paidCard = toursSection.querySelector('.rio-tour-card.rio-tour-paid');
             if (paidCard) {
-                const nameEl = paidCard.querySelector('.rio-tour-name');
-                if (nameEl && t.names?.[1]) nameEl.innerHTML = t.names[1];
-                const detailItems = paidCard.querySelectorAll('.rio-tour-details li');
-                (t.card2_details || []).forEach((html, index) => {
-                    if (detailItems[index]) detailItems[index].innerHTML = html;
-                });
+                const hasDynamicDetails = typeof window.applyDynamicTourDetailsToCard === 'function'
+                    && window.applyDynamicTourDetailsToCard(paidCard, lang);
+                if (!hasDynamicDetails) {
+                    const nameEl = paidCard.querySelector('.rio-tour-name');
+                    if (nameEl && t.names?.[1]) nameEl.innerHTML = t.names[1];
+                    const detailItems = paidCard.querySelectorAll('.rio-tour-details li');
+                    (t.card2_details || []).forEach((html, index) => {
+                        if (detailItems[index]) detailItems[index].innerHTML = html;
+                    });
+                }
                 const mapLink = paidCard.querySelector('.rio-link-map');
                 if (mapLink) mapLink.innerHTML = t.card2_map;
                 const reserveBtn = paidCard.querySelector('.rio-btn-reserve');

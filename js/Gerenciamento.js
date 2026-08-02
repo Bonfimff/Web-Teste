@@ -578,6 +578,7 @@ const getTourCidadeMap = async () => {
 const normalizeTourStatus = (status) => {
   const raw = String(status || 'ativo').trim().toLowerCase();
   if (raw === 'pausado') return 'Pausado';
+  if (raw === 'oculto' || raw === 'hidden') return 'Oculto';
   if (raw === 'inativo') return 'Inativo';
   return 'Ativo';
 };
@@ -606,7 +607,8 @@ const mapBackendTourToPageTour = (tour) => {
     imagens: Array.isArray(tour?.imagens) ? tour.imagens : [],
     pastaImagens: tour?.pasta_imagens || '',
     ordem: tour?.ordem ?? 0,
-    horarios: tour?.horarios || ''
+    horarios: tour?.horarios || '',
+    diasSemana: tour?.dias_semana || ''
   };
 };
 
@@ -666,6 +668,7 @@ const formatTourValueBRL = (value) => {
 };
 
 let currentlyEditingTourId = null;
+let isCreatingNewTour = false;
 let currentTourHorarios = [];
 
 const renderTourHorarios = (horarios) => {
@@ -1708,8 +1711,14 @@ const openTourEditModal = (tourData) => {
   if (!modal) return;
 
   currentlyEditingTourId = tourData.id;
+  isCreatingNewTour = !tourData.id;
 
-  document.getElementById('tourModalId').textContent = tourData.id || '--';
+  const deleteButton = document.getElementById('tourModalDelete');
+  const pauseButtonToggle = document.getElementById('tourModalPause');
+  if (deleteButton) deleteButton.style.display = isCreatingNewTour ? 'none' : '';
+  if (pauseButtonToggle) pauseButtonToggle.style.display = isCreatingNewTour ? 'none' : '';
+
+  document.getElementById('tourModalId').textContent = tourData.id || (isCreatingNewTour ? 'Novo tour' : '--');
   document.getElementById('tourModalName').value = tourData.name || '';
   document.getElementById('tourModalCidade').value = tourData.cidade || '';
   document.getElementById('tourModalPastaImagens').value = tourData.pastaImagens || tourData.pasta_imagens || '';
@@ -1722,6 +1731,7 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalSaida').value = tourData.saida || '';
   document.getElementById('tourModalGrupo').value = tourData.grupo || '';
   document.getElementById('tourModalDuracao').value = tourData.duracao || '';
+  document.getElementById('tourModalDiasSemana').value = tourData.diasSemana || tourData.dias_semana || '';
   document.getElementById('tourModalInclui').value = tourData.inclui || '';
   document.getElementById('tourModalRoteiro').value = tourData.roteiro || '';
   document.getElementById('tourModalPontoEmbarque').value = tourData.pontoEmbarque || tourData.ponto_embarque || '';
@@ -1750,6 +1760,14 @@ const closeTourEditModal = () => {
   if (!modal) return;
   modal.classList.add('hidden');
   currentlyEditingTourId = null;
+  isCreatingNewTour = false;
+};
+
+// Abre o mesmo modal de edição, mas em branco — usado pelo botão
+// "+ Adicionar Tour". Ao salvar, cria o tour no banco (POST) em vez de
+// atualizar um existente (PUT); ver saveTourEditModal.
+const openTourCreateModal = () => {
+  openTourEditModal({ status: 'Ativo', modalidade: 'free', canal_reserva: 'web' });
 };
 
 const toggleTourPauseFromModal = () => {
@@ -1785,7 +1803,7 @@ const deleteTourFromModal = () => {
 
 const saveTourEditModal = async () => {
   const id = currentlyEditingTourId;
-  if (!id) return;
+  if (!id && !isCreatingNewTour) return;
 
   const name = document.getElementById('tourModalName').value.trim();
   const languages = getTourModalLanguages();
@@ -1797,6 +1815,7 @@ const saveTourEditModal = async () => {
   const saida = document.getElementById('tourModalSaida').value.trim();
   const grupo = document.getElementById('tourModalGrupo').value.trim();
   const duracao = document.getElementById('tourModalDuracao').value.trim();
+  const diasSemana = document.getElementById('tourModalDiasSemana').value.trim();
   const inclui = document.getElementById('tourModalInclui').value.trim();
   const roteiro = document.getElementById('tourModalRoteiro').value.trim();
   const pontoEmbarque = document.getElementById('tourModalPontoEmbarque').value.trim();
@@ -1808,8 +1827,13 @@ const saveTourEditModal = async () => {
   const pastaImagens = document.getElementById('tourModalPastaImagens').value.trim();
   const adminEmail = localStorage.getItem('userEmail') || '';
 
+  if (isCreatingNewTour && (!name || !cidade)) {
+    alert('Preencha ao menos o nome do tour e a cidade antes de criar.');
+    return;
+  }
+
   const payload = {
-    id,
+    ...(isCreatingNewTour ? {} : { id }),
     nome_tour: name,
     idiomas: languages,
     encontro: meeting,
@@ -1820,6 +1844,7 @@ const saveTourEditModal = async () => {
     saida,
     grupo,
     duracao,
+    dias_semana: diasSemana,
     inclui,
     roteiro,
     ponto_embarque: pontoEmbarque,
@@ -1834,15 +1859,31 @@ const saveTourEditModal = async () => {
   };
 
   try {
-    const response = await fetchWithApiFallback('/update_tour_pagina', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const response = isCreatingNewTour
+      ? await fetchWithApiFallback('/add_tour_pagina', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+      : await fetchWithApiFallback('/update_tour_pagina', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      alert(`Falha ao atualizar tour: ${errorData.message || response.statusText}`);
+      alert(`Falha ao ${isCreatingNewTour ? 'criar' : 'atualizar'} tour: ${errorData.message || response.statusText}`);
+      return;
+    }
+
+    if (isCreatingNewTour) {
+      // Refaz a busca no backend em vez de montar o objeto localmente — o
+      // servidor decide o id e a ordem do tour novo, então a lista local
+      // (getPageTours/setPageTours) ficaria desatualizada até o próximo fetch.
+      closeTourEditModal();
+      carregarToursGerenciamento();
+      alert('Tour criado com sucesso.');
       return;
     }
 
@@ -1861,6 +1902,7 @@ const saveTourEditModal = async () => {
           saida,
           grupo,
           duracao,
+          diasSemana,
           inclui,
           roteiro,
           pontoEmbarque,
@@ -2432,6 +2474,85 @@ const carregarCidadeAvisoGerenciamento = async () => {
   }
 
   preencherCidadeAvisoForm(select.value);
+};
+
+let cidadeAwardAtual = {};
+
+const preencherCidadeAwardForm = (cidade) => {
+  const award = cidadeAwardAtual[cidade] || { ativo: true, link: '', imagem: '' };
+  const ativoInput = document.getElementById('cidadeAwardAtivo');
+  const linkInput = document.getElementById('cidadeAwardLink');
+  const imagemInput = document.getElementById('cidadeAwardImagem');
+  if (ativoInput) ativoInput.checked = award.ativo !== false;
+  if (linkInput) linkInput.value = award.link || '';
+  if (imagemInput) imagemInput.value = award.imagem || '';
+  const status = document.getElementById('cidadeAwardStatus');
+  if (status) status.textContent = '';
+};
+
+const initCidadeAwardForm = () => {
+  const select = document.getElementById('cidadeAwardSelect');
+  const saveBtn = document.getElementById('cidadeAwardSave');
+  if (!select || !saveBtn || select.dataset.bound) return;
+  select.dataset.bound = '1';
+
+  select.addEventListener('change', () => preencherCidadeAwardForm(select.value));
+
+  saveBtn.addEventListener('click', async () => {
+    const cidade = select.value;
+    const ativo = document.getElementById('cidadeAwardAtivo')?.checked !== false;
+    const link = document.getElementById('cidadeAwardLink')?.value.trim() || '';
+    const imagem = document.getElementById('cidadeAwardImagem')?.value.trim() || '';
+    const status = document.getElementById('cidadeAwardStatus');
+    const adminEmail = localStorage.getItem('userEmail');
+
+    saveBtn.disabled = true;
+    if (status) status.textContent = 'Salvando...';
+
+    try {
+      const response = await fetchWithApiFallback('/update_cidade_award', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cidade, ativo, link, imagem, admin_email: adminEmail })
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.success) {
+        if (status) status.textContent = 'Salvo com sucesso.';
+        cidadeAwardAtual[cidade] = { cidade, ativo, link, imagem };
+      } else if (status) {
+        status.textContent = result.message || 'Erro ao salvar.';
+      }
+    } catch (error) {
+      console.error('Erro ao salvar card de premiação:', error);
+      if (status) status.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      saveBtn.disabled = false;
+      setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+    }
+  });
+};
+
+const carregarCidadeAwardGerenciamento = async () => {
+  const select = document.getElementById('cidadeAwardSelect');
+  if (!select) return;
+
+  initCidadeAwardForm();
+
+  try {
+    const response = await fetchWithApiFallback('/get_cidade_award', { method: 'GET' });
+    const lista = await response.json().catch(() => []);
+    if (Array.isArray(lista)) {
+      cidadeAwardAtual = lista.reduce((acc, item) => {
+        if (item && item.cidade) acc[item.cidade] = item;
+        return acc;
+      }, {});
+    }
+  } catch (error) {
+    console.warn('Não foi possível carregar cards de premiação por cidade:', error);
+  }
+
+  preencherCidadeAwardForm(select.value);
 };
 
 let paginaSecaoAtual = {};
@@ -3270,6 +3391,7 @@ const mostrarSecao = (secao) => {
   [
     'cidadeContatoSection',
     'cidadeAvisoSection',
+    'cidadeAwardSection',
     'paginaSecaoSection',
     'cidadeVisualSection',
     'pageManagementToursSection'
@@ -3282,6 +3404,7 @@ const mostrarSecao = (secao) => {
     carregarToursGerenciamento();
     carregarCidadeContatoGerenciamento();
     carregarCidadeAvisoGerenciamento();
+    carregarCidadeAwardGerenciamento();
     carregarPaginaSecaoGerenciamento();
     carregarCidadeVisualGerenciamento();
   }
@@ -3763,6 +3886,13 @@ const setupAccountModalEvents = () => {
   if (tourModalDelete) {
     tourModalDelete.addEventListener('click', () => {
       deleteTourFromModal();
+    });
+  }
+
+  const tourAddButton = document.getElementById('tourAddButton');
+  if (tourAddButton) {
+    tourAddButton.addEventListener('click', () => {
+      openTourCreateModal();
     });
   }
 

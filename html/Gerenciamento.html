@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=36">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=37">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -452,6 +452,31 @@
                 </div>
             </div>
 
+            <div id="cidadeAwardSection" style="margin-bottom: 1.25rem;">
+                <div id="cidadeAwardCard" class="cidade-contato-card">
+                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Card de Premiação ("Reconhecimento Especial")</h3>
+                    <label>Cidade
+                        <select id="cidadeAwardSelect">
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Salvador">Salvador</option>
+                            <option value="Sao Luis">São Luís do Maranhão</option>
+                            <option value="Lencois">Lençóis Maranhenses</option>
+                        </select>
+                    </label>
+                    <label style="flex:0 0 auto;">
+                        <input type="checkbox" id="cidadeAwardAtivo" style="width:auto; height:auto;" /> Exibir card
+                    </label>
+                    <label style="flex:1 1 100%;">Link do prêmio (para onde o card leva ao clicar)
+                        <input type="url" id="cidadeAwardLink" placeholder="https://..." />
+                    </label>
+                    <label style="flex:1 1 100%;">Ícone/imagem do prêmio (URL)
+                        <input type="url" id="cidadeAwardImagem" placeholder="https://..." />
+                    </label>
+                    <button type="button" id="cidadeAwardSave" class="btn-book">Salvar</button>
+                    <span id="cidadeAwardStatus" class="cidade-contato-status"></span>
+                </div>
+            </div>
+
             <div id="paginaSecaoSection" style="margin-bottom: 1.25rem;">
                 <div id="paginaSecaoCard" class="cidade-contato-card">
                     <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Textos SOBRE / CONTATO / AJUDA</h3>
@@ -466,6 +491,7 @@
                     </label>
                     <label>Seção
                         <select id="paginaSecaoSecao">
+                            <option value="informacoes">Informações (texto padrão do cartão)</option>
                             <option value="sobre">Sobre</option>
                             <option value="contato">Contato</option>
                             <option value="ajuda">Ajuda</option>
@@ -567,7 +593,10 @@
             </div>
 
             <div id="pageManagementToursSection" style="overflow-x:auto; margin-bottom: 1.25rem;">
-                <h3 style="margin:0 0 0.5rem; font-size:1rem;">Tours da Página</h3>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                    <h3 style="margin:0; font-size:1rem;">Tours da Página</h3>
+                    <button type="button" id="tourAddButton" class="btn-book">+ Adicionar Tour</button>
+                </div>
                 <table class="rio-tour-table">
                     <thead>
                         <tr>
@@ -729,6 +758,10 @@
               <input type="text" id="tourModalDuracao" placeholder="Ex: 2h15 (deixe em branco ou N/U para ocultar)" />
             </label>
             <label>
+              Dias da semana
+              <input type="text" id="tourModalDiasSemana" placeholder="Ex: Segunda a sexta (deixe em branco ou N/U para ocultar)" />
+            </label>
+            <label>
               Encontro
               <input type="text" id="tourModalMeeting" placeholder="Deixe em branco ou N/U para ocultar" />
             </label>
@@ -764,7 +797,8 @@
               Status
               <select id="tourModalStatus">
                 <option value="Ativo">Ativo</option>
-                <option value="Pausado">Pausado</option>
+                <option value="Pausado">Pausado (reserva indisponível, tour continua visível)</option>
+                <option value="Oculto">Oculto (some da página pública)</option>
               </select>
             </label>
             <label>
@@ -1027,8 +1061,8 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=23"></script>
-    <script src="../js/Gerenciamento.js?v=53"></script>
+    <script src="../js/Riodejaneiro.js?v=31"></script>
+    <script src="../js/Gerenciamento.js?v=57"></script>
 </body>
 </html>
 

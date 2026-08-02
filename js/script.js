@@ -42,7 +42,11 @@ console.log('Layout da imagem de referência carregado.');
 	const applyLang = (lang) => {
 		currentLang = translations[lang] ? lang : "pt";
 		window.__appLang = currentLang;
-		try { localStorage.setItem('appLang', currentLang); } catch(e) {}
+		// Mesma chave usada pelas páginas de cidade e pelo Gerenciamento
+		// (site-shell.js/Riodejaneiro.js) — precisa ser a mesma em todo o site
+		// para o idioma escolhido numa aba valer nas outras (ver listener de
+		// "storage" mais abaixo).
+		try { localStorage.setItem('preferredLanguage', currentLang); } catch(e) {}
 		document.documentElement.lang = currentLang;
 
 		const dict = translations[currentLang] || translations.pt;
@@ -69,7 +73,7 @@ console.log('Layout da imagem de referência carregado.');
 
 	if (btn && list && wrapper) {
 		let savedLang;
-		try { savedLang = localStorage.getItem('appLang'); } catch(e) {}
+		try { savedLang = localStorage.getItem('preferredLanguage'); } catch(e) {}
 		const browserLang = (navigator.language || "pt").slice(0, 2);
 		const initialLang = savedLang && translations[savedLang] ? savedLang : (translations[browserLang] ? browserLang : "pt");
 		applyLang(initialLang);
@@ -87,6 +91,16 @@ console.log('Layout da imagem de referência carregado.');
 
 		document.addEventListener("click", (e) => {
 			if (!wrapper.contains(e.target)) wrapper.classList.remove("open");
+		});
+
+		// Troca de idioma feita em OUTRA aba (ex.: home aberta junto com a
+		// página de uma cidade): o evento "storage" só dispara nas abas que
+		// NÃO fizeram a mudança, então não conflita com applyLang() acima.
+		window.addEventListener('storage', (event) => {
+			if (event.key !== 'preferredLanguage' || !event.newValue) return;
+			if (event.newValue !== currentLang) {
+				applyLang(event.newValue);
+			}
 		});
 	}
 

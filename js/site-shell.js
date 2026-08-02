@@ -296,29 +296,71 @@
     // Award notification: supports either the corner "toast" markup (#awardToast, used by
     // the Rio de Janeiro page) or the centered "modal" markup (#awardModal, used by the
     // other destination pages). Whichever one is present in the DOM gets wired up.
-    const initAwardNotification = () => {
+    //
+    // Link/ícone e ativo/inativo são editáveis por cidade em Gerenciamento > Card de
+    // Premiação. O card só é exibido DEPOIS do aviso "Informações Importantes" ser
+    // fechado (ou imediatamente se esse aviso não existir/já estiver escondido nesta
+    // página) — por isso a exibição em si não roda mais num setTimeout cego; ela é
+    // dependendurada de window.__showAwardCard, chamado nos handlers do aviso lá embaixo.
+    const initAwardNotification = async () => {
         const toast = document.getElementById('awardToast');
+        const modal = !toast ? document.getElementById('awardModal') : null;
+        if (!toast && !modal) return;
+
+        let awardConfig = { ativo: true, link: '', imagem: '' };
+        try {
+            const cidadeAtual = document.getElementById('relatosGallery')?.dataset.cidade;
+            const endpoint = `${API_BASE_URL}/get_cidade_award`;
+            const response = await fetch(endpoint);
+            if (response.ok) {
+                const lista = await response.json();
+                const found = Array.isArray(lista) ? lista.find((item) => item && item.cidade === cidadeAtual) : null;
+                if (found) awardConfig = found;
+            }
+        } catch (error) {
+            console.warn('Falha ao carregar card de premiação em', error);
+        }
+
+        if (awardConfig.ativo === false) return;
+
         if (toast) {
+            if (awardConfig.imagem) {
+                const img = toast.querySelector('.award-toast__icon img');
+                if (img) img.src = awardConfig.imagem;
+            }
             let awardToastTimer = null;
             toast.addEventListener('click', (event) => {
                 const close = event.target.closest('[data-close-award]');
                 if (close) {
                     toast.classList.remove('visible');
                     if (awardToastTimer) clearTimeout(awardToastTimer);
+                    return;
                 }
+                if (awardConfig.link) window.open(awardConfig.link, '_blank', 'noopener');
             });
-            awardToastTimer = setTimeout(() => {
+
+            let alreadySeen = false;
+            try { alreadySeen = sessionStorage.getItem('awardModalSeen') === '1'; } catch (e) {}
+            if (alreadySeen) return;
+
+            window.__showAwardCard = () => {
+                if (window.__awardCardShown) return;
+                window.__awardCardShown = true;
                 toast.classList.add('visible');
                 awardToastTimer = setTimeout(() => toast.classList.remove('visible'), 15000);
-            }, 700);
+                try { sessionStorage.setItem('awardModalSeen', '1'); } catch (e) {}
+            };
             return;
         }
 
-        const modal = document.getElementById('awardModal');
-        if (!modal) return;
+        if (awardConfig.imagem) {
+            const img = modal.querySelector('.hs-modal__leftImage img');
+            if (img) img.src = awardConfig.imagem;
+        }
 
         const countdownEl = document.getElementById('awardCountdown');
-        const awardLink = 'https://www.tripadvisor.com.br/Attraction_Review-g303506-d12219836-Reviews-Rio_by_Foot_Free_Walking_Tour-Rio_de_Janeiro_State_of_Rio_de_Janeiro.html';
+        const awardLink = awardConfig.link
+            || 'https://www.tripadvisor.com.br/Attraction_Review-g303506-d12219836-Reviews-Rio_by_Foot_Free_Walking_Tour-Rio_de_Janeiro_State_of_Rio_de_Janeiro.html';
         let countdownTimer = null;
 
         const getCountdownLabel = (seconds) => {
@@ -393,12 +435,42 @@
 
         let alreadySeen = false;
         try { alreadySeen = sessionStorage.getItem('awardModalSeen') === '1'; } catch (e) {}
-        if (!alreadySeen) {
-            setTimeout(openModal, 700);
-        }
+        if (alreadySeen) return;
+
+        window.__showAwardCard = () => {
+            if (window.__awardCardShown) return;
+            window.__awardCardShown = true;
+            openModal();
+        };
     };
 
     initAwardNotification();
+
+    // Dispara o card de premiação (se cadastrado/ativo) depois que o aviso
+    // "Informações Importantes" some da tela — seja porque não existe nesta
+    // página, seja porque o usuário já fechou. window.__showAwardCard só existe
+    // quando initAwardNotification() decidiu que há algo pra mostrar.
+    const maybeShowAwardCardAfterNotice = () => {
+        const trigger = () => window.__showAwardCard?.();
+        const notice = document.querySelector('.rio-notice');
+        const isNoticeVisible = () => {
+            if (!notice) return false;
+            if (notice.style.display === 'none') return false;
+            return getComputedStyle(notice).display !== 'none';
+        };
+        if (!isNoticeVisible()) {
+            setTimeout(trigger, 700);
+        }
+        // Se o aviso estiver visível agora, os handlers de Prosseguir/Não mostrar
+        // novamente (ver DOMContentLoaded mais abaixo) chamam window.__showAwardCard
+        // diretamente quando o usuário fechar.
+    };
+    document.addEventListener('DOMContentLoaded', () => {
+        // Roda depois de initAwardNotification (chamada síncrona acima, antes deste
+        // listener ser registrado) já ter tido a chance de popular window.__showAwardCard;
+        // como o fetch é assíncrono, adia um tick extra pra dar tempo dele resolver.
+        setTimeout(maybeShowAwardCardAfterNotice, 50);
+    });
 
     const translateProfileDropdown = (container) => {
         if (!container) return;
@@ -691,6 +763,22 @@
         // Reload the page after switching language so all content reflects the selection.
         window.location.reload();
     };
+
+    // Troca de idioma feita em OUTRA aba (ex.: home ou outra cidade aberta ao
+    // mesmo tempo): o evento "storage" só dispara nas abas que NÃO fizeram a
+    // mudança. Recarrega para reaplicar tudo (tours, textos, cartão de
+    // informações etc.) do mesmo jeito que já acontece na aba que trocou.
+    // Importante: por essa altura o localStorage já mudou (é por isso que o
+    // evento disparou), então comparar com getCurrentLang() de novo compararia
+    // o valor novo com ele mesmo — por isso o idioma já aplicado nesta aba é
+    // capturado uma única vez aqui, no carregamento.
+    const langAppliedOnLoad = getCurrentLang();
+    window.addEventListener('storage', (event) => {
+        if (event.key !== storageKey || !event.newValue) return;
+        if (normalizeLang(event.newValue) !== langAppliedOnLoad) {
+            window.location.reload();
+        }
+    });
 
     const initLanguageSelector = () => {
         const wrapper = document.querySelector('#langSelector');
@@ -2318,6 +2406,7 @@
         const bodyKey = `footer_${key}`;
         body.innerHTML = strings[bodyKey] || fallbackFooterInfoBody;
     };
+    window.updateFooterInfo = updateFooterInfo;
 
     const getReservations = () => {
         try {
@@ -2394,6 +2483,7 @@
             saida: tour?.saida || '',
             grupo: tour?.grupo || '',
             duracao: tour?.duracao || '',
+            diasSemana: tour?.dias_semana || '',
             inclui: tour?.inclui || '',
             roteiro: tour?.roteiro || '',
             pontoEmbarque: tour?.ponto_embarque || '',
@@ -2414,21 +2504,84 @@
     // Página. Cada um só aparece no card se preenchido — em branco ou "N/U"
     // (não usar) omite a legenda inteira, sem texto de preenchimento padrão.
     const TOUR_DETAIL_ICONS = {
-        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', saida: 'fa-route',
+        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', diasSemana: 'fa-calendar-week', saida: 'fa-route',
         encontro: 'fa-map-marker-alt', pontoEmbarque: 'fa-bus', pontoDesembarque: 'fa-bus',
         grupo: 'fa-users', identificacao: 'fa-shirt', inclui: 'fa-check-circle', roteiro: 'fa-list',
         horarios: 'fa-calendar-check'
     };
-    const TOUR_DETAIL_LABELS_PT = { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis' };
+    const TOUR_DETAIL_LABELS = {
+        pt: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', diasSemana: 'Dias da semana', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis', valor: 'Valor', estado: 'Estado' },
+        en: { periodo: 'Period', idiomas: 'Languages', duracao: 'Duration', diasSemana: 'Days of the week', saida: 'Departure', encontro: 'Meeting', pontoEmbarque: 'Pick-up point', pontoDesembarque: 'Drop-off point', grupo: 'Group', identificacao: 'Identification', inclui: 'Includes', roteiro: 'Itinerary', horarios: 'Available times', valor: 'Price', estado: 'Status' },
+        fr: { periodo: 'Période', idiomas: 'Langues', duracao: 'Durée', diasSemana: 'Jours de la semaine', saida: 'Départ', encontro: 'Rendez-vous', pontoEmbarque: "Point d'embarquement", pontoDesembarque: 'Point de débarquement', grupo: 'Groupe', identificacao: 'Identification', inclui: 'Inclus', roteiro: 'Itinéraire', horarios: 'Horaires disponibles', valor: 'Prix', estado: 'Statut' },
+        es: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duración', diasSemana: 'Días de la semana', saida: 'Salida', encontro: 'Encuentro', pontoEmbarque: 'Punto de embarque', pontoDesembarque: 'Punto de desembarque', grupo: 'Grupo', identificacao: 'Identificación', inclui: 'Incluye', roteiro: 'Itinerario', horarios: 'Horarios disponibles', valor: 'Precio', estado: 'Estado' },
+        it: { periodo: 'Periodo', idiomas: 'Lingue', duracao: 'Durata', diasSemana: 'Giorni della settimana', saida: 'Partenza', encontro: 'Incontro', pontoEmbarque: 'Punto di imbarco', pontoDesembarque: 'Punto di sbarco', grupo: 'Gruppo', identificacao: 'Identificazione', inclui: 'Include', roteiro: 'Itinerario', horarios: 'Orari disponibili', valor: 'Prezzo', estado: 'Stato' },
+        zh: { periodo: '时期', idiomas: '语言', duracao: '时长', diasSemana: '星期几', saida: '出发地', encontro: '集合', pontoEmbarque: '上车点', pontoDesembarque: '下车点', grupo: '团体', identificacao: '识别', inclui: '包含', roteiro: '行程', horarios: '可预订时间', valor: '价格', estado: '状态' }
+    };
     const tourFieldVisible = (value) => {
         const v = (value ?? '').toString().trim();
         return !!v && v.toUpperCase() !== 'N/U';
     };
-    const buildTourDetailsHtml = (tour) => {
+    const translateTourCardDetailValue = (fieldKey, rawValue, lang) => {
+        if (!rawValue && rawValue !== 0) return rawValue || '';
+        const value = String(rawValue).trim();
+        const defaultsByLang = window.translationCatalog?.tourCardDefaultByLang?.[lang]
+            || window.translationCatalog?.tourCardDefaultByLang?.pt
+            || { languages: 'Português, Inglês e Espanhol', meeting: 'Não informado', identification: 'Guias com camisetas verdes' };
+
+        const knownValues = {
+            languages: {
+                pt: 'Português, Inglês e Espanhol',
+                en: 'Portuguese, English and Spanish',
+                fr: 'Portugais, anglais et espagnol',
+                es: 'Portugués, inglés y español',
+                it: 'Portoghese, inglese e spagnolo',
+                zh: '葡萄牙语、英语和西班牙语'
+            },
+            meeting: {
+                pt: 'Não informado',
+                en: 'Not informed',
+                fr: 'Non renseigné',
+                es: 'No informado',
+                it: 'Non indicato',
+                zh: '未指定'
+            },
+            identification: {
+                pt: 'Guias com camisetas verdes',
+                en: 'Guides wearing green shirts',
+                fr: 'Guides avec t-shirts verts',
+                es: 'Guías con camisetas verdes',
+                it: 'Guide con magliette verdi',
+                zh: '穿绿色T恤的导游'
+            }
+        };
+
+        const target = {
+            languages: defaultsByLang.languages,
+            meeting: defaultsByLang.meeting,
+            identification: defaultsByLang.identification
+        }[fieldKey] || value;
+
+        const normalize = (text) => text
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toLowerCase();
+
+        const normalizedValue = normalize(value);
+        for (const [langKey, phrase] of Object.entries(knownValues[fieldKey] || {})) {
+            if (normalize(phrase) === normalizedValue) {
+                return target;
+            }
+        }
+
+        return value;
+    };
+    const buildTourDetailsHtml = (tour, lang) => {
+        const labels = TOUR_DETAIL_LABELS[lang] || TOUR_DETAIL_LABELS.pt;
         const rawValues = {
             periodo: tour.periodo,
             idiomas: tour.idiomas || tour.languages,
             duracao: tour.duracao,
+            diasSemana: tour.dias_semana || tour.diasSemana,
             saida: tour.saida,
             encontro: tour.encontro || tour.meeting,
             pontoEmbarque: tour.pontoEmbarque || tour.ponto_embarque,
@@ -2439,26 +2592,149 @@
             roteiro: tour.roteiro,
             horarios: (tour.horarios || '').split(',').map(h => h.trim()).filter(Boolean).join(', ')
         };
+        const translateKeyByField = { idiomas: 'languages', encontro: 'meeting', identificacao: 'identification' };
 
         let html = '';
         Object.keys(TOUR_DETAIL_ICONS).forEach((key) => {
             const raw = rawValues[key];
             if (!tourFieldVisible(raw)) return;
-            const value = raw.toString().trim();
-            html += `<li><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${TOUR_DETAIL_LABELS_PT[key]}:</strong> ${value}</li>`;
+            let value = raw.toString().trim();
+            if (translateKeyByField[key]) {
+                value = translateTourCardDetailValue(translateKeyByField[key], value, lang);
+            }
+            html += `<li><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> ${value}</li>`;
         });
 
         const valorRaw = tour.valor ?? tour.value;
         if (valorRaw != null && valorRaw !== '' && Number(valorRaw) !== 0) {
             const formatted = Number(valorRaw).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            html += `<li><i class="fa fa-dollar-sign"></i> <strong>Valor:</strong> ${formatted}</li>`;
+            html += `<li><i class="fa fa-dollar-sign"></i> <strong>${labels.valor}:</strong> ${formatted}</li>`;
         }
         const estado = (tour.estado || tour.status || '').toString().trim();
         if (estado && estado.toLowerCase() !== 'ativo') {
-            html += `<li><i class="fa fa-info-circle"></i> <strong>Estado:</strong> ${estado}</li>`;
+            html += `<li><i class="fa fa-info-circle"></i> <strong>${labels.estado}:</strong> ${estado}</li>`;
         }
         return html;
     };
+
+    // Reaplica os detalhes dinâmicos (vindos do banco) de um card já casado
+    // com um tour, no idioma atual — usado tanto no carregamento inicial
+    // quanto na troca de idioma (senão a troca de idioma reintroduz o texto
+    // estático de demonstração por cima do conteúdo real cadastrado no admin).
+    const findTourForCard = (card) => {
+        const cardName = (card.querySelector('.rio-tour-name')?.textContent || '').trim();
+        if (!cardName) return null;
+        return getTours().find(t => normalizeTourKey(t.name) === normalizeTourKey(cardName)) || null;
+    };
+    // Tour com estado "Oculto" some da página pública (diferente de "Pausado",
+    // que mantém o card visível mas desabilita a reserva).
+    const applyTourVisibility = (card, tour) => {
+        const estado = (tour.estado || tour.status || '').toString().trim().toLowerCase();
+        card.style.display = (estado === 'oculto' || estado === 'hidden') ? 'none' : '';
+    };
+
+    // Tour criado em Gerenciamento > "+ Adicionar Tour" sem card correspondente
+    // no HTML estático da página: monta um card do zero e insere na grid certa
+    // (grid[0] = tours gratuitos, última grid = pagos — mesma convenção das
+    // divs .rio-tours-grid já existentes em #tours).
+    const createSiteShellTourCardElement = (tour) => {
+        const card = document.createElement('article');
+        card.className = 'rio-tour-card';
+
+        const imagesDiv = document.createElement('div');
+        imagesDiv.className = 'rio-tour-images';
+        const slider = document.createElement('div');
+        slider.className = 'rio-tour-slider';
+        slider.dataset.folder = (tour.pasta_imagens || '').trim() || `tour-${tour.id}`;
+        slider.setAttribute('aria-label', `Slideshow ${tour.name || ''}`);
+        imagesDiv.appendChild(slider);
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'rio-tour-info';
+
+        const nameEl = document.createElement('h4');
+        nameEl.className = 'rio-tour-name';
+        nameEl.textContent = tour.name || '';
+
+        const detailsEl = document.createElement('ul');
+        detailsEl.className = 'rio-tour-details';
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'rio-tour-actions';
+
+        const mapLink = document.createElement('a');
+        mapLink.target = '_blank';
+        mapLink.rel = 'noopener';
+        mapLink.className = 'rio-link-map';
+        mapLink.innerHTML = '<i class="fa fa-map"></i> Ver no Mapa';
+
+        const reserveLink = document.createElement('a');
+        reserveLink.href = '#';
+        reserveLink.target = '_blank';
+        reserveLink.rel = 'noopener';
+        reserveLink.className = 'btn-book rio-btn-reserve';
+        reserveLink.textContent = 'Reservar Agora';
+
+        actionsDiv.appendChild(mapLink);
+        actionsDiv.appendChild(reserveLink);
+        infoDiv.appendChild(nameEl);
+        infoDiv.appendChild(detailsEl);
+        infoDiv.appendChild(actionsDiv);
+
+        card.appendChild(imagesDiv);
+        card.appendChild(infoDiv);
+
+        window.__bindSiteShellReserveButton?.(reserveLink);
+
+        return card;
+    };
+
+    // Insere cards para tours desta cidade cadastrados no admin que ainda não
+    // têm um bloco correspondente no HTML estático da página.
+    const appendMissingSiteShellTourCards = (tours, matchedTourIds, lang) => {
+        const cidadeAtual = document.getElementById('relatosGallery')?.dataset.cidade;
+        if (!cidadeAtual) return;
+
+        const pending = tours.filter((t) => t.id && !matchedTourIds.has(String(t.id)) && t.cidade === cidadeAtual);
+        if (!pending.length) return;
+
+        const grids = document.querySelectorAll('#tours .rio-tours-grid');
+        if (!grids.length) return;
+
+        pending.forEach((tour) => {
+            const isPaid = (tour.modalidade || 'free').toLowerCase() !== 'free';
+            const grid = (isPaid && grids.length > 1) ? grids[grids.length - 1] : grids[0];
+            const card = createSiteShellTourCardElement(tour);
+            if (isPaid) card.classList.add('rio-tour-paid');
+
+            card.querySelector('.rio-tour-details').innerHTML = buildTourDetailsHtml(tour, lang);
+            applyMapLinkState(card.querySelector('.rio-link-map'), tour.link || tour.link_tour || '');
+            applyTourVisibility(card, tour);
+
+            grid.appendChild(card);
+
+            if (tour.id && window.TourInteracoes) {
+                window.TourInteracoes.attachCommentsToggle(card, tour.id);
+            }
+        });
+
+        if (typeof window.startTourSliders === 'function') {
+            window.startTourSliders();
+        }
+    };
+    const applyDynamicTourDetailsToCard = (card, lang) => {
+        const tour = findTourForCard(card);
+        if (!tour) return false;
+        applyTourVisibility(card, tour);
+        const detailsEl = card.querySelector('.rio-tour-details');
+        if (detailsEl) detailsEl.innerHTML = buildTourDetailsHtml(tour, lang);
+        const nameEl = card.querySelector('.rio-tour-name');
+        if (nameEl && tour.name) nameEl.textContent = tour.name;
+        return true;
+    };
+    window.buildTourDetailsHtml = buildTourDetailsHtml;
+    window.applyDynamicTourDetailsToCard = applyDynamicTourDetailsToCard;
+    window.applyTourVisibility = applyTourVisibility;
 
     // O botão "Ver no Mapa" só faz sentido — e só fica habilitado — quando o
     // tour tem um "Link do local de encontro" preenchido no admin.
@@ -2513,6 +2789,8 @@
                 // manifesto local hardcoded de cada cidade, casadas pelo nome do tour.
                 window.tourImagesByFolder = window.tourImagesByFolder || {};
                 const cardsByParent = new Map();
+                const matchedTourIds = new Set();
+                const currentLangForNewCards = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
                 Array.from(document.querySelectorAll('.rio-tour-card')).forEach((card, originalIndex) => {
                     const folder = card.querySelector('.rio-tour-slider')?.dataset.folder;
                     const cardName = card.querySelector('.rio-tour-name')?.textContent?.trim();
@@ -2520,9 +2798,13 @@
                     const matchedTour = tours.find(t => normalizeTourKey(t.name) === normalizeTourKey(cardName));
                     if (!matchedTour) return;
 
+                    if (matchedTour.id) matchedTourIds.add(String(matchedTour.id));
+                    applyTourVisibility(card, matchedTour);
+
+                    const currentLang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
                     const detailsEl = card.querySelector('.rio-tour-details');
                     if (detailsEl) {
-                        detailsEl.innerHTML = buildTourDetailsHtml(matchedTour);
+                        detailsEl.innerHTML = buildTourDetailsHtml(matchedTour, currentLang);
                     }
 
                     applyMapLinkState(card.querySelector('.rio-link-map'), matchedTour.link || matchedTour.link_tour || '');
@@ -2557,6 +2839,8 @@
                         .sort((a, b) => (a.ordem - b.ordem) || (a.originalIndex - b.originalIndex))
                         .forEach(({ card }) => parent.appendChild(card));
                 });
+
+                appendMissingSiteShellTourCards(tours, matchedTourIds, currentLangForNewCards);
 
                 if (typeof window.startTourSliders === 'function') {
                     window.startTourSliders();
@@ -3658,7 +3942,14 @@
             reservationModal.classList.remove('hidden');
         };
 
-        document.querySelectorAll('.rio-btn-reserve').forEach(button => {
+        // Extraída como função nomeada (em vez de só um forEach inline) porque
+        // cards de tour criados dinamicamente (ver "+ Adicionar Tour" no admin,
+        // window.__bindSiteShellReserveButton em fetchToursFromBackend) precisam
+        // do mesmo binding — o forEach abaixo só alcança os botões que já
+        // existem no HTML estático no momento em que a página carrega.
+        const bindReserveButton = (button) => {
+            if (!button || button.dataset.reserveBound === 'true') return;
+            button.dataset.reserveBound = 'true';
             button.addEventListener('click', (event) => {
                 if (button.classList.contains('disabled') || button.getAttribute('aria-disabled') === 'true') {
                     event.preventDefault();
@@ -3678,7 +3969,9 @@
                 const meetingText = meetingTextRaw.replace(/^\s*(Encontro|Meeting|Rendez-vous|Encuentro|Incontro|集合|Saída|Roteiro)\s*:\s*/i, '').trim();
                 openReservationModal(tourName, languageText, meetingText);
             });
-        });
+        };
+        document.querySelectorAll('.rio-btn-reserve').forEach(bindReserveButton);
+        window.__bindSiteShellReserveButton = bindReserveButton;
 
         if (reservationCancel) {
             reservationCancel.addEventListener('click', (event) => {
@@ -3934,12 +4227,14 @@
         if (noticeProceedBtn) {
             noticeProceedBtn.addEventListener('click', () => {
                 if (noticeEl) noticeEl.style.display = 'none';
+                window.__showAwardCard?.();
             });
         }
         if (noticeDontShowBtn) {
             noticeDontShowBtn.addEventListener('click', () => {
                 localStorage.setItem(noticeDismissKey, '1');
                 if (noticeEl) noticeEl.style.display = 'none';
+                window.__showAwardCard?.();
             });
         }
 
@@ -3956,7 +4251,15 @@
         fetchToursFromBackend();
         loadCidadeContato();
         loadCidadeAviso();
-        loadPaginaSecao();
+        // Texto padrão do cartão de informações (antes de SOBRE/CONTATO/AJUDA
+        // serem clicados) é editável em Gerenciamento > Textos SOBRE/CONTATO/AJUDA,
+        // seção "Informações". Sem override cadastrado, mantém o texto estático
+        // padrão de cada página (sem regressão para quem não configurou nada).
+        loadPaginaSecao().then(() => {
+            if (window.__paginaSecaoOverrides?.informacoes) {
+                updateFooterInfo('informacoes');
+            }
+        });
         dispatchLanguageChange(getCurrentLang());
     });
 
@@ -4036,6 +4339,7 @@
 
         if (aviso.ativo === false) {
             noticeEl.style.display = 'none';
+            window.__showAwardCard?.();
             return;
         }
 
