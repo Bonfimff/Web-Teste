@@ -901,6 +901,41 @@ body {
     font-size: 0.85rem;
 }
 
+/* Textos longos (Inclui, Roteiro, etc.) ficam limitados a 3 linhas para o
+   card não crescer demais — "Ler mais" expande, mostrado só quando o texto
+   realmente estoura (ver wireTourDetailToggles no JS). */
+.rio-tour-detail-line {
+    display: -webkit-box;
+    width: 100%;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.rio-tour-detail-line.rio-detail-expanded {
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    overflow: visible;
+}
+
+.rio-tour-detail-toggle {
+    display: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 0.15rem;
+    color: #1da194;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.rio-tour-detail-toggle.rio-detail-visible {
+    display: inline-block;
+}
+
 .rio-tour-details strong {
     color: #2c3e50;
 }
@@ -923,6 +958,7 @@ body {
     font-size: 0.9rem;
     text-decoration: none;
     transition: color 0.2s;
+    white-space: nowrap;
 }
 
 .rio-link-map:hover {
@@ -942,12 +978,13 @@ body {
 }
 
 .rio-btn-reserve {
-    padding: 0.55rem 1.2rem;
-    min-width: 160px;
+    padding: 0.45rem 0.9rem;
+    min-width: 120px;
     max-width: 220px;
     width: auto;
+    flex-shrink: 0;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     margin-top: 0;
     background: rgba(255, 255, 255, 0.65);
     color: #C2B280;

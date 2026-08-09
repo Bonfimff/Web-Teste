@@ -2029,7 +2029,8 @@ const renderTourManagementTable = (tours) => {
     const linkHtml = hasLink
       ? `<a href="${tour.link}" target="_blank" rel="noopener noreferrer">Abrir link</a>`
       : '-';
-    const modalidadeLabel = (tour.modalidade || 'free').toLowerCase() === 'privado' ? 'Privado' : 'Aberto (Free)';
+    const modalidadeRaw = (tour.modalidade || 'free').toLowerCase();
+    const modalidadeLabel = modalidadeRaw === 'privado' ? 'Privado' : modalidadeRaw === 'transfer' ? 'Transfer' : 'Aberto (Free)';
 
     // Botões ▲▼ só reordenam dentro da mesma cidade, então ficam desabilitados
     // no primeiro/último tour DESSA cidade, não da tabela inteira. A posição

@@ -2520,10 +2520,9 @@
     // Página. Cada um só aparece no card se preenchido — em branco ou "N/U"
     // (não usar) omite a legenda inteira, sem texto de preenchimento padrão.
     const TOUR_DETAIL_ICONS = {
-        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', diasSemana: 'fa-calendar-week', saida: 'fa-route',
+        periodo: 'fa-calendar', idiomas: 'fa-language', duracao: 'fa-clock', diasSemana: 'fa-calendar-week', horarios: 'fa-calendar-check', saida: 'fa-route',
         encontro: 'fa-map-marker-alt', pontoEmbarque: 'fa-bus', pontoDesembarque: 'fa-bus',
-        grupo: 'fa-users', identificacao: 'fa-shirt', inclui: 'fa-check-circle', roteiro: 'fa-list',
-        horarios: 'fa-calendar-check'
+        grupo: 'fa-users', identificacao: 'fa-shirt', inclui: 'fa-check-circle', roteiro: 'fa-list'
     };
     const TOUR_DETAIL_LABELS = {
         pt: { periodo: 'Período', idiomas: 'Idiomas', duracao: 'Duração', diasSemana: 'Dias da semana', saida: 'Saída', encontro: 'Encontro', pontoEmbarque: 'Ponto de embarque', pontoDesembarque: 'Ponto de desembarque', grupo: 'Grupo', identificacao: 'Identificação', inclui: 'Inclui', roteiro: 'Roteiro', horarios: 'Horários disponíveis', valor: 'Valor', estado: 'Estado' },
@@ -2533,6 +2532,50 @@
         it: { periodo: 'Periodo', idiomas: 'Lingue', duracao: 'Durata', diasSemana: 'Giorni della settimana', saida: 'Partenza', encontro: 'Incontro', pontoEmbarque: 'Punto di imbarco', pontoDesembarque: 'Punto di sbarco', grupo: 'Gruppo', identificacao: 'Identificazione', inclui: 'Include', roteiro: 'Itinerario', horarios: 'Orari disponibili', valor: 'Prezzo', estado: 'Stato' },
         zh: { periodo: '时期', idiomas: '语言', duracao: '时长', diasSemana: '星期几', saida: '出发地', encontro: '集合', pontoEmbarque: '上车点', pontoDesembarque: '下车点', grupo: '团体', identificacao: '识别', inclui: '包含', roteiro: '行程', horarios: '可预订时间', valor: '价格', estado: '状态' }
     };
+    // Textos do botão "Ler mais/Ler menos" usado quando um campo do tour
+    // (ex.: Inclui, Roteiro) é longo o bastante pra estourar o clamp de 3
+    // linhas do card — ver .rio-tour-detail-line no CSS.
+    const TOUR_READ_MORE_LABELS = {
+        pt: { more: 'Ler mais', less: 'Ler menos' },
+        en: { more: 'Read more', less: 'Read less' },
+        fr: { more: 'Lire plus', less: 'Lire moins' },
+        es: { more: 'Leer más', less: 'Leer menos' },
+        it: { more: 'Leggi di più', less: 'Leggi di meno' },
+        zh: { more: '阅读更多', less: '收起' }
+    };
+    // campos realmente estouraram o clamp de 3 linhas e só aí mostra o botão
+    // — evita um "Ler mais" que não faz nada em textos curtos. Com
+    // -webkit-line-clamp o navegador nem chega a "layoutar" as linhas
+    // cortadas, então scrollHeight == clientHeight mesmo com texto truncado;
+    // por isso a comparação usa a altura SEM o clamp (.rio-detail-expanded,
+    // aplicada e desfeita na hora) contra a altura COM o clamp.
+    const wireTourDetailToggles = (container) => {
+        if (!container) return;
+        container.querySelectorAll('.rio-tour-detail-line').forEach((valueEl) => {
+            const toggle = valueEl.nextElementSibling;
+            if (!toggle || !toggle.classList.contains('rio-tour-detail-toggle')) return;
+            toggle.classList.remove('rio-detail-visible');
+            valueEl.classList.remove('rio-detail-expanded');
+            const clampedHeight = valueEl.clientHeight;
+            valueEl.classList.add('rio-detail-expanded');
+            const fullHeight = valueEl.scrollHeight;
+            valueEl.classList.remove('rio-detail-expanded');
+            if (fullHeight - clampedHeight > 1) {
+                toggle.classList.add('rio-detail-visible');
+                toggle.textContent = toggle.dataset.more;
+                toggle.onclick = () => {
+                    const expanded = valueEl.classList.toggle('rio-detail-expanded');
+                    toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
+                };
+            }
+        });
+    };
+    const setTourDetailsHtml = (el, tour, lang) => {
+        if (!el) return;
+        el.innerHTML = buildTourDetailsHtml(tour, lang);
+        wireTourDetailToggles(el);
+    };
+    window.setTourDetailsHtml = setTourDetailsHtml;
     const tourFieldVisible = (value) => {
         const v = (value ?? '').toString().trim();
         return !!v && v.toUpperCase() !== 'N/U';
@@ -2591,25 +2634,42 @@
 
         return value;
     };
+    // Campos de texto livre traduzidos automaticamente (via MyMemory no
+    // backend, cacheados em tour.traducoes) quando o admin preenche em
+    // português e o visitante vê a página em outro idioma.
+    const TOUR_TRANSLATABLE_FIELD_MAP = {
+        periodo: 'periodo', idiomas: 'idiomas', duracao: 'duracao', saida: 'saida',
+        encontro: 'encontro', pontoEmbarque: 'ponto_embarque', pontoDesembarque: 'ponto_desembarque',
+        grupo: 'grupo', identificacao: 'identificacao', inclui: 'inclui', roteiro: 'roteiro'
+    };
+    const translatedTourField = (tour, key, fallback, lang) => {
+        if (lang && lang !== 'pt') {
+            const campo = TOUR_TRANSLATABLE_FIELD_MAP[key];
+            const traduzido = campo && tour.traducoes && tour.traducoes[lang] && tour.traducoes[lang][campo];
+            if (traduzido) return traduzido;
+        }
+        return fallback;
+    };
     const buildTourDetailsHtml = (tour, lang) => {
         const labels = TOUR_DETAIL_LABELS[lang] || TOUR_DETAIL_LABELS.pt;
         const rawValues = {
-            periodo: tour.periodo,
-            idiomas: tour.idiomas || tour.languages,
-            duracao: tour.duracao,
+            periodo: translatedTourField(tour, 'periodo', tour.periodo, lang),
+            idiomas: translatedTourField(tour, 'idiomas', tour.idiomas || tour.languages, lang),
+            duracao: translatedTourField(tour, 'duracao', tour.duracao, lang),
             diasSemana: tour.dias_semana || tour.diasSemana,
-            saida: tour.saida,
-            encontro: tour.encontro || tour.meeting,
-            pontoEmbarque: tour.pontoEmbarque || tour.ponto_embarque,
-            pontoDesembarque: tour.pontoDesembarque || tour.ponto_desembarque,
-            grupo: tour.grupo,
-            identificacao: tour.identificacao || tour.identification,
-            inclui: tour.inclui,
-            roteiro: tour.roteiro,
+            saida: translatedTourField(tour, 'saida', tour.saida, lang),
+            encontro: translatedTourField(tour, 'encontro', tour.encontro || tour.meeting, lang),
+            pontoEmbarque: translatedTourField(tour, 'pontoEmbarque', tour.pontoEmbarque || tour.ponto_embarque, lang),
+            pontoDesembarque: translatedTourField(tour, 'pontoDesembarque', tour.pontoDesembarque || tour.ponto_desembarque, lang),
+            grupo: translatedTourField(tour, 'grupo', tour.grupo, lang),
+            identificacao: translatedTourField(tour, 'identificacao', tour.identificacao || tour.identification, lang),
+            inclui: translatedTourField(tour, 'inclui', tour.inclui, lang),
+            roteiro: translatedTourField(tour, 'roteiro', tour.roteiro, lang),
             horarios: (tour.horarios || '').split(',').map(h => h.trim()).filter(Boolean).join(', ')
         };
         const translateKeyByField = { idiomas: 'languages', encontro: 'meeting', identificacao: 'identification' };
 
+        const readMoreLabel = TOUR_READ_MORE_LABELS[lang] || TOUR_READ_MORE_LABELS.pt;
         let html = '';
         Object.keys(TOUR_DETAIL_ICONS).forEach((key) => {
             const raw = rawValues[key];
@@ -2618,7 +2678,7 @@
             if (translateKeyByField[key]) {
                 value = translateTourCardDetailValue(translateKeyByField[key], value, lang);
             }
-            html += `<li><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> ${value}</li>`;
+            html += `<li><span class="rio-tour-detail-line"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> ${value}</span><button type="button" class="rio-tour-detail-toggle" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></li>`;
         });
 
         const valorRaw = tour.valor ?? tour.value;
@@ -2714,16 +2774,35 @@
         const pending = tours.filter((t) => t.id && !matchedTourIds.has(String(t.id)) && t.cidade === cidadeAtual);
         if (!pending.length) return;
 
-        const grids = document.querySelectorAll('#tours .rio-tours-grid');
-        if (!grids.length) return;
+        // Páginas com seções dedicadas (ex.: Lençóis tem #transfers e
+        // #expedicoes-privativas) recebem o tour diretamente nelas; páginas
+        // sem essas seções (Rio/Salvador/São Luís) caem no comportamento
+        // antigo: 2 grids dentro de #tours (free + paga).
+        const findGridForTour = (tour) => {
+            const modalidade = (tour.modalidade || 'free').toLowerCase();
+            if (modalidade === 'transfer') {
+                const dedicated = document.querySelector('#transfers .rio-tours-grid');
+                if (dedicated) return dedicated;
+            }
+            if (modalidade === 'privado') {
+                const dedicated = document.querySelector('#expedicoes-privativas .rio-tours-grid')
+                    || document.querySelector('#expedicoes-compartilhadas .rio-tours-grid');
+                if (dedicated) return dedicated;
+            }
+            const grids = document.querySelectorAll('#tours .rio-tours-grid');
+            if (!grids.length) return null;
+            const isPaid = modalidade !== 'free';
+            return (isPaid && grids.length > 1) ? grids[grids.length - 1] : grids[0];
+        };
 
         pending.forEach((tour) => {
             const isPaid = (tour.modalidade || 'free').toLowerCase() !== 'free';
-            const grid = (isPaid && grids.length > 1) ? grids[grids.length - 1] : grids[0];
+            const grid = findGridForTour(tour);
+            if (!grid) return;
             const card = createSiteShellTourCardElement(tour);
             if (isPaid) card.classList.add('rio-tour-paid');
 
-            card.querySelector('.rio-tour-details').innerHTML = buildTourDetailsHtml(tour, lang);
+            setTourDetailsHtml(card.querySelector('.rio-tour-details'), tour, lang);
             applyMapLinkState(card.querySelector('.rio-link-map'), tour.link || tour.link_tour || '');
             applyTourVisibility(card, tour);
 
@@ -2749,7 +2828,7 @@
         if (!tour) return false;
         applyTourVisibility(card, tour);
         const detailsEl = card.querySelector('.rio-tour-details');
-        if (detailsEl) detailsEl.innerHTML = buildTourDetailsHtml(tour, lang);
+        if (detailsEl) setTourDetailsHtml(detailsEl, tour, lang);
         const nameEl = card.querySelector('.rio-tour-name');
         if (nameEl && tour.name) nameEl.textContent = tour.name;
         return true;
@@ -2826,7 +2905,7 @@
                     const currentLang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
                     const detailsEl = card.querySelector('.rio-tour-details');
                     if (detailsEl) {
-                        detailsEl.innerHTML = buildTourDetailsHtml(matchedTour, currentLang);
+                        setTourDetailsHtml(detailsEl, matchedTour, currentLang);
                     }
 
                     applyMapLinkState(card.querySelector('.rio-link-map'), matchedTour.link || matchedTour.link_tour || '');
