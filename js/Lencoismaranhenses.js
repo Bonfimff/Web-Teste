@@ -51,7 +51,10 @@
         }
 
         const proceedButton = document.querySelector('.rio-notice .btn-proceed');
-        if (proceedButton) proceedButton.textContent = t.proceed;
+        const dontShowButton = document.querySelector('.rio-notice .btn-dont-show');
+        const actionLabels = window.TOUR_ACTION_LABELS?.[lang] || window.TOUR_ACTION_LABELS?.pt;
+        if (proceedButton) proceedButton.textContent = actionLabels?.proceed || t.proceed;
+        if (dontShowButton) dontShowButton.textContent = actionLabels?.dontShow || dontShowButton.textContent;
 
         // Passeios (free/shared entry tours)
         const toursSection = document.getElementById('tours');

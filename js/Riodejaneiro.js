@@ -577,6 +577,19 @@
         it: { more: 'Leggi di più', less: 'Leggi di meno' },
         zh: { more: '阅读更多', less: '收起' }
     };
+    // Rótulos fixos de UI que aparecem em todo card de tour, independente do
+    // conteúdo vindo do banco — não usam mais o array pageTranslations[lang].cards
+    // (que era indexado por posição do card e quebrava assim que a lista de
+    // tours deixou de bater com a ordem fixa dos cards estáticos antigos).
+    const TOUR_ACTION_LABELS = {
+        pt: { map: 'Ver no Mapa', reserve: 'Reservar Agora', reviews: 'Avaliações', dontShow: 'Não mostrar novamente' },
+        en: { map: 'View on Map', reserve: 'Book Now', reviews: 'Reviews', dontShow: "Don't show again" },
+        fr: { map: 'Voir sur la carte', reserve: 'Réserver', reviews: 'Avis', dontShow: 'Ne plus afficher' },
+        es: { map: 'Ver en el mapa', reserve: 'Reservar ahora', reviews: 'Reseñas', dontShow: 'No mostrar de nuevo' },
+        it: { map: 'Vedi sulla mappa', reserve: 'Prenota ora', reviews: 'Recensioni', dontShow: 'Non mostrare più' },
+        zh: { map: '查看地图', reserve: '立即预订', reviews: '评价', dontShow: '不再显示' }
+    };
+    window.TOUR_ACTION_LABELS = TOUR_ACTION_LABELS;
     // Depois de injetar buildTourDetailsHtml() num card, verifica quais
     // campos realmente estouraram o clamp de 3 linhas e só aí mostra o botão
     // — evita um "Ler mais" que não faz nada em textos curtos. Com
@@ -586,23 +599,33 @@
     // aplicada e desfeita na hora) contra a altura COM o clamp.
     const wireTourDetailToggles = (container) => {
         if (!container) return;
-        container.querySelectorAll('.rio-tour-detail-line').forEach((valueEl) => {
-            const toggle = valueEl.nextElementSibling;
-            if (!toggle || !toggle.classList.contains('rio-tour-detail-toggle')) return;
-            toggle.classList.remove('rio-detail-visible');
-            valueEl.classList.remove('rio-detail-expanded');
-            const clampedHeight = valueEl.clientHeight;
-            valueEl.classList.add('rio-detail-expanded');
-            const fullHeight = valueEl.scrollHeight;
-            valueEl.classList.remove('rio-detail-expanded');
-            if (fullHeight - clampedHeight > 1) {
-                toggle.classList.add('rio-detail-visible');
-                toggle.textContent = toggle.dataset.more;
-                toggle.onclick = () => {
-                    const expanded = valueEl.classList.toggle('rio-detail-expanded');
-                    toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
-                };
-            }
+        // Medir logo após o innerHTML ser trocado pega o card ainda sem layout
+        // assentado (altura 0 ou desatualizada) — o botão nunca aparecia mesmo
+        // com texto claramente cortado pelo "...". Adiar pro próximo frame
+        // garante que o navegador já terminou de desenhar antes de medir.
+        requestAnimationFrame(() => {
+            container.querySelectorAll('.rio-tour-detail-line').forEach((valueEl) => {
+                const toggle = valueEl.nextElementSibling;
+                if (!toggle || !toggle.classList.contains('rio-tour-detail-toggle')) return;
+                toggle.classList.remove('rio-detail-visible');
+                valueEl.classList.remove('rio-detail-expanded');
+                const clampedHeight = valueEl.clientHeight;
+                valueEl.classList.add('rio-detail-expanded');
+                const fullHeight = valueEl.scrollHeight;
+                valueEl.classList.remove('rio-detail-expanded');
+                // Reforço: além da medição de altura, um texto longo o
+                // suficiente (~3 linhas nesse tamanho de fonte) sempre mostra
+                // o botão, mesmo se a medição de layout falhar por algum motivo.
+                const overflowed = (fullHeight - clampedHeight > 1) || valueEl.textContent.trim().length > 130;
+                if (overflowed) {
+                    toggle.classList.add('rio-detail-visible');
+                    toggle.textContent = toggle.dataset.more;
+                    toggle.onclick = () => {
+                        const expanded = valueEl.classList.toggle('rio-detail-expanded');
+                        toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
+                    };
+                }
+            });
         });
     };
     const setTourDetailsHtml = (el, tour, lang) => {
@@ -615,11 +638,11 @@
         const v = (value ?? '').toString().trim();
         return !!v && v.toUpperCase() !== 'N/U';
     };
-    // Campos de texto livre traduzidos automaticamente (via MyMemory no
-    // backend, cacheados em tour.traducoes) quando o admin preenche em
-    // português e o visitante vê a página em outro idioma.
+    // Campos de texto livre preenchidos manualmente pelo admin em cada
+    // idioma (aba de edição do tour em Gerenciamento), salvos em
+    // tour.traducoes[idioma][campo].
     const TOUR_TRANSLATABLE_FIELD_MAP = {
-        periodo: 'periodo', idiomas: 'idiomas', duracao: 'duracao', saida: 'saida',
+        periodo: 'periodo', duracao: 'duracao', saida: 'saida',
         encontro: 'encontro', pontoEmbarque: 'ponto_embarque', pontoDesembarque: 'ponto_desembarque',
         grupo: 'grupo', identificacao: 'identificacao', inclui: 'inclui', roteiro: 'roteiro'
     };
@@ -631,11 +654,28 @@
         }
         return fallback;
     };
+    // "Idiomas" não é um campo livre editável por idioma (vem dos checkboxes
+    // de idioma falado do tour) — só os NOMES dos idiomas mudam de um idioma
+    // pro outro, então é uma troca de palavra fixa, não uma tradução manual.
+    const LANGUAGE_NAME_TRANSLATIONS = {
+        en: { 'Português': 'Portuguese', 'Inglês': 'English', 'Espanhol': 'Spanish', 'Francês': 'French', 'Italiano': 'Italian', 'Chinês': 'Chinese' },
+        fr: { 'Português': 'Portugais', 'Inglês': 'Anglais', 'Espanhol': 'Espagnol', 'Francês': 'Français', 'Italiano': 'Italien', 'Chinês': 'Chinois' },
+        es: { 'Português': 'Portugués', 'Inglês': 'Inglés', 'Espanhol': 'Español', 'Francês': 'Francés', 'Italiano': 'Italiano', 'Chinês': 'Chino' },
+        it: { 'Português': 'Portoghese', 'Inglês': 'Inglese', 'Espanhol': 'Spagnolo', 'Francês': 'Francese', 'Italiano': 'Italiano', 'Chinês': 'Cinese' },
+        zh: { 'Português': '葡萄牙语', 'Inglês': '英语', 'Espanhol': '西班牙语', 'Francês': '法语', 'Italiano': '意大利语', 'Chinês': '中文' }
+    };
+    const translateLanguageNames = (raw, lang) => {
+        const map = LANGUAGE_NAME_TRANSLATIONS[lang];
+        if (!map || !raw) return raw;
+        let out = raw;
+        Object.entries(map).forEach(([pt, tr]) => { out = out.replaceAll(pt, tr); });
+        return out;
+    };
     const buildTourDetailsHtml = (tour, lang) => {
         const labels = TOUR_DETAIL_LABELS[lang] || TOUR_DETAIL_LABELS.pt;
         const rawValues = {
             periodo: translatedTourField(tour, 'periodo', tour.periodo, lang),
-            idiomas: translatedTourField(tour, 'idiomas', tour.idiomas || tour.languages, lang),
+            idiomas: translateLanguageNames(tour.idiomas || tour.languages || '', lang),
             duracao: translatedTourField(tour, 'duracao', tour.duracao, lang),
             diasSemana: tour.dias_semana || tour.diasSemana,
             saida: translatedTourField(tour, 'saida', tour.saida, lang),
@@ -651,7 +691,12 @@
         const translateKeyByField = { idiomas: 'languages', encontro: 'meeting', identificacao: 'identification' };
 
         const readMoreLabel = TOUR_READ_MORE_LABELS[lang] || TOUR_READ_MORE_LABELS.pt;
+        const valorRaw = tour.valor ?? tour.value;
+        const valorLi = (valorRaw != null && valorRaw !== '' && Number(valorRaw) !== 0)
+            ? `<li><i class="fa fa-dollar-sign"></i> <strong>${labels.valor}:</strong> ${Number(valorRaw).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</li>`
+            : '';
         let html = '';
+        let horariosRendered = false;
         Object.keys(TOUR_DETAIL_ICONS).forEach((key) => {
             const raw = rawValues[key];
             if (!tourFieldVisible(raw)) return;
@@ -660,13 +705,16 @@
                 value = translateTourCardDetailValue(translateKeyByField[key], value, lang);
             }
             html += `<li><span class="rio-tour-detail-line"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> ${value}</span><button type="button" class="rio-tour-detail-toggle" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></li>`;
+            // "Valor" vai logo depois de "Horários disponíveis" em vez de sempre
+            // no final da lista — pedido explícito, já que ambos os campos
+            // costumam ser lidos juntos ("quando" e "quanto").
+            if (key === 'horarios') {
+                horariosRendered = true;
+                if (valorLi) html += valorLi;
+            }
         });
+        if (valorLi && !horariosRendered) html += valorLi;
 
-        const valorRaw = tour.valor ?? tour.value;
-        if (valorRaw != null && valorRaw !== '' && Number(valorRaw) !== 0) {
-            const formatted = Number(valorRaw).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            html += `<li><i class="fa fa-dollar-sign"></i> <strong>${labels.valor}:</strong> ${formatted}</li>`;
-        }
         const estado = (tour.estado || tour.status || '').toString().trim();
         if (estado && estado.toLowerCase() !== 'ativo') {
             html += `<li><i class="fa fa-info-circle"></i> <strong>${labels.estado}:</strong> ${estado}</li>`;
@@ -701,7 +749,8 @@
     // no HTML estático da página: monta um card do zero e insere na grid certa
     // (grid[0] = tours gratuitos, grid[1] = pagos — mesma convenção das duas
     // divs .rio-tours-grid já existentes em #tours).
-    const createRioTourCardElement = (tour) => {
+    const createRioTourCardElement = (tour, lang) => {
+        const actionLabels = TOUR_ACTION_LABELS[lang] || TOUR_ACTION_LABELS.pt;
         const card = document.createElement('article');
         card.className = 'rio-tour-card';
 
@@ -730,14 +779,14 @@
         mapLink.target = '_blank';
         mapLink.rel = 'noopener';
         mapLink.className = 'rio-link-map';
-        mapLink.innerHTML = '<i class="fa fa-map"></i> Ver no Mapa';
+        mapLink.innerHTML = `<i class="fa fa-map"></i> ${actionLabels.map}`;
 
         const reserveLink = document.createElement('a');
         reserveLink.href = '#';
         reserveLink.target = '_blank';
         reserveLink.rel = 'noopener';
         reserveLink.className = 'btn-book rio-btn-reserve';
-        reserveLink.textContent = 'Reservar Agora';
+        reserveLink.textContent = actionLabels.reserve;
 
         actionsDiv.appendChild(mapLink);
         actionsDiv.appendChild(reserveLink);
@@ -784,10 +833,10 @@
             const isPaid = (tour.modalidade || 'free').toLowerCase() !== 'free';
             const grid = findGridForTour(tour);
             if (!grid) return;
-            const card = createRioTourCardElement(tour);
+            const currentLang = (typeof window.getCurrentLang === 'function') ? window.getCurrentLang() : 'pt';
+            const card = createRioTourCardElement(tour, currentLang);
             if (isPaid) card.classList.add('rio-tour-paid');
 
-            const currentLang = (typeof window.getCurrentLang === 'function') ? window.getCurrentLang() : 'pt';
             setTourDetailsHtml(card.querySelector('.rio-tour-details'), tour, currentLang);
             applyMapLinkState(card.querySelector('.rio-link-map'), tour.link_tour || tour.link || '');
             applyTourVisibility(card, tour);
@@ -845,6 +894,14 @@
         const proceedButton = document.querySelector('.rio-notice .btn-proceed');
         if (proceedButton) proceedButton.textContent = t.proceed;
 
+        const dontShowButton = document.querySelector('.rio-notice .btn-dont-show');
+        if (dontShowButton) dontShowButton.textContent = (TOUR_ACTION_LABELS[lang] || TOUR_ACTION_LABELS.pt).dontShow;
+
+        document.querySelectorAll('.tour-comments-toggle').forEach((btn) => {
+            const icon = btn.querySelector('i')?.outerHTML || '<i class="fa fa-comment"></i>';
+            btn.innerHTML = `${icon} ${(TOUR_ACTION_LABELS[lang] || TOUR_ACTION_LABELS.pt).reviews}`;
+        });
+
         const sectionTitle = document.querySelector('.rio-section-title');
         if (sectionTitle) sectionTitle.textContent = t.section_title;
 
@@ -858,6 +915,7 @@
         const footerTitle = document.querySelector('.rio-footer-card-title');
         if (footerTitle) footerTitle.textContent = footerTitleByLang[lang] || footerTitleByLang.pt || 'Informações';
 
+        const actionLabels = TOUR_ACTION_LABELS[lang] || TOUR_ACTION_LABELS.pt;
         const languageMatchers = buildRioTourMatchers(toursFromDatabase);
         cards.forEach((card, index) => {
             const dbTour = matchRioTourForCard(card, languageMatchers);
@@ -874,7 +932,7 @@
 
                 const actions = card.querySelectorAll('.rio-tour-actions a');
                 if (actions[0]) {
-                    actions[0].innerHTML = (t.cards[index] && t.cards[index].map) ? t.cards[index].map : '<i class="fa fa-map"></i> Ver no Mapa';
+                    actions[0].innerHTML = `<i class="fa fa-map"></i> ${actionLabels.map}`;
                     applyMapLinkState(actions[0], dbTour.link_tour || '');
                 }
                 if (actions[1]) {
@@ -889,7 +947,7 @@
                         actions[1].setAttribute('aria-disabled', 'true');
                         actions[1].style.pointerEvents = 'none';
                     } else {
-                        const reserveText = (t.cards[index] && t.cards[index].reserve) ? t.cards[index].reserve : 'Reservar Agora';
+                        const reserveText = actionLabels.reserve;
                         actions[1].innerHTML = isWhatsApp ? `<i class="fab fa-whatsapp"></i> ${reserveText}` : reserveText;
                         if (dbTour.link_tour) {
                             actions[1].href = dbTour.link_tour;

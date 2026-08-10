@@ -368,10 +368,15 @@
 
         card.dataset.commentsAttached = 'true';
 
+        const currentLang = (typeof window.getCurrentLang === 'function' && window.getCurrentLang())
+            || (typeof window.getCurrentLanguage === 'function' && window.getCurrentLanguage())
+            || 'pt';
+        const reviewsLabel = (window.TOUR_ACTION_LABELS?.[currentLang] || window.TOUR_ACTION_LABELS?.pt || { reviews: 'Avaliações' }).reviews;
+
         const toggleBtn = document.createElement('button');
         toggleBtn.type = 'button';
         toggleBtn.className = 'rio-link-map tour-comments-toggle';
-        toggleBtn.innerHTML = '<i class="fa fa-comment"></i> Avaliações';
+        toggleBtn.innerHTML = `<i class="fa fa-comment"></i> ${reviewsLabel}`;
 
         const panel = document.createElement('div');
         panel.className = 'tour-comments-panel';

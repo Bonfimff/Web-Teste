@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=37">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=38">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -747,6 +747,18 @@
                 <label><input type="checkbox" id="tourModalLanguageEs" value="Espanhol" /> Espanhol</label>
               </div>
             </fieldset>
+            <fieldset class="tour-translate-fieldset">
+              <legend>Idioma destas informações</legend>
+              <p class="tour-translate-hint">Selecione o idioma e preencha os campos abaixo para ele. Cada idioma é salvo separadamente; o Português é o idioma padrão (obrigatório).</p>
+              <div class="tour-lang-tabs" id="tourModalLangTabs">
+                <button type="button" class="tour-lang-tab active" data-lang="pt">Português</button>
+                <button type="button" class="tour-lang-tab" data-lang="en">English</button>
+                <button type="button" class="tour-lang-tab" data-lang="fr">Français</button>
+                <button type="button" class="tour-lang-tab" data-lang="es">Español</button>
+                <button type="button" class="tour-lang-tab" data-lang="it">Italiano</button>
+                <button type="button" class="tour-lang-tab" data-lang="zh">中文</button>
+              </div>
+            </fieldset>
             <label>
               Período
               <input type="text" id="tourModalPeriodo" placeholder="Ex: Junho a Setembro (deixe em branco ou N/U para ocultar)" />
@@ -1068,8 +1080,8 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=32"></script>
-    <script src="../js/Gerenciamento.js?v=59"></script>
+    <script src="../js/Riodejaneiro.js?v=47"></script>
+    <script src="../js/Gerenciamento.js?v=62"></script>
 </body>
 </html>
 

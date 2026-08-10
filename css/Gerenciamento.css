@@ -1605,6 +1605,44 @@ body {
     align-items: center;
   }
 
+  .tour-translate-fieldset {
+    margin-bottom: 0.5rem;
+  }
+
+  .tour-translate-hint {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    color: rgba(11, 60, 109, 0.75);
+  }
+
+  .tour-lang-tabs {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .tour-lang-tab {
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(11, 60, 109, 0.3);
+    background: rgba(255, 255, 255, 0.9);
+    color: #0b3c6d;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .tour-lang-tab:hover {
+    background: rgba(11, 60, 109, 0.12);
+  }
+
+  .tour-lang-tab.active {
+    background: #0b3c6d;
+    color: #fff;
+    border-color: #0b3c6d;
+  }
+
   .modal-body .checkbox-row label {
     display: inline-flex;
     align-items: center;

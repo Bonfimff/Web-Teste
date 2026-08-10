@@ -600,6 +600,7 @@ const mapBackendTourToPageTour = (tour) => {
     roteiro: tour?.roteiro || '',
     pontoEmbarque: tour?.ponto_embarque || '',
     pontoDesembarque: tour?.ponto_desembarque || '',
+    traducoes: tour?.traducoes || {},
     status: normalizeTourStatus(tour?.estado || tour?.status),
     cidade: tour?.cidade || '',
     modalidade: (tour?.modalidade || 'free').toLowerCase(),
@@ -670,6 +671,54 @@ const formatTourValueBRL = (value) => {
 let currentlyEditingTourId = null;
 let isCreatingNewTour = false;
 let currentTourHorarios = [];
+
+// Campos de texto livre do tour preenchidos separadamente para cada idioma
+// (aba de tradução do modal de edição). "pt" é o idioma padrão/obrigatório;
+// os outros são opcionais e vão pra coluna `traducoes` (JSON) no banco.
+const TOUR_LANG_FIELD_IDS = {
+  periodo: 'tourModalPeriodo',
+  saida: 'tourModalSaida',
+  grupo: 'tourModalGrupo',
+  duracao: 'tourModalDuracao',
+  encontro: 'tourModalMeeting',
+  identificacao: 'tourModalIdentification',
+  ponto_embarque: 'tourModalPontoEmbarque',
+  ponto_desembarque: 'tourModalPontoDesembarque',
+  inclui: 'tourModalInclui',
+  roteiro: 'tourModalRoteiro'
+};
+const TOUR_TRANSLATE_LANGS = ['en', 'fr', 'es', 'it', 'zh'];
+let tourEditLangValues = {};
+let tourEditCurrentLang = 'pt';
+
+const readTourLangFieldsFromInputs = () => {
+  const valores = {};
+  Object.entries(TOUR_LANG_FIELD_IDS).forEach(([campo, elId]) => {
+    valores[campo] = (document.getElementById(elId)?.value || '').trim();
+  });
+  return valores;
+};
+
+const writeTourLangFieldsToInputs = (valores) => {
+  Object.entries(TOUR_LANG_FIELD_IDS).forEach(([campo, elId]) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = (valores && valores[campo]) || '';
+  });
+};
+
+const syncCurrentTourEditLang = () => {
+  tourEditLangValues[tourEditCurrentLang] = readTourLangFieldsFromInputs();
+};
+
+const switchTourEditLang = (lang) => {
+  if (lang === tourEditCurrentLang) return;
+  syncCurrentTourEditLang();
+  tourEditCurrentLang = lang;
+  writeTourLangFieldsToInputs(tourEditLangValues[lang] || {});
+  document.querySelectorAll('#tourModalLangTabs .tour-lang-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+  });
+};
 
 const renderTourHorarios = (horarios) => {
   const container = document.getElementById('tourModalHorarios');
@@ -1740,6 +1789,16 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalModalidade').value = (tourData.modalidade || 'free').toLowerCase();
   document.getElementById('tourModalCanalReserva').value = (tourData.canal_reserva || tourData.canalReserva || 'web').toLowerCase();
 
+  const traducoesExistentes = tourData.traducoes || {};
+  tourEditLangValues = { pt: readTourLangFieldsFromInputs() };
+  TOUR_TRANSLATE_LANGS.forEach((lang) => {
+    tourEditLangValues[lang] = { ...(traducoesExistentes[lang] || {}) };
+  });
+  tourEditCurrentLang = 'pt';
+  document.querySelectorAll('#tourModalLangTabs .tour-lang-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === 'pt');
+  });
+
   renderTourImagePreview([]);
   renderTourGallery(Array.isArray(tourData.imagens) ? tourData.imagens : []);
 
@@ -1789,37 +1848,61 @@ const toggleTourPauseFromModal = () => {
   carregarToursGerenciamento();
 };
 
-const deleteTourFromModal = () => {
+const deleteTourFromModal = async () => {
   if (!currentlyEditingTourId) return;
   const tours = getPageTours();
   const tourToDelete = tours.find(t => String(t.id) === String(currentlyEditingTourId));
   if (!tourToDelete) return;
   if (!confirm(`Excluir tour "${tourToDelete.name || tourToDelete.id}"?`)) return;
-  const updatedTours = tours.filter(t => String(t.id) !== String(currentlyEditingTourId));
-  setPageTours(updatedTours);
-  closeTourEditModal();
-  carregarToursGerenciamento();
+
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/delete_tour_pagina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: currentlyEditingTourId, admin_email: adminEmail })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      alert(`Falha ao excluir tour: ${errorData.message || response.statusText}`);
+      return;
+    }
+
+    const updatedTours = tours.filter(t => String(t.id) !== String(currentlyEditingTourId));
+    setPageTours(updatedTours);
+    closeTourEditModal();
+    carregarToursGerenciamento();
+  } catch (error) {
+    console.error('Erro ao excluir tour:', error);
+    alert('Erro ao excluir tour. Verifique sua conexão e tente novamente.');
+  }
 };
 
 const saveTourEditModal = async () => {
   const id = currentlyEditingTourId;
   if (!id && !isCreatingNewTour) return;
 
+  // Garante que as informações do idioma que está sendo exibido no momento
+  // do clique em "Salvar" também sejam capturadas antes de ler tourEditLangValues.pt.
+  syncCurrentTourEditLang();
+  const ptFields = tourEditLangValues.pt || {};
+
   const name = document.getElementById('tourModalName').value.trim();
   const languages = getTourModalLanguages();
-  const meeting = document.getElementById('tourModalMeeting').value.trim();
-  const identification = document.getElementById('tourModalIdentification').value.trim();
+  const meeting = ptFields.encontro || '';
+  const identification = ptFields.identificacao || '';
   const link = document.getElementById('tourModalLink').value.trim();
   const value = parseFloat(document.getElementById('tourModalValue').value);
-  const periodo = document.getElementById('tourModalPeriodo').value.trim();
-  const saida = document.getElementById('tourModalSaida').value.trim();
-  const grupo = document.getElementById('tourModalGrupo').value.trim();
-  const duracao = document.getElementById('tourModalDuracao').value.trim();
+  const periodo = ptFields.periodo || '';
+  const saida = ptFields.saida || '';
+  const grupo = ptFields.grupo || '';
+  const duracao = ptFields.duracao || '';
   const diasSemana = document.getElementById('tourModalDiasSemana').value.trim();
-  const inclui = document.getElementById('tourModalInclui').value.trim();
-  const roteiro = document.getElementById('tourModalRoteiro').value.trim();
-  const pontoEmbarque = document.getElementById('tourModalPontoEmbarque').value.trim();
-  const pontoDesembarque = document.getElementById('tourModalPontoDesembarque').value.trim();
+  const inclui = ptFields.inclui || '';
+  const roteiro = ptFields.roteiro || '';
+  const pontoEmbarque = ptFields.ponto_embarque || '';
+  const pontoDesembarque = ptFields.ponto_desembarque || '';
   const status = document.getElementById('tourModalStatus').value;
   const cidade = document.getElementById('tourModalCidade').value;
   const modalidade = document.getElementById('tourModalModalidade').value;
@@ -1831,6 +1914,14 @@ const saveTourEditModal = async () => {
     alert('Preencha ao menos o nome do tour e a cidade antes de criar.');
     return;
   }
+
+  const traducoes = {};
+  TOUR_TRANSLATE_LANGS.forEach((lang) => {
+    const valores = tourEditLangValues[lang] || {};
+    if (Object.values(valores).some((v) => (v || '').trim())) {
+      traducoes[lang] = valores;
+    }
+  });
 
   const payload = {
     ...(isCreatingNewTour ? {} : { id }),
@@ -1855,6 +1946,7 @@ const saveTourEditModal = async () => {
     canal_reserva: canalReserva,
     pasta_imagens: pastaImagens,
     horarios: currentTourHorarios.join(','),
+    traducoes,
     admin_email: adminEmail
   };
 
@@ -1912,7 +2004,8 @@ const saveTourEditModal = async () => {
           modalidade,
           canal_reserva: canalReserva,
           pastaImagens,
-          horarios: currentTourHorarios.join(',')
+          horarios: currentTourHorarios.join(','),
+          traducoes
         };
       }
       return t;
@@ -3873,6 +3966,10 @@ const setupAccountModalEvents = () => {
       carregarContasDoBanco();
     });
   }
+
+  document.querySelectorAll('#tourModalLangTabs .tour-lang-tab').forEach((btn) => {
+    btn.addEventListener('click', () => switchTourEditLang(btn.getAttribute('data-lang')));
+  });
 
   const tourModalCancel = document.getElementById('tourModalCancel');
   const tourModalSave = document.getElementById('tourModalSave');
