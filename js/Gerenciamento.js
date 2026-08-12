@@ -57,6 +57,7 @@ let currentRolesConfig = {}; // guarda as permissões atuais carregadas
 let currentUserPermissions = null; // permissões do usuário logado
 let currentReservations = []; // lista de reservas carregadas para gerenciamento da página
 let currentAccounts = []; // lista de contas carregadas para pesquisa na aba Contas
+let accountsFilterTab = 'colaboradores'; // 'colaboradores' (tudo que não é cliente_user) ou 'clientes'
 let importantInfoRefreshTimer = null;
 
 const escapeHtml = (value) => String(value ?? '')
@@ -112,14 +113,34 @@ const renderAccountsTable = (accounts) => {
 
 const applyAccountsSearchFilter = () => {
   const query = (document.getElementById('accountsNameSearch')?.value || '').trim().toLowerCase();
+
+  const byTab = currentAccounts.filter((account) => {
+    const isCliente = (account.role || '').trim().toLowerCase() === 'cliente_user';
+    return accountsFilterTab === 'clientes' ? isCliente : !isCliente;
+  });
+
   const visibleAccounts = query
-    ? currentAccounts.filter((account) => {
+    ? byTab.filter((account) => {
         const fullName = `${account.nome || ''} ${account.sobrenome || ''}`.toLowerCase();
         return fullName.includes(query) || (account.email || '').toLowerCase().includes(query);
       })
-    : currentAccounts;
+    : byTab;
 
   renderAccountsTable(visibleAccounts);
+};
+
+const setAccountsFilterTab = (tab) => {
+  accountsFilterTab = tab;
+  const styleActive = (btn, active) => {
+    if (!btn) return;
+    btn.style.background = active ? '#fff' : '#e5e7eb';
+    btn.style.color = active ? '#18b015' : '#4b5563';
+    btn.style.borderColor = active ? '#d1d5db' : '#d1d5db';
+    btn.style.boxShadow = active ? '0 -1px 0 #fff inset' : 'none';
+  };
+  styleActive(document.getElementById('accountsFilterColaboradores'), tab === 'colaboradores');
+  styleActive(document.getElementById('accountsFilterClientes'), tab === 'clientes');
+  applyAccountsSearchFilter();
 };
 const IMPORTANT_INFO_DISMISSED_KEY = 'importantInfoDismissedItems';
 
@@ -2779,6 +2800,11 @@ const carregarPaginaSecaoGerenciamento = async () => {
   preencherPaginaSecaoForm(paginaSelect.value, secaoSelect.value);
 };
 
+// Cidade marcada = liberada; nenhuma marcada = nenhuma cidade liberada.
+// Usado como default local (fallback quando a API falha) pra admin/super_admin
+// não ficarem sem ver nada — precisam das 4 cidades explícitas.
+const TODAS_AS_CIDADES = ['Rio de Janeiro', 'Lencois', 'Sao Luis', 'Salvador'];
+
 const DEFAULT_ROLE_PERMISSIONS = {
   cliente_user: {
     manageReservas: false,
@@ -2804,9 +2830,9 @@ const DEFAULT_ROLE_PERMISSIONS = {
     managePageContent: true,
     manageComentarios: true,
     manageFinanceiro: true,
-    financeiroCidades: [],
+    financeiroCidades: TODAS_AS_CIDADES,
     financeiroSomenteVisualizar: false,
-    reservasCidades: [],
+    reservasCidades: TODAS_AS_CIDADES,
     pages: ['Principal', 'Gerenciamento'],
     tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   },
@@ -2821,9 +2847,9 @@ const DEFAULT_ROLE_PERMISSIONS = {
     managePageContent: true,
     manageComentarios: true,
     manageFinanceiro: true,
-    financeiroCidades: [],
+    financeiroCidades: TODAS_AS_CIDADES,
     financeiroSomenteVisualizar: false,
-    reservasCidades: [],
+    reservasCidades: TODAS_AS_CIDADES,
     pages: ['Principal', 'Gerenciamento'],
     tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   }
@@ -3256,17 +3282,33 @@ const carregarAgendamentosDoBanco = async () => {
       }
     }
 
+    // "Sem guia definido" não conta como guia em comum — precisa ser um nome
+    // real pra valer a exceção abaixo.
+    const GUIA_VAZIO = new Set(['', 'n/s', 'ns', '-', 'não definido', 'nao definido', 'sem guia']);
+    const guiaEhReal = (guia) => {
+      const norm = (guia || '').trim().toLowerCase();
+      return norm && !GUIA_VAZIO.has(norm);
+    };
+
     const grouped = {};
     allNextDateTime.forEach(ag => {
       const tour = (ag.tour || '').trim();
       const idioma = (ag.idioma || '').trim();
+      const modalidade = (ag.modalidade || '').trim();
       const guia = (ag.guia || '').trim();
-      const key = `${tour}||${idioma}||${guia}`;
+      // Modalidade diferente = saída diferente (ex: privado x compartilhado no
+      // mesmo horário não é o mesmo grupo) — EXCETO quando o guia é o mesmo
+      // (nome real, não "N/S"): aí é o mesmo guia tocando as duas modalidades
+      // juntas, então continua sendo a mesma saída.
+      const key = guiaEhReal(guia)
+        ? `${tour}||${idioma}||${guia}`
+        : `${tour}||${idioma}||${modalidade}||${guia}`;
       const qtd = Number(ag.qtd ?? ag.qtd_pessoas ?? 0) || 0;
       if (!grouped[key]) {
         grouped[key] = {
           tour: tour || '-',
           idioma: idioma || '-',
+          modalidades: new Set([modalidade || '-']),
           guia: guia || '-',
           data: ag.data || '-',
           hora: ag.hora || '-',
@@ -3274,6 +3316,7 @@ const carregarAgendamentosDoBanco = async () => {
           count: 1
         };
       } else {
+        grouped[key].modalidades.add(modalidade || '-');
         grouped[key].pessoas += qtd;
         grouped[key].count += 1;
       }
@@ -3285,9 +3328,10 @@ const carregarAgendamentosDoBanco = async () => {
     const nextTourDetails = document.getElementById('nextTourDetails');
 
     if (nextTourDetails) {
+      // Fecha só via classe (max-height/opacity no CSS) — nunca via display
+      // inline, senão a animação de abrir/fechar quebra e o botão "pula".
       nextTourDetails.classList.remove('open');
       nextTourDetails.setAttribute('aria-hidden', 'true');
-      nextTourDetails.style.display = 'none';
 
       let tourListContainer = nextTourDetails.querySelector('.next-tour-entries');
       if (!tourListContainer) {
@@ -3308,6 +3352,7 @@ const carregarAgendamentosDoBanco = async () => {
             <div class="next-tour-entry" style="margin-bottom:0.4rem; border-bottom:1px solid rgba(0,0,0,0.08); padding-bottom:0.4rem;">
               <div><strong>Tour:</strong> ${group.tour}</div>
               <div><strong>Idioma:</strong> ${group.idioma}</div>
+              <div><strong>Modalidade:</strong> ${[...group.modalidades].join(', ')}</div>
               <div><strong>Guia:</strong> ${group.guia}</div>
               <div><strong>Pessoas:</strong> ${group.pessoas}</div>
             </div>`;
@@ -3330,7 +3375,6 @@ const carregarAgendamentosDoBanco = async () => {
         nextDetails.setAttribute('aria-hidden', String(!expanded));
         nextToggle.setAttribute('aria-expanded', String(expanded));
         nextToggle.classList.toggle('open', expanded);
-        nextDetails.style.display = expanded ? 'block' : 'none';
         nextToggle.textContent = expanded ? '▼' : '▶';
       });
     }
@@ -3508,6 +3552,7 @@ const mostrarSecao = (secao) => {
     carregarPaginaSecaoGerenciamento();
     carregarCidadeVisualGerenciamento();
   }
+
 };
 
 const toggleReservaPausada = async (id, currentStatus) => {
@@ -3627,7 +3672,17 @@ const carregarContasDoBanco = async () => {
       accountsSearchInput.dataset.searchAttached = '1';
     }
 
-    applyAccountsSearchFilter();
+    const colaboradoresBtn = document.getElementById('accountsFilterColaboradores');
+    const clientesBtn = document.getElementById('accountsFilterClientes');
+    if (colaboradoresBtn && !colaboradoresBtn.dataset.filterAttached) {
+      colaboradoresBtn.addEventListener('click', () => setAccountsFilterTab('colaboradores'));
+      colaboradoresBtn.dataset.filterAttached = '1';
+    }
+    if (clientesBtn && !clientesBtn.dataset.filterAttached) {
+      clientesBtn.addEventListener('click', () => setAccountsFilterTab('clientes'));
+      clientesBtn.dataset.filterAttached = '1';
+    }
+    setAccountsFilterTab(accountsFilterTab);
 
     // Atualiza gráfico de países com base no cadastro de contas
     updateCountryPie(accounts);
@@ -3782,6 +3837,35 @@ const populateRoleOptionsInto = (selectEl, selectedValue) => {
   if (selectedValue) selectEl.value = selectedValue;
 };
 
+// Extrai DDI (2) + DDD (2) + número de um telefone só-dígitos, formato
+// esperado pelo robô de WhatsApp (ex: 5521999999999 = DDI 55 + DDD 21 + número).
+const parseWhatsAppNumeroBR = (raw) => {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length !== 12 && digits.length !== 13) return null;
+  return { digits, ddi: digits.slice(0, 2), ddd: digits.slice(2, 4), numero: digits.slice(4) };
+};
+
+// Confere com o admin se o número (DDI+DDD+número) está certo antes de
+// salvar um alerta de WhatsApp — evita cadastrar número sem código de país/área.
+const confirmWhatsAppNumero = (raw) => {
+  const parsed = parseWhatsAppNumeroBR(raw);
+  if (!parsed) {
+    alert(`Número de WhatsApp inválido: "${raw || ''}".\nPreencha o campo "Celular" com DDI + DDD + número, só dígitos (ex: 5521999999999).`);
+    return false;
+  }
+  return confirm(`Confirma o número de WhatsApp?\n\nDDI: ${parsed.ddi}\nDDD: ${parsed.ddd}\nNúmero: ${parsed.numero}`);
+};
+
+let accountWhatsAppPausadoState = false;
+
+const updateAccountWhatsAppPauseButton = () => {
+  const btn = document.getElementById('accountWhatsAppPause');
+  if (!btn) return;
+  btn.textContent = accountWhatsAppPausadoState ? 'Retomar alertas' : 'Pausar alertas';
+  btn.style.background = accountWhatsAppPausadoState ? '#f59e0b' : '';
+  btn.style.color = accountWhatsAppPausadoState ? '#fff' : '';
+};
+
 const openAccountModal = (account) => {
   currentlyEditingAccount = account;
   const accountModal = document.getElementById('accountModal');
@@ -3792,6 +3876,7 @@ const openAccountModal = (account) => {
   const roleInput = document.getElementById('accountRole');
   const generoInput = document.getElementById('accountGenero');
   const senhaInput = document.getElementById('accountSenha');
+  const whatsappAlertaInput = document.getElementById('accountWhatsAppAlerta');
 
   if (!accountModal || !emailInput) return;
 
@@ -3803,10 +3888,31 @@ const openAccountModal = (account) => {
   if (paisOrigemInput) paisOrigemInput.value = account.pais_origem || '';
   if (generoInput) generoInput.value = account.genero || '';
   if (senhaInput) senhaInput.value = '';
+  if (whatsappAlertaInput) whatsappAlertaInput.checked = !!account.whatsappAlertaAtivo;
+  accountWhatsAppPausadoState = !!account.whatsappAlertaPausado;
+  updateAccountWhatsAppPauseButton();
 
   populateRoleOptionsInto(roleInput, account.role || 'cliente_user');
+  updateAccountWhatsAppFieldsVisibility('accountRole', 'accountWhatsAppFields', 'accountWhatsAppAlerta');
+  if (roleInput && !roleInput.dataset.whatsappVisibilityAttached) {
+    roleInput.addEventListener('change', () => updateAccountWhatsAppFieldsVisibility('accountRole', 'accountWhatsAppFields', 'accountWhatsAppAlerta'));
+    roleInput.dataset.whatsappVisibilityAttached = '1';
+  }
 
   accountModal.classList.remove('hidden');
+};
+
+// Clientes não recebem alerta de WhatsApp (não têm acesso a reservas de
+// terceiros) — o campo some do formulário quando a role selecionada é cliente_user.
+const updateAccountWhatsAppFieldsVisibility = (roleSelectId, wrapperId, checkboxId) => {
+  const role = document.getElementById(roleSelectId)?.value || '';
+  const isCliente = role.trim().toLowerCase() === 'cliente_user';
+  const wrapper = document.getElementById(wrapperId);
+  if (wrapper) wrapper.style.display = isCliente ? 'none' : '';
+  if (isCliente) {
+    const checkbox = document.getElementById(checkboxId);
+    if (checkbox) checkbox.checked = false;
+  }
 };
 
 const closeAccountModal = () => {
@@ -3826,6 +3932,14 @@ const setupAccountModalEvents = () => {
     });
   }
 
+  const accountWhatsAppPauseBtn = document.getElementById('accountWhatsAppPause');
+  if (accountWhatsAppPauseBtn) {
+    accountWhatsAppPauseBtn.addEventListener('click', () => {
+      accountWhatsAppPausadoState = !accountWhatsAppPausadoState;
+      updateAccountWhatsAppPauseButton();
+    });
+  }
+
   if (accountSave) {
     accountSave.addEventListener('click', async () => {
       if (!currentlyEditingAccount) return;
@@ -3837,6 +3951,16 @@ const setupAccountModalEvents = () => {
       const role = document.getElementById('accountRole')?.value;
       const genero = document.getElementById('accountGenero')?.value || '';
       const senha = document.getElementById('accountSenha')?.value;
+      const whatsappAlertaAtivo = document.getElementById('accountWhatsAppAlerta')?.checked ?? false;
+
+      if (whatsappAlertaAtivo && role === 'cliente_user') {
+        alert('Contas de cliente não podem receber alertas de WhatsApp. Escolha outra role ou desmarque o alerta.');
+        return;
+      }
+
+      if (whatsappAlertaAtivo && !confirmWhatsAppNumero(celular)) {
+        return;
+      }
 
       const paisOrigem = document.getElementById('accountPaisOrigem')?.value.trim();
       const currentUserEmail = localStorage.getItem('userEmail');
@@ -3848,7 +3972,10 @@ const setupAccountModalEvents = () => {
         celular,
         pais_origem: paisOrigem || undefined,
         genero,
-        role
+        role,
+        whatsappAlertaAtivo,
+        whatsappNumero: celular,
+        whatsappAlertaPausado: accountWhatsAppPausadoState
       };
       if (senha) payload.senha = senha;
 
@@ -3913,7 +4040,13 @@ const setupAccountModalEvents = () => {
     addAccountBtn.addEventListener('click', () => {
       if (!addAccountModal) return;
       document.getElementById('addAccountForm')?.reset();
-      populateRoleOptionsInto(document.getElementById('newAccountRole'), 'cliente_user');
+      const newRoleSelect = document.getElementById('newAccountRole');
+      populateRoleOptionsInto(newRoleSelect, 'cliente_user');
+      updateAccountWhatsAppFieldsVisibility('newAccountRole', 'newAccountWhatsAppFields', 'newAccountWhatsAppAlerta');
+      if (newRoleSelect && !newRoleSelect.dataset.whatsappVisibilityAttached) {
+        newRoleSelect.addEventListener('change', () => updateAccountWhatsAppFieldsVisibility('newAccountRole', 'newAccountWhatsAppFields', 'newAccountWhatsAppAlerta'));
+        newRoleSelect.dataset.whatsappVisibilityAttached = '1';
+      }
       addAccountModal.classList.remove('hidden');
     });
   }
@@ -3932,9 +4065,19 @@ const setupAccountModalEvents = () => {
       const paisOrigem = document.getElementById('newAccountPaisOrigem')?.value.trim();
       const genero = document.getElementById('newAccountGenero')?.value || '';
       const role = document.getElementById('newAccountRole')?.value || 'cliente_user';
+      const whatsappAlertaAtivo = document.getElementById('newAccountWhatsAppAlerta')?.checked ?? false;
 
       if (!email || !senha) {
         alert('E-mail e senha são obrigatórios.');
+        return;
+      }
+
+      if (whatsappAlertaAtivo && role === 'cliente_user') {
+        alert('Contas de cliente não podem receber alertas de WhatsApp. Escolha outra role ou desmarque o alerta.');
+        return;
+      }
+
+      if (whatsappAlertaAtivo && !confirmWhatsAppNumero(celular)) {
         return;
       }
 
@@ -3951,7 +4094,9 @@ const setupAccountModalEvents = () => {
           celular,
           pais_origem: paisOrigem,
           genero,
-          role
+          role,
+          whatsappAlertaAtivo,
+          whatsappNumero: celular
         })
       });
 
@@ -4120,6 +4265,8 @@ const openEditModalFromBackend = (ag) => {
   const modal = document.getElementById('reservationModal');
   if (!modal) return;
 
+  carregarOpcoesGuiaReserva();
+
   const modalTour = document.getElementById('modalTour');
   const modalDate = document.getElementById('modalDate');
   const modalTime = document.getElementById('modalTime');
@@ -4188,7 +4335,35 @@ const openEditModalFromBackend = (ag) => {
   modal.classList.remove('hidden');
 };
 
+let guiaOptionsCache = null;
+
+const carregarOpcoesGuiaReserva = async () => {
+  const datalist = document.getElementById('modalGuideOptions');
+  if (!datalist) return;
+
+  if (guiaOptionsCache) {
+    datalist.innerHTML = guiaOptionsCache.map((nome) => `<option value="${escapeHtml(nome)}"></option>`).join('');
+    return;
+  }
+
+  const currentUserEmail = localStorage.getItem('userEmail');
+  if (!currentUserEmail) return;
+
+  try {
+    const response = await fetchWithApiFallback(`/get_colaboradores_guias?email=${encodeURIComponent(currentUserEmail)}`);
+    if (!response.ok) return;
+    const nomes = await response.json();
+    if (!Array.isArray(nomes)) return;
+    guiaOptionsCache = nomes;
+    datalist.innerHTML = nomes.map((nome) => `<option value="${escapeHtml(nome)}"></option>`).join('');
+  } catch (error) {
+    console.error('Erro ao carregar lista de guias:', error);
+  }
+};
+
 const initReservationManagement = () => {
+  carregarOpcoesGuiaReserva();
+
   const tableBody = document.getElementById('reservationsBody');
   const filterFrom = document.getElementById('filterFrom');
   const filterTo = document.getElementById('filterTo');

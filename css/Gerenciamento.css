@@ -735,19 +735,6 @@ body {
   box-sizing: border-box;
 }
 
-.next-tour-details-panel {
-  display: none;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #374151;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.next-tour-details-panel.open {
-  display: block;
-}
-
 .profile-menu.open .profile-dropdown {
   display: block !important;
   visibility: visible !important;
@@ -878,6 +865,91 @@ body {
 }
 
 /* Tabela responsiva */
+/* Barra de abas (Colaboradores/Clientes/Buscar/Nova Conta) grudada na
+   tabela de Contas — sem padding lateral pra a primeira aba encostar
+   exatamente na borda esquerda da tabela abaixo, sem sobra de borda. */
+.accounts-tabbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.accounts-tab-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  border: 1px solid #d1d5db;
+  border-bottom: none;
+  border-radius: 0.6rem 0.6rem 0 0;
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  top: 1px;
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.accounts-tab-btn-accent {
+  border-color: #18b015;
+  background: #18b015;
+  color: #fff;
+}
+
+.accounts-search-tab {
+  flex: 1 1 220px;
+  min-width: 170px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-bottom: none;
+  border-radius: 0.6rem 0.6rem 0 0;
+  padding: 0.35rem 1rem;
+  position: relative;
+  top: 1px;
+  background: #e5e7eb;
+}
+
+.accounts-search-tab label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.accounts-search-tab input {
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.accounts-search-tab input:focus {
+  outline: none;
+}
+
+@media (max-width: 560px) {
+  .accounts-tab-btn {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .accounts-search-tab {
+    flex-basis: 130px;
+    min-width: 130px;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .accounts-search-tab label {
+    display: none;
+  }
+}
+
 .rio-tour-table {
   width: 100%;
   border-collapse: collapse;

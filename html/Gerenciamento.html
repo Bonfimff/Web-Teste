@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=38">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=40">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -174,15 +174,17 @@
                     <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
                 </div>
             </div>
-            <div style="margin-bottom:1rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;">
-                <label style="font-weight:700; color:#1f2937; display:block;">
-                    Buscar por Nome ou E-mail
-                    <input type="text" id="accountsNameSearch" placeholder="Nome ou e-mail" style="margin-top:0.5rem; width:100%; max-width:320px; padding:0.55rem 0.75rem; border:1px solid #ccc; border-radius:0.5rem;" />
-                </label>
-                <button type="button" id="addAccountBtn" class="btn-book" style="background:#18b015;color:#fff;">Nova Conta</button>
+            <div class="accounts-tabbar">
+                <button type="button" id="accountsFilterColaboradores" data-filter="colaboradores" class="accounts-tab-btn">Colaboradores</button>
+                <button type="button" id="accountsFilterClientes" data-filter="clientes" class="accounts-tab-btn">Clientes</button>
+                <div class="accounts-search-tab">
+                    <label for="accountsNameSearch">Buscar</label>
+                    <input type="text" id="accountsNameSearch" placeholder="Nome ou e-mail" />
+                </div>
+                <button type="button" id="addAccountBtn" class="accounts-tab-btn accounts-tab-btn-accent">+ Nova Conta</button>
             </div>
-            <div style="overflow-x:auto;">
-                <table class="rio-tour-table">
+            <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0 0 0.6rem 0.6rem;">
+                <table class="rio-tour-table" style="margin:0; border-radius:0;">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -221,7 +223,7 @@
                     <label><input type="checkbox" id="roleCheckCarregarReservas" /> Carregar todas as reservas</label><br />
                     <label><input type="checkbox" id="roleCheckPageContent" /> Gerenciar conteúdo da página (tours, aviso, contato, textos)</label><br />
                     <label><input type="checkbox" id="roleCheckComentarios" /> Moderar avaliações de clientes</label><br />
-                    <label><input type="checkbox" id="roleCheckFinanceiro" /> Gerenciar financeiro</label>
+                    <label><input type="checkbox" id="roleCheckFinanceiro" /> Gerenciar financeiro</label><br />
                 </div>
 
                 <div id="reservasRestricoes" style="margin-top:1rem; color:#1f2937;">
@@ -231,7 +233,7 @@
                     <label><input type="checkbox" class="reservas-city-perm" data-cidade="Lencois" /> Lençóis Maranhenses</label><br />
                     <label><input type="checkbox" class="reservas-city-perm" data-cidade="Sao Luis" /> São Luís do Maranhão</label><br />
                     <label><input type="checkbox" class="reservas-city-perm" data-cidade="Salvador" /> Salvador</label><br />
-                    <span style="font-size:0.8rem; color:#6b7280;">Nenhuma cidade marcada = pode ver/gerenciar todas.</span>
+                    <span style="font-size:0.8rem; color:#6b7280;">Cidade marcada = pode ver/gerenciar. Nenhuma marcada = não vê/gerencia nenhuma cidade.</span>
                 </div>
 
                 <div id="financeiroRestricoes" style="margin-top:1rem; color:#1f2937;">
@@ -241,7 +243,7 @@
                     <label><input type="checkbox" class="finance-city-perm" data-cidade="Lencois" /> Lençóis Maranhenses</label><br />
                     <label><input type="checkbox" class="finance-city-perm" data-cidade="Sao Luis" /> São Luís do Maranhão</label><br />
                     <label><input type="checkbox" class="finance-city-perm" data-cidade="Salvador" /> Salvador</label><br />
-                    <span style="font-size:0.8rem; color:#6b7280;">Nenhuma cidade marcada = pode ver/gerenciar todas.</span><br />
+                    <span style="font-size:0.8rem; color:#6b7280;">Cidade marcada = pode ver/gerenciar. Nenhuma marcada = não vê/gerencia nenhuma cidade.</span><br />
                     <label style="margin-top:0.4rem; display:inline-block;"><input type="checkbox" id="roleCheckFinanceiroSomenteView" /> Somente visualizar (não pode lançar, editar ou excluir entradas/retiradas/despesas)</label>
                 </div>
 
@@ -680,7 +682,8 @@
                   </label>
                   <label>
                       Guia
-                      <input type="text" id="modalGuide" />
+                      <input type="text" id="modalGuide" list="modalGuideOptions" autocomplete="off" />
+                      <datalist id="modalGuideOptions"></datalist>
                   </label>
                   <label>
                       Pessoas
@@ -909,6 +912,13 @@
               Nova Senha (opcional)
               <input type="password" id="accountSenha" placeholder="Deixe em branco para manter a senha atual" autocomplete="new-password" />
             </label>
+            <div id="accountWhatsAppFields" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #e5e7eb;">
+              <label style="flex-direction:row; align-items:center; gap:0.5rem;">
+                <input type="checkbox" id="accountWhatsAppAlerta" style="width:auto; flex:0 0 auto;" /> Receber alertas por WhatsApp
+              </label>
+              <span style="font-size:0.8rem; color:#6b7280; display:block; margin:0.15rem 0 0.5rem;">Usa o número do campo "Celular" acima (precisa ter DDI + DDD).</span>
+              <button type="button" id="accountWhatsAppPause" class="btn-book" style="font-size:0.85rem;">Pausar alertas</button>
+            </div>
             <div class="modal-actions">
               <button type="button" id="accountDelete" class="btn-book btn-danger">Excluir Perfil</button>
               <button type="button" id="accountCancel" class="btn-book">Cancelar</button>
@@ -962,6 +972,12 @@
               Role
               <select id="newAccountRole"></select>
             </label>
+            <div id="newAccountWhatsAppFields" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #e5e7eb;">
+              <label style="flex-direction:row; align-items:center; gap:0.5rem;">
+                <input type="checkbox" id="newAccountWhatsAppAlerta" style="width:auto; flex:0 0 auto;" /> Receber alertas por WhatsApp
+              </label>
+              <span style="font-size:0.8rem; color:#6b7280; display:block; margin-top:0.15rem;">Usa o número do campo "Celular" acima (precisa ter DDI + DDD).</span>
+            </div>
             <div class="modal-actions">
               <button type="button" id="addAccountCancel" class="btn-book">Cancelar</button>
               <button type="button" id="addAccountSave" class="btn-book">Criar Conta</button>
@@ -1081,7 +1097,7 @@
 
     <script src="../js/Translation.js?v=2"></script>
     <script src="../js/Riodejaneiro.js?v=47"></script>
-    <script src="../js/Gerenciamento.js?v=62"></script>
+    <script src="../js/Gerenciamento.js?v=73"></script>
 </body>
 </html>
 
