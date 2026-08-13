@@ -29,11 +29,17 @@
         const heroLocation = document.querySelector('.rio-hero-location');
         if (heroLocation) heroLocation.textContent = t.hero_location;
 
+        // innerHTML (e não textContent) porque hero_desc traz <span class="rio-hero-accent">
+        // nos trechos destacados em dourado — com textContent essa marcação se perderia
+        // na primeira troca de idioma.
         const heroDesc = document.querySelector('.rio-hero-desc');
-        if (heroDesc) heroDesc.textContent = t.hero_desc;
+        if (heroDesc) heroDesc.innerHTML = t.hero_desc;
 
         const heroButton = document.querySelector('.rio-hero-content .btn-book');
         if (heroButton) heroButton.textContent = t.hero_button;
+
+        const heroScroll = document.querySelector('.rio-hero-scroll-label');
+        if (heroScroll && t.hero_scroll) heroScroll.textContent = t.hero_scroll;
 
         if (!window.__cidadeAvisoCarregado) {
             const noticeTitle = document.querySelector('.rio-notice-title');
@@ -130,6 +136,19 @@
         const footerText = document.querySelector('.rio-footer-text');
         if (footerText) footerText.textContent = t.footer;
     };
+
+    // Esconde seções dinâmicas (#expedicoes-compartilhadas, #expedicoes-privativas)
+    // enquanto o grid delas não tiver nenhum card — evitam-se, assim, os espaços
+    // em branco quando não há tours daquela modalidade cadastrados para a cidade.
+    // Usa MutationObserver porque os cards chegam via fetch assíncrono ao banco
+    // (site-shell.js), então a checagem precisa reagir ao momento em que entram.
+    document.querySelectorAll('.rio-tours[id] .rio-tours-grid').forEach((grid) => {
+        const section = grid.closest('.rio-tours');
+        if (!section) return;
+        const sync = () => section.classList.toggle('rio-tours-vazia', grid.childElementCount === 0);
+        sync();
+        new MutationObserver(sync).observe(grid, { childList: true });
+    });
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {

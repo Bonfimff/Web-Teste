@@ -12,8 +12,11 @@
         const heroLocation = document.querySelector('.rio-hero-location');
         if (heroLocation) heroLocation.textContent = t.hero_location;
 
+        // innerHTML (e não textContent) porque hero_desc traz <span class="rio-hero-accent">
+        // nos trechos destacados em dourado — com textContent essa marcação se perderia
+        // na primeira troca de idioma.
         const heroDesc = document.querySelector('.rio-hero-desc');
-        if (heroDesc) heroDesc.textContent = t.hero_desc;
+        if (heroDesc) heroDesc.innerHTML = t.hero_desc;
 
         const heroButton = document.querySelector('.rio-hero-content .btn-book');
         if (heroButton) heroButton.textContent = t.hero_button;

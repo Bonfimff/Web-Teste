@@ -873,7 +873,9 @@
         if (heroLocation) heroLocation.textContent = t.hero_location;
 
         const heroDesc = document.querySelector('#rioHeroDesc');
-        if (heroDesc) heroDesc.textContent = t.hero_desc;
+        // innerHTML (e não textContent) para preservar os <span class="rio-hero-accent">
+        // que marcam os trechos dourados da descrição no design em lockup.
+        if (heroDesc) heroDesc.innerHTML = t.hero_desc;
 
         const heroButton = document.querySelector('.rio-hero-content .btn-book');
         if (heroButton) heroButton.textContent = t.hero_button;

@@ -234,8 +234,8 @@ footer: 'Travel the World - Experiencias - Rio de Janeiro'
 Salvador: {
 pt: {
 hero_title: '<span class="rio-city-highlight">Salvador</span>',
-hero_location: 'Bahia - Brasil',
-hero_desc: 'Descubra a alma vibrante do Pelourinho: ladeiras coloridas, o som do berimbau ecoando pelas ruas e séculos de história a cada passo. Mais que um passeio, uma imersão nos sabores, sons e cores da Bahia.',
+hero_location: 'Bahia • Brasil',
+hero_desc: 'Descubra a alma vibrante do <span class="rio-hero-accent">Pelourinho</span>: ladeiras coloridas, o som do <span class="rio-hero-accent">berimbau</span> ecoando pelas ruas e séculos de história a cada passo. Mais que um passeio, uma imersão nos <span class="rio-hero-accent">sabores, sons e cores da Bahia</span>.',
 hero_button: 'Conhecer Tours',
 notice_title: 'Informações Importantes',
 notice_lines: [
@@ -265,8 +265,8 @@ relatos_like_label: 'Curtir foto'
 },
 en: {
 hero_title: '<span class="rio-city-highlight">Salvador</span>',
-hero_location: 'Bahia - Brazil',
-hero_desc: 'On a Free Walking Tour through the city, your experience goes beyond just seeing. You will be able to feel, touch and taste a bit of this land\'s culture and history.',
+hero_location: 'Bahia • Brazil',
+hero_desc: 'On a <span class="rio-hero-accent">Free Walking Tour</span> through the city, your experience goes beyond just seeing. You will be able to <span class="rio-hero-accent">feel, touch and taste</span> a bit of this land\'s <span class="rio-hero-accent">culture and history</span>.',
 hero_button: 'See Tours',
 notice_title: 'Important Information',
 notice_lines: [
@@ -296,8 +296,8 @@ relatos_like_label: 'Like photo'
 },
 es: {
 hero_title: '<span class="rio-city-highlight">Salvador</span>',
-hero_location: 'Bahía - Brasil',
-hero_desc: 'Al hacer un Free Walking Tour por la ciudad, tu experiencia va más allá de solo ver. Podrás sentir, tocar y probar un poco de la cultura y la historia de esta tierra.',
+hero_location: 'Bahía • Brasil',
+hero_desc: 'Al hacer un <span class="rio-hero-accent">Free Walking Tour</span> por la ciudad, tu experiencia va más allá de solo ver. Podrás <span class="rio-hero-accent">sentir, tocar y probar</span> un poco de la <span class="rio-hero-accent">cultura y la historia</span> de esta tierra.',
 hero_button: 'Conocer Tours',
 notice_title: 'Información Importante',
 notice_lines: [
@@ -327,8 +327,8 @@ relatos_like_label: 'Me gusta'
 },
 fr: {
 hero_title: '<span class="rio-city-highlight">Salvador</span>',
-hero_location: 'Bahia - Brésil',
-hero_desc: 'En participant à un Free Walking Tour dans la ville, votre expérience va bien au-delà de la simple observation. Vous pourrez sentir, toucher et goûter un peu de la culture et de l\'histoire de cette terre.',
+hero_location: 'Bahia • Brésil',
+hero_desc: 'En participant à un <span class="rio-hero-accent">Free Walking Tour</span> dans la ville, votre expérience va bien au-delà de la simple observation. Vous pourrez <span class="rio-hero-accent">sentir, toucher et goûter</span> un peu de la <span class="rio-hero-accent">culture et de l\'histoire</span> de cette terre.',
 hero_button: 'Découvrir les Tours',
 notice_title: 'Informations Importantes',
 notice_lines: [
@@ -358,8 +358,8 @@ relatos_like_label: "J'aime"
 },
 it: {
 hero_title: '<span class="rio-city-highlight">Salvador</span>',
-hero_location: 'Bahia - Brasile',
-hero_desc: 'Facendo un Free Walking Tour in città, la tua esperienza va oltre il semplice vedere. Potrai sentire, toccare e assaporare un po\' della cultura e della storia di questa terra.',
+hero_location: 'Bahia • Brasile',
+hero_desc: 'Facendo un <span class="rio-hero-accent">Free Walking Tour</span> in città, la tua esperienza va oltre il semplice vedere. Potrai <span class="rio-hero-accent">sentire, toccare e assaporare</span> un po\' della <span class="rio-hero-accent">cultura e della storia</span> di questa terra.',
 hero_button: 'Scopri i Tour',
 notice_title: 'Informazioni Importanti',
 notice_lines: [
@@ -388,9 +388,9 @@ testimonials: [
 relatos_like_label: 'Mi piace'
 },
 zh: {
-hero_title: '<span class="rio-city-highlight">萨尔瓦多</span>',
-hero_location: '巴伊亚 - 巴西',
-hero_desc: '参加城市徒步免费游览，您的体验将不仅仅是观赏。您还可以感受、触摸并品味这片土地的文化与历史。',
+hero_title: '<span class="rio-city-highlight">萨尔瓦多</span><span class="rio-city-accent">巴伊亚州</span>',
+hero_location: '巴伊亚 • 巴西',
+hero_desc: '参加城市<span class="rio-hero-accent">徒步免费游览</span>，您的体验将不仅仅是观赏。您还可以<span class="rio-hero-accent">感受、触摸并品味</span>这片土地的<span class="rio-hero-accent">文化与历史</span>。',
 hero_button: '查看行程',
 notice_title: '重要信息',
 notice_lines: [
@@ -422,9 +422,10 @@ relatos_like_label: '点赞照片'
 Lencoismaranhenses: {
 pt: {
 hero_title: '<span class="rio-city-highlight">Lençóis Maranhenses</span>',
-hero_location: 'Maranhão - Brasil',
-hero_desc: 'Descubra o paraíso das dunas e lagoas cristalinas no coração do Maranhão. Uma experiência única em um dos cenários naturais mais impressionantes do planeta.',
+hero_location: 'Maranhão • Brasil',
+hero_desc: 'Descubra o <span class="rio-hero-accent">paraíso das dunas</span> e lagoas cristalinas no coração do <span class="rio-hero-accent">Maranhão</span>. Uma experiência única em um dos cenários naturais mais impressionantes do planeta.',
 hero_button: 'Conhecer Tours',
+hero_scroll: 'Descubra mais',
 notice_title: 'Informações Importantes',
 notice_lines: [
 'A melhor época para visitar os Lençóis Maranhenses é entre junho e setembro, quando as lagoas estão cheias.',
@@ -522,9 +523,10 @@ footer: 'Travel the World - Experiências - Lençóis Maranhenses'
 },
 en: {
 hero_title: '<span class="rio-city-highlight">Lençóis Maranhenses</span>',
-hero_location: 'Maranhão - Brazil',
-hero_desc: 'Discover the paradise of dunes and crystal-clear lagoons in the heart of Maranhão. A unique experience in one of the most breathtaking natural landscapes on the planet.',
+hero_location: 'Maranhão • Brazil',
+hero_desc: 'Discover the <span class="rio-hero-accent">paradise of dunes</span> and crystal-clear lagoons in the heart of <span class="rio-hero-accent">Maranhão</span>. A unique experience in one of the most breathtaking natural landscapes on the planet.',
 hero_button: 'See Tours',
+hero_scroll: 'Discover more',
 notice_title: 'Important Information',
 notice_lines: [
 'The best time to visit Lençóis Maranhenses is between June and September, when the lagoons are full.',
@@ -622,9 +624,10 @@ footer: 'Travel the World - Experiences - Lençóis Maranhenses'
 },
 es: {
 hero_title: '<span class="rio-city-highlight">Lençóis Maranhenses</span>',
-hero_location: 'Maranhão - Brasil',
-hero_desc: 'Descubre el paraíso de las dunas y lagunas cristalinas en el corazón de Maranhão. Una experiencia única en uno de los escenarios naturales más impresionantes del planeta.',
+hero_location: 'Maranhão • Brasil',
+hero_desc: 'Descubre el <span class="rio-hero-accent">paraíso de las dunas</span> y lagunas cristalinas en el corazón de <span class="rio-hero-accent">Maranhão</span>. Una experiencia única en uno de los escenarios naturales más impresionantes del planeta.',
 hero_button: 'Ver Tours',
+hero_scroll: 'Descubre más',
 notice_title: 'Información Importante',
 notice_lines: [
 'La mejor época para visitar los Lençóis Maranhenses es entre junio y septiembre, cuando las lagunas están llenas.',
@@ -722,9 +725,10 @@ footer: 'Travel the World - Experiencias - Lençóis Maranhenses'
 },
 fr: {
 hero_title: '<span class="rio-city-highlight">Lençóis Maranhenses</span>',
-hero_location: 'Maranhão - Brésil',
-hero_desc: "Découvrez le paradis des dunes et des lagunes cristallines au cœur du Maranhão. Une expérience unique dans l'un des paysages naturels les plus impressionnants de la planète.",
+hero_location: 'Maranhão • Brésil',
+hero_desc: 'Découvrez le <span class="rio-hero-accent">paradis des dunes</span> et des lagunes cristallines au cœur du <span class="rio-hero-accent">Maranhão</span>. Une expérience unique dans l\'un des paysages naturels les plus impressionnants de la planète.',
 hero_button: 'Voir les Tours',
+hero_scroll: 'Découvrir plus',
 notice_title: 'Informations Importantes',
 notice_lines: [
 'La meilleure période pour visiter les Lençóis Maranhenses se situe entre juin et septembre, lorsque les lagunes sont pleines.',
@@ -822,9 +826,10 @@ footer: 'Travel the World - Expériences - Lençóis Maranhenses'
 },
 it: {
 hero_title: '<span class="rio-city-highlight">Lençóis Maranhenses</span>',
-hero_location: 'Maranhão - Brasile',
-hero_desc: "Scopri il paradiso delle dune e delle lagune cristalline nel cuore del Maranhão. Un'esperienza unica in uno degli scenari naturali più spettacolari del pianeta.",
+hero_location: 'Maranhão • Brasile',
+hero_desc: 'Scopri il <span class="rio-hero-accent">paradiso delle dune</span> e delle lagune cristalline nel cuore del <span class="rio-hero-accent">Maranhão</span>. Un\'esperienza unica in uno degli scenari naturali più spettacolari del pianeta.',
 hero_button: 'Scopri i Tour',
+hero_scroll: 'Scopri di più',
 notice_title: 'Informazioni Importanti',
 notice_lines: [
 'Il periodo migliore per visitare i Lençóis Maranhenses è tra giugno e settembre, quando le lagune sono piene.',
@@ -922,9 +927,10 @@ footer: 'Travel the World - Esperienze - Lençóis Maranhenses'
 },
 zh: {
 hero_title: '<span class="rio-city-highlight">Lençóis Maranhenses</span>',
-hero_location: '马拉尼昂州 - 巴西',
-hero_desc: '探索马拉尼昂州中心的沙丘与清澈泻湖组成的天堂。这是地球上最令人惊叹的自然景观之一，带给您独一无二的体验。',
+hero_location: '马拉尼昂州 • 巴西',
+hero_desc: '探索<span class="rio-hero-accent">马拉尼昂州</span>中心的沙丘与清澈泻湖组成的<span class="rio-hero-accent">天堂</span>。这是地球上最令人惊叹的自然景观之一，带给您独一无二的体验。',
 hero_button: '查看行程',
+hero_scroll: '了解更多',
 notice_title: '重要信息',
 notice_lines: [
 '参观莱恩索伊斯沙丘（Lençóis Maranhenses）的最佳时间是6月至9月，此时泻湖水量充沛。',
@@ -1023,10 +1029,10 @@ footer: 'Travel the World - 体验 - 莱恩索伊斯沙丘'
 },
 Saoluísdomaranhao: {
 pt: {
-hero_title: '<span class="rio-city-highlight">São Luís do Maranhão</span>',
-hero_location: 'Maranhão - Brasil',
-hero_desc: 'Perca-se pelos azulejos centenários e ruas de pedra da Atenas Brasileira, porta de entrada para o paraíso natural dos Lençóis Maranhenses. Um centro histórico Patrimônio da Humanidade que encanta a cada esquina.',
-hero_button: 'Conhecer Tours',
+hero_title: '<span class="rio-city-highlight">São Luís</span><span class="rio-city-accent">do Maranhão</span>',
+hero_location: 'Maranhão • Brasil',
+hero_desc: 'Perca-se pelos <span class="rio-hero-accent">azulejos centenários</span> e ruas de pedra da <span class="rio-hero-accent">Atenas Brasileira</span>, porta de entrada para o paraíso natural dos Lençóis Maranhenses. Um centro histórico <span class="rio-hero-accent">Patrimônio da Humanidade</span> que encanta a cada esquina.',
+hero_button: 'Conhecer Tour',
 notice_title: 'Informações Importantes',
 notice_lines: [
 'Para participar de nosso Free Tour é necessário reservar sua vaga.',
@@ -1066,9 +1072,9 @@ testimonials: [
 relatos_like_label: 'Curtir foto'
 },
 en: {
-hero_title: '<span class="rio-city-highlight">São Luís do Maranhão</span>',
-hero_location: 'Maranhão - Brazil',
-hero_desc: 'Welcome to the capital of Maranhão; besides being the gateway to the natural paradise of Lençóis Maranhenses, São Luís has one of the most emblematic and charming historic centers in the world.',
+hero_title: '<span class="rio-city-highlight">São Luís</span><span class="rio-city-accent">do Maranhão</span>',
+hero_location: 'Maranhão • Brazil',
+hero_desc: 'Welcome to the capital of <span class="rio-hero-accent">Maranhão</span>; besides being the gateway to the natural paradise of <span class="rio-hero-accent">Lençóis Maranhenses</span>, São Luís has one of the most <span class="rio-hero-accent">emblematic historic centers</span> in the world.',
 hero_button: 'See Tours',
 notice_title: 'Important Information',
 notice_lines: [
@@ -1109,9 +1115,9 @@ testimonials: [
 relatos_like_label: 'Like photo'
 },
 es: {
-hero_title: '<span class="rio-city-highlight">São Luís do Maranhão</span>',
-hero_location: 'Maranhão - Brasil',
-hero_desc: 'Bienvenido a la capital ludovicense; además de ser la puerta de entrada al paraíso natural de los Lençóis Maranhenses, São Luís posee uno de los centros históricos más emblemáticos y encantadores del mundo.',
+hero_title: '<span class="rio-city-highlight">São Luís</span><span class="rio-city-accent">do Maranhão</span>',
+hero_location: 'Maranhão • Brasil',
+hero_desc: 'Bienvenido a la <span class="rio-hero-accent">capital ludovicense</span>; además de ser la puerta de entrada al paraíso natural de los <span class="rio-hero-accent">Lençóis Maranhenses</span>, São Luís posee uno de los <span class="rio-hero-accent">centros históricos más emblemáticos</span> y encantadores del mundo.',
 hero_button: 'Conocer Tours',
 notice_title: 'Información Importante',
 notice_lines: [
@@ -1152,9 +1158,9 @@ testimonials: [
 relatos_like_label: 'Me gusta'
 },
 fr: {
-hero_title: '<span class="rio-city-highlight">São Luís do Maranhão</span>',
-hero_location: 'Maranhão - Brésil',
-hero_desc: 'Bienvenue dans la capitale ludovicienne ; en plus d\'être la porte d\'entrée du paradis naturel des Lençóis Maranhenses, São Luís possède l\'un des centres historiques les plus emblématiques et charmants du monde.',
+hero_title: '<span class="rio-city-highlight">São Luís</span><span class="rio-city-accent">do Maranhão</span>',
+hero_location: 'Maranhão • Brésil',
+hero_desc: 'Bienvenue dans la <span class="rio-hero-accent">capitale ludovicienne</span> ; en plus d\'être la porte d\'entrée du paradis naturel des <span class="rio-hero-accent">Lençóis Maranhenses</span>, São Luís possède l\'un des <span class="rio-hero-accent">centres historiques les plus emblématiques</span> et charmants du monde.',
 hero_button: 'Découvrir les Tours',
 notice_title: 'Informations Importantes',
 notice_lines: [
@@ -1195,9 +1201,9 @@ testimonials: [
 relatos_like_label: "J'aime"
 },
 it: {
-hero_title: '<span class="rio-city-highlight">São Luís do Maranhão</span>',
-hero_location: 'Maranhão - Brasile',
-hero_desc: 'Benvenuti nella capitale ludovicense; oltre a essere la porta d\'ingresso al paradiso naturale dei Lençóis Maranhenses, São Luís possiede uno dei centri storici più emblematici e affascinanti del mondo.',
+hero_title: '<span class="rio-city-highlight">São Luís</span><span class="rio-city-accent">do Maranhão</span>',
+hero_location: 'Maranhão • Brasile',
+hero_desc: 'Benvenuti nella <span class="rio-hero-accent">capitale ludovicense</span>; oltre a essere la porta d\'ingresso al paradiso naturale dei <span class="rio-hero-accent">Lençóis Maranhenses</span>, São Luís possiede uno dei <span class="rio-hero-accent">centri storici più emblematici</span> e affascinanti del mondo.',
 hero_button: 'Scopri i Tour',
 notice_title: 'Informazioni Importanti',
 notice_lines: [
@@ -1238,9 +1244,9 @@ testimonials: [
 relatos_like_label: 'Mi piace'
 },
 zh: {
-hero_title: '<span class="rio-city-highlight">圣路易斯 - 马拉尼昂州</span>',
-hero_location: '马拉尼昂州 - 巴西',
-hero_desc: '欢迎来到路多维森斯之都；除了是伦索伊斯马拉年斯自然天堂的门户外，圣路易斯还拥有世界上最具代表性和迷人魅力的历史中心之一。',
+hero_title: '<span class="rio-city-highlight">圣路易斯</span><span class="rio-city-accent">马拉尼昂州</span>',
+hero_location: '马拉尼昂州 • 巴西',
+hero_desc: '欢迎来到<span class="rio-hero-accent">路多维森斯之都</span>；除了是<span class="rio-hero-accent">伦索伊斯马拉年斯</span>自然天堂的门户外，圣路易斯还拥有世界上<span class="rio-hero-accent">最具代表性</span>和迷人魅力的历史中心之一。',
 hero_button: '查看行程',
 notice_title: '重要信息',
 notice_lines: [

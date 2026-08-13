@@ -25,7 +25,7 @@
     height: 100dvh;
     z-index: -1;
     background-color: var(--city-fundo-cor, #02415a);
-    background-image: var(--city-fundo-img, url('../imagem/Rio de Janeiro/assets/fundo%20rj.png'));
+    background-image: var(--city-fundo-img, none);
     background-size: cover;
     background-position: center;
     will-change: transform;
@@ -346,20 +346,45 @@ body {
     text-align: center;
     overflow: hidden;
     padding-top: calc(60px + 0.5rem); /* garante que começa logo abaixo do header */
-    /* herói mantém sua própria foto acima do fundo do corpo */
-    background:
-        var(--city-painel-bg, url('../imagem/Rio de Janeiro/assets/painel.jpeg') center/cover no-repeat);
-    /* aplicar máscara de transparência na base para fade ao fundo */
-    -webkit-mask-image: none;
-    mask-image: none;
-    -webkit-mask-size: auto;
-    mask-size: auto;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
+    /* A foto em si vive em .rio-hero::before (ver abaixo) para poder ser
+       recortada seguindo a onda sem cortar junto o overlay, a onda decorativa
+       e o "Descubra mais". !important neutraliza o background inline que
+       cidade-visual.js e/ou o HTML de cada cidade ainda escrevem neste
+       elemento — sem isso a foto retangular voltaria a aparecer por baixo
+       do recorte. Compartilhado por Riodejaneiro/Salvador/São Luís, que
+       carregam este arquivo como base (ver comentário de --hero-wave-*
+       logo abaixo para o porquê da técnica de 2 camadas). */
+    background: transparent !important;
     position: relative;
+    --hero-wave-band-height: calc(26px + clamp(48px, 9vw, 90px));
+    --hero-wave-band-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 148' preserveAspectRatio='none'%3E%3Cpath d='M0 74 C 240 34, 480 34, 720 62 S 1200 98, 1440 56 L1440 0 L0 0 Z' fill='white'/%3E%3C/svg%3E");
 }
 
-/* gradiente de transição em tom de areia com textura delicada */
+/* Foto de fundo do hero, recortada seguindo a curva de .rio-hero-wave-divider
+   (definida em hero-lockup.css / Saoluísdomaranhao.css: bottom:26px + altura
+   clamp(48px,9vw,90px)) para que a imagem termine em onda em vez de um
+   retângulo reto. Cada cidade sobrescreve só a imagem via
+   var(--city-painel-bg,...) no seu próprio CSS. */
+.rio-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        var(--city-painel-bg, url('../imagem/Rio de Janeiro/assets/painel.jpeg') center/cover no-repeat);
+    -webkit-mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    -webkit-mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    -webkit-mask-position: left top, left bottom;
+    mask-position: left top, left bottom;
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
+}
+
+/* gradiente de transição em tom de areia com textura delicada — sempre
+   ficou restrito à faixa perto do fundo, então só precisa da máscara da
+   faixa da onda (sem o retângulo superior que a foto/overlay usam). */
 .rio-hero::after {
     content: '';
     position: absolute;
@@ -379,6 +404,14 @@ body {
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='60'%3E%3Cpath d='M0 30 C30 10, 60 10, 90 30 S150 50, 180 30' fill='none' stroke='%236b4c20' stroke-width='4'/%3E%3Cpath d='M0 50 C30 30, 60 30, 90 50 S150 70, 180 50' fill='none' stroke='%236b4c20' stroke-width='3'/%3E%3C/svg%3E") center/cover no-repeat;
     background-blend-mode: normal;
     opacity: 0.50;
+    -webkit-mask-image: var(--hero-wave-band-svg);
+    mask-image: var(--hero-wave-band-svg);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
     z-index: 2;
 }
 
@@ -395,6 +428,14 @@ body {
         rgba(26, 82, 118, 0.38) 60%,
         rgba(12, 35, 64, 0.88) 100%
     );
+    -webkit-mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    -webkit-mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    -webkit-mask-position: left top, left bottom;
+    mask-position: left top, left bottom;
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
     z-index: 1;
 }
 
@@ -467,6 +508,9 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* sobrescreve o box-shadow padrão de .btn-book (style.css) — no hero,
+       sobre a foto, a sombra ficava pesada demais no botão translúcido */
+    box-shadow: none;
 }
 
 .rio-hero-content .btn-book:hover,
@@ -863,6 +907,7 @@ body {
 }
 
 .rio-tour-details li {
+    position: relative;
     color: #4a5568;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -884,7 +929,15 @@ body {
 
 /* Textos longos (Inclui, Roteiro, etc.) ficam limitados a 3 linhas para o
    card não crescer demais — "Ler mais" expande, mostrado só quando o texto
-   realmente estoura (ver wireTourDetailToggles no JS). */
+   realmente estoura (ver wireTourDetailToggles no JS).
+   Tentativa anterior usava max-height:2.5*line-height com overflow:hidden,
+   mas como o texto tem quebras de linha reais (\n do banco), o corte caía
+   no meio da altura de uma linha e mostrava letras pela metade.
+   -webkit-line-clamp corta sempre numa fronteira de linha completa (nunca
+   no meio de um glifo) e ainda troca o final por "…" automaticamente —
+   com 3 linhas, na prática quase sempre sobra só um pedaço da 3ª linha
+   visível antes do "…", o que já dá o efeito visual de "2 linhas e meia"
+   pedido, sem o bug de corte. */
 .rio-tour-detail-line {
     display: -webkit-box;
     width: 100%;
@@ -913,8 +966,28 @@ body {
     text-decoration: underline;
 }
 
+/* Enquanto o texto está truncado, "Ler mais" fica sobreposto no final da
+   3ª linha (canto inferior direito do <li>, que é do tamanho do texto
+   clampado) — um degradê pro branco do card disfarça a sobreposição por
+   cima do "…" do line-clamp, dando a impressão de continuação da linha. */
 .rio-tour-detail-toggle.rio-detail-visible {
     display: inline-block;
+    position: absolute;
+    right: 0;
+    bottom: 0.35rem;
+    padding-left: 2.4em;
+    margin-top: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #ffffff 55%);
+}
+
+/* Texto expandido ("Ler menos"): volta ao fluxo normal, numa linha própria
+   abaixo do texto completo. */
+.rio-tour-detail-line.rio-detail-expanded + .rio-tour-detail-toggle.rio-detail-visible {
+    position: static;
+    display: inline-block;
+    padding-left: 0;
+    margin-top: 0.15rem;
+    background: none;
 }
 
 .rio-tour-details strong {
@@ -1155,12 +1228,16 @@ body {
     }
 
     .rio-hero {
-        min-height: max(50vh, 630px);
+        /* Sem piso fixo aqui — o painel deve encolher para caber só o
+           conteúdo (logo, título, texto, botão), sem sobrar espaço vazio
+           antes da onda. A folga para a onda decorativa não colidir com o
+           botão vem do padding-bottom de .rio-hero-content, abaixo. */
+        min-height: 0;
         padding-top: calc(60px + 0.5rem);
     }
 
     .rio-hero-content {
-        padding: 1rem 1rem 2rem;
+        padding: 1rem 1rem calc(var(--hero-wave-band-height, 116px) + 24px);
     }
 
 }
@@ -1272,13 +1349,17 @@ body {
     }
 
     .rio-hero {
-        min-height: max(45vh, 740px);
+        /* Sem piso fixo — o painel encolhe para caber só o conteúdo, sem
+           deixar espaço vazio entre o botão e a onda decorativa. A folga
+           necessária pra onda não colidir com o botão vem do padding-bottom
+           de .rio-hero-content, abaixo. */
+        min-height: 0;
         padding-top: 70px;
     }
 
     .rio-hero-content {
         margin-top: 4rem;
-        padding: 1.4rem 1rem 2rem;
+        padding: 1.4rem 1rem calc(var(--hero-wave-band-height, 116px) + 24px);
     }
 
     .rio-hero-title {
@@ -2495,6 +2576,12 @@ header {
   .rio-page header .profile-user-info span[data-i18n="profile_hello"] {
     color: #0f2a57 !important;
   }
+
+  /* Iguala a altura do painel a Lençóis/São Luís — todos os heros de
+     cidade devem cobrir a tela inteira a partir do mesmo breakpoint. */
+  .rio-hero {
+    min-height: 100vh;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2558,9 +2645,8 @@ header {
 }
 
 @media (min-width: 1200px) {
-  .rio-hero {
-    min-height: 78vh;
-  }
+  /* min-height do painel vem do bloco @media (min-width:1024px) acima
+     (100vh, igual a Lençóis/São Luís) — nada a sobrescrever aqui. */
 
   .rio-hero-content {
     padding: 1.2rem 3.5rem 3.5rem;
@@ -2634,12 +2720,21 @@ header {
   padding: 1.2rem;
   box-shadow: 0 12px 40px rgba(0,0,0,0.28);
   overflow: hidden;
+  /* Layout em coluna com o form como único item flexível: em telas
+     grandes 90vh pode passar de 640px, e o form tentava crescer pra
+     acompanhar (calc(90vh - 120px)) em vez de respeitar o teto real do
+     modal — o excesso ficava cortado pelo overflow:hidden do modal sem
+     nunca acionar o próprio scroll do form. min-height:0 é o que permite
+     o form encolher abaixo do seu conteúdo e realmente rolar. */
+  display: flex;
+  flex-direction: column;
 }
 
 .reservation-modal form {
   display: grid;
   gap: 0.75rem;
-  max-height: calc(90vh - 120px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -2681,40 +2776,54 @@ header {
 .reservation-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.6rem;
-  margin-top: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .reservation-modal-actions .btn-book {
   border-radius: 999px;
-  min-width: 140px;
-  padding: 0.5rem 1rem;
-  border: 2px solid #b0b0b0;
-  color: #222;
-  background: #e0e0e0;
-  text-transform: uppercase;
+  min-width: 130px;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Cancelar — ação secundária, discreta (fundo transparente) */
+.reservation-modal-actions button[type="button"] {
+  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  color: #555;
+}
+
+.reservation-modal-actions button[type="button"]:hover,
+.reservation-modal-actions button[type="button"]:focus {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.35);
+  color: #222;
+  transform: none;
+}
+
+/* Confirmar Reserva — ação primária, preenchida na cor de destaque do site */
 .reservation-modal-actions button[type="submit"] {
-  background: #ffffff;
-  border: 2px solid #c2b280;
-  color: #c2b280;
+  background: #1da194;
+  border: 1.5px solid #1da194;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(29, 161, 148, 0.35);
 }
 
 .reservation-modal-actions button[type="submit"]:hover,
 .reservation-modal-actions button[type="submit"]:focus {
-  background: #fff8e5;
-  border-color: #b99e60;
-  color: #b99e60;
-}
-
-.reservation-modal-actions .btn-book:hover,
-.reservation-modal-actions .btn-book:focus {
-  background: rgba(220, 220, 220, 0.9);
+  background: #178f84;
+  border-color: #178f84;
+  color: #ffffff;
   transform: translateY(-1px);
-  color: #333;
+  box-shadow: 0 8px 20px rgba(29, 161, 148, 0.45);
 }
 
 .footer-info-icons {

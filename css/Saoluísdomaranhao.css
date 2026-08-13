@@ -24,7 +24,7 @@
 /* Fundo fixo próprio de São Luís (substitui o fundo do Rio de Janeiro) */
 .rio-page::before {
     background-color: var(--city-fundo-cor, #1e2d4a);
-    background-image: var(--city-fundo-img, url('../imagem/Sao Luis/assets/fundo sao-luis.png'));
+    background-image: var(--city-fundo-img, none);
     background-size: cover;
     background-position: center;
 }
@@ -38,28 +38,446 @@
     color: #1e2d4a;
 }
 
-.rio-hero {
-    background: var(--city-painel-bg, url('https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp') center/cover no-repeat);
+.rio-hero::before {
+    background: var(--city-painel-bg, url('../imagem/Sao Luis/assets/painel.png') center/cover no-repeat);
 }
 
 /* Remove padrão Copacabana — exclusivo do Rio; base escura padronizada
-   (mesmo tom azul-marinho do degradê principal) em vez de clarear */
+   (mesmo tom azul-marinho do degradê principal) em vez de clarear.
+   A máscara de recorte na onda (definida em Riodejaneiro.css, carregado
+   antes deste arquivo como base) continua valendo — só a cor/imagem muda. */
 .rio-hero::after {
-    mask-image: none;
-    -webkit-mask-image: none;
     background: linear-gradient(to bottom, transparent 0%, rgba(12, 35, 64, 0.9) 100%);
 }
 
+/* Em telas pequenas o texto fica sobre o casario claro da foto, então o
+   escurecimento precisa ser mais firme da altura do título para baixo —
+   com o degradê herdado do Rio (0.38 no meio) o título dourado sumia.
+   A partir de 1024px este degradê é trocado pelo lateral (ver adiante). */
 .rio-hero-overlay {
-    /* Degradê padronizado com base no Rio de Janeiro, base mais escura/sólida */
     background: linear-gradient(
         180deg,
-        rgba(12, 35, 64, 0.60) 0%,
-        rgba(26, 82, 118, 0.38) 60%,
-        rgba(12, 35, 64, 0.88) 100%
+        rgba(8, 20, 40, 0.62) 0%,
+        rgba(8, 20, 40, 0.32) 26%,
+        rgba(8, 20, 40, 0.66) 54%,
+        rgba(7, 18, 34, 0.92) 100%
     );
 }
 
+/* =====================================================
+   HERO SÃO LUÍS
+   Reescreve a composição centralizada herdada de
+   Riodejaneiro.css: conteúdo à esquerda, marca em lockup
+   deitado e o lado direito da foto aberto.
+   ===================================================== */
+.rio-hero {
+    /* flex-start (não center): com o hero bem mais alto que o conteúdo,
+       centralizar empurrava o bloco pin+título para bem abaixo do header,
+       deixando um vão vazio no topo. O espaçamento do header vem do
+       padding-top de .rio-hero-content em cada breakpoint.
+       padding-top:0 zera o padding-top que esta página herda de
+       Riodejaneiro.css (carregado antes deste arquivo como base) — sem
+       isso o hero somava o padding do template do Rio (até 70px) ao
+       padding-top de .rio-hero-content abaixo, dobrando o espaçamento. */
+    align-items: flex-start;
+    padding-top: 0;
+    text-align: left;
+}
+
+.rio-hero-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: left;
+    gap: 0.55rem;
+    /* Com .rio-hero agora em align-items:flex-start, o espaçamento do topo
+       do header passa a vir daqui (antes a centralização escondia a falta
+       desse padding). margin-top:0 zera o margin-top que esta página herda
+       de Riodejaneiro.css (calc até 4rem em telas pequenas, pensado para o
+       logo centralizado antigo). Sobrescrito no lockup deitado (1024px+)
+       abaixo. */
+    margin-top: 0;
+    padding: calc(var(--rio-header-height, 72px) + 16px) 1.25rem 0;
+}
+
+/* -----------------------------------------------------------------
+   LOCKUP DA MARCA
+   Em telas grandes o pin fica à esquerda e o texto ao lado, escrito
+   na tipografia serifada do hero (e não o azul da arte original).
+   As tentativas anteriores de recorte cortavam o pin porque as
+   proporções tinham sido medidas sobre `Logo.png` (256x270, arte com
+   texto embaixo do pin). O logo real — tanto o do servidor quanto o
+   fallback local — é `LogoV2.png`: 480x520, SÓ o pin, sem texto
+   (confirmado por hash: o custom_logo.png do servidor é byte a byte
+   igual ao LogoV2.png local). Os valores abaixo são a bounding box de
+   pixels opacos desse arquivo — x:44..462 (419px) e y:6..514 (509px) —
+   o que remove a margem transparente sem encostar na arte.
+   O recorte é dimensionado só pela altura (--mark-h); a largura da
+   caixa deriva dessa proporção. A imagem recortada mantém a classe
+   .rio-hero-logo para que cidade-visual.js continue trocando todas
+   pelo logo vindo do servidor.
+   ----------------------------------------------------------------- */
+/* Abaixo de 1024px segue o padrão do hero de Lençóis: pin centralizado e a
+   legenda "Tour by Foot" embaixo dele, também centralizada. A partir de
+   1024px vira lockup deitado (pin à esquerda, texto ao lado) — ver o bloco
+   "HERO SÃO LUÍS — TELAS GRANDES" adiante. */
+.rio-hero-brand {
+    --mark-h: clamp(66px, 15vw, 118px);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 2vw, 14px);
+    margin-bottom: clamp(1rem, 3vw, 2.6rem);
+}
+
+/* brightness+saturate clareiam o azul-marinho do pin (bem escuro na arte
+   original) para um tom mais suave, como pedido — sem isso ele destoava,
+   forte demais, ao lado do texto claro do hero. */
+.rio-hero-brand-mark {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    flex: none;
+    width: calc(var(--mark-h) * 0.8232);   /* 419 / 509 — largura da arte */
+    height: var(--mark-h);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.75)) brightness(1.35) saturate(0.6);
+}
+
+.rio-hero-brand-mark > .rio-hero-logo {
+    position: absolute;
+    max-width: none;
+    height: auto;
+    aspect-ratio: auto;
+    margin: 0;
+    filter: none;
+    width: calc(var(--mark-h) * 0.9430);   /* 480 / 509 */
+    left: calc(var(--mark-h) * -0.0864);   /* -44 / 509 */
+    top: calc(var(--mark-h) * -0.0118);    /*  -6 / 509 */
+}
+
+.rio-hero-brand-word {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    line-height: 1.15;
+}
+
+/* "VISIT SÃO LUÍS" — mesmo tratamento do wordmark dourado da referência
+   (Visit Lençóis). Lá o wordmark é arte embutida no PNG, não texto, então não
+   há fonte para reaproveitar: a família abaixo foi escolhida medindo os glifos
+   da própria arte (V/I/S/T/E/N/O recortados de Logo2.png, normalizados por
+   cap-height e comparados por sobreposição) — Karla foi a de maior coincidência
+   de forma. Cap-height 67px sobre largura de palavra 656px dá o tracking de
+   ~0.085em usado aqui. Karla tem cap/em menor que a Playfair usada antes, daí
+   o font-size um pouco maior para manter a mesma altura óptica.
+   Sem text-shadow: o glow escurecia o contorno das letras e destoava da
+   referência, que tem traço limpo.
+   O peso partiu de medição (400=0.1217, 500=0.1458 de razão haste/cap contra
+   o alvo 0.1343 da arte, apontando ~450) mas ficou fino demais na tela —
+   ajustado a olho para 520.
+   O degradê também foi amostrado da arte: varrendo os pixels opacos do
+   wordmark, a cor é praticamente constante ao longo da palavra (~#EBC273 em
+   qualquer coluna) e varia só na vertical, de #F5D286 no topo da caixa alta
+   a #D8AC5F na base — ou seja, é um linear-gradient vertical, não radial nem
+   diagonal. As paradas abaixo remapeiam essa curva para a altura da caixa do
+   bloco (a caixa alta ocupa ~22%–80% dela, o resto é entrelinha).
+   `color` fica como fallback: se background-clip:text não for suportado, o
+   texto aparece no dourado sólido em vez de sumir. */
+.rio-hero-brand-name {
+    font-family: "Karla", "Lato", "Montserrat", sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.6rem, 3.3vw, 2.8rem);
+    color: #f3d998;
+    text-transform: uppercase;
+    letter-spacing: 0.085em;
+    text-align: center;
+    background-image: linear-gradient(
+        180deg,
+        #f7d68c 0%,
+        #f5d286 22%,
+        #f5d184 39%,
+        #efc676 51%,
+        #e5b764 62%,
+        #d8ac5f 78%,
+        #d8ac5f 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* "TOUR BY FOOT" — legenda com fios dourados dos dois lados, cópia do
+   padrão .rio-hero-logo-sub usado em Lençóis (mesma fonte/tamanho/lines). */
+.rio-hero-logo-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    margin: 0.1rem 0 0;
+    font-family: "Lato", "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: clamp(0.72rem, 2.4vw, 0.95rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+.rio-hero-logo-sub::before,
+.rio-hero-logo-sub::after {
+    content: '';
+    display: block;
+    width: clamp(26px, 8vw, 56px);
+    height: 1px;
+    background: #e0b653;
+}
+
+.rio-hero-text {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.rio-hero-ornament {
+    display: block;
+    width: clamp(42px, 4vw, 62px);
+    margin: 0 0 0.5rem;
+    color: #d9b978;
+    opacity: 0.9;
+}
+
+.rio-hero-ornament > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.rio-hero-title {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 7vw, 6.5rem);
+    line-height: 1.08;
+    letter-spacing: 0;
+    margin: 0 0 0.35rem;
+    text-shadow: 0 3px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Anula o degradê dourado + Montserrat que .rio-city-highlight herda do Rio:
+   aqui a primeira linha é creme sólido e só "Maranhão" recebe o dourado. */
+.rio-hero-title .rio-city-highlight {
+    display: block;
+    font-family: inherit;
+    font-size: inherit;
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: #f7f2e6;
+    color: #f7f2e6;
+}
+
+/* Mesma cor sólida de .rio-city-highlight — "Maranhão" não recebe mais o
+   degradê dourado, como pedido. */
+.rio-hero-title .rio-city-accent {
+    display: block;
+    font-family: inherit;
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: #f7f2e6;
+    color: #f7f2e6;
+    /* "do Maranhão" é uma unidade só — não pode quebrar em 2 linhas mesmo
+       em telas estreitas (o título já reduz de tamanho via clamp). */
+    white-space: nowrap;
+}
+
+.rio-hero-location {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-family: "Lato", "Montserrat", sans-serif;
+    font-weight: 600;
+    font-size: clamp(0.9rem, 1.5vw, 1.35rem);
+    color: #dcb264;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 0 0 0.2rem;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+/* Fios dourados dos dois lados do local, como na referência. */
+.rio-hero-location::before,
+.rio-hero-location::after {
+    content: '';
+    flex: none;
+    width: clamp(20px, 2.6vw, 40px);
+    height: 1px;
+    background: currentColor;
+    opacity: 0.9;
+}
+
+.rio-hero-desc {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    color: #edeef0;
+    font-size: clamp(0.95rem, 1.5vw, 1.35rem);
+    line-height: 1.7;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    margin: 0.9rem 0 0;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Trechos dourados da descrição (vêm marcados em translations.js). */
+.rio-hero-accent {
+    color: #dcb264;
+}
+
+.rio-hero-content .btn-book {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    width: auto;
+    max-width: none;
+    margin: 1.6rem 0 0;
+    padding: 0.75rem 2.2rem 0.75rem 0.75rem;
+    border: none;
+    border-radius: 10px;
+    color: #16233c;
+    background: linear-gradient(180deg, #f2cd76 0%, #e0ac48 100%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.38);
+    font-family: "Montserrat", "Lato", sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: clamp(0.82rem, 1.05vw, 1rem);
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Badge circular escuro com a bússola, à esquerda do rótulo — mesmo ícone
+   usado em todos os botões "Conhecer Tours" do hero (ver Lençóis). */
+.rio-hero-content .btn-book::before {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.4em;
+    height: 2.4em;
+    border-radius: 50%;
+    background: #16233c;
+    color: #f2cd76;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f14e";
+    font-size: 0.95em;
+    line-height: 1;
+}
+
+.rio-hero-content .btn-book:hover,
+.rio-hero-content .btn-book:focus {
+    background: linear-gradient(180deg, #f2cd76 0%, #e0ac48 100%);
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.42);
+    color: #16233c;
+}
+
+.rio-hero-wave-divider {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 26px;
+    width: 100%;
+    height: clamp(48px, 9vw, 90px);
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* =====================================================
+   HERO SÃO LUÍS — TELAS GRANDES
+   ===================================================== */
+@media (min-width: 1024px) {
+    .rio-hero {
+        min-height: 100vh;
+        padding-top: 0;
+    }
+
+    /* Escurecimento vindo da esquerda (onde mora o texto), deixando o
+       casario e as bandeirinhas visíveis à direita. */
+    .rio-hero-overlay {
+        background:
+            linear-gradient(180deg,
+                rgba(8, 20, 40, 0.55) 0%,
+                rgba(8, 20, 40, 0.05) 30%,
+                rgba(8, 20, 40, 0.05) 58%,
+                rgba(8, 18, 34, 0.88) 100%),
+            linear-gradient(95deg,
+                rgba(7, 18, 38, 0.97) 0%,
+                rgba(7, 18, 38, 0.93) 22%,
+                rgba(7, 18, 38, 0.78) 36%,
+                rgba(7, 18, 38, 0.42) 52%,
+                rgba(7, 18, 38, 0.12) 70%,
+                rgba(7, 18, 38, 0) 88%);
+    }
+
+    .rio-hero-content {
+        max-width: none;
+        align-items: flex-start;
+        /* padding-bottom mais enxuto que o de Lençóis (7rem) porque a
+           descrição daqui é mais longa e quebra em mais linhas — sem esse
+           ajuste o painel passava de 100vh (medido: 840px vs 800px de
+           viewport a 1280x800), quebrando a paridade de altura entre as
+           páginas de cidade. */
+        padding: calc(var(--rio-header-height, 72px) + 12px) 3rem 5rem
+                 clamp(2rem, 5vw, 6rem);
+    }
+
+    /* Volta ao lockup deitado (pin + nome lado a lado, alinhados à
+       esquerda) — o empilhado centralizado é só para telas pequenas. */
+    .rio-hero-brand {
+        --mark-h: clamp(66px, 7.6vw, 118px);
+        width: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: clamp(12px, 1.3vw, 22px);
+    }
+
+    /* Fica centralizado mesmo no lockup deitado — igual ao bloco
+       "VISIT LENÇÓIS" / "TOUR BY FOOT" da referência, que se mantém
+       auto-centralizado ao lado do ícone independente do layout. */
+    .rio-hero-logo-sub {
+        font-size: clamp(0.62rem, 0.9vw, 0.82rem);
+        letter-spacing: 0.26em;
+        gap: 0.7rem;
+    }
+
+    .rio-hero-logo-sub::before,
+    .rio-hero-logo-sub::after {
+        width: clamp(20px, 2.2vw, 38px);
+    }
+
+    .rio-hero-text {
+        max-width: min(600px, 44vw);
+        margin: 0;
+    }
+
+    .rio-hero-desc {
+        margin-top: 0.6rem;
+    }
+}
 /* Textura de azulejo português sutil */
 .rio-tours::before {
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Crect x='5' y='5' width='50' height='50' rx='3' fill='none' stroke='%231a3a6a' stroke-width='0.5' opacity='0.06'/%3E%3Cline x1='30' y1='5' x2='30' y2='55' stroke='%231a3a6a' stroke-width='0.3' opacity='0.04'/%3E%3Cline x1='5' y1='30' x2='55' y2='30' stroke='%231a3a6a' stroke-width='0.3' opacity='0.04'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%231a3a6a' stroke-width='0.4' opacity='0.05'/%3E%3C/svg%3E") repeat;

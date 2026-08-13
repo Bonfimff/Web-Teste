@@ -37,6 +37,16 @@
         return gradientFn(bloco.degradeTipo).replace('__STOPS__', `${cor1}, ${cor2}`);
     };
 
+    // Uploads no admin sempre salvam com o mesmo nome de arquivo (custom_logo.png,
+    // custom_painel.jpg etc.), então o navegador pode servir uma cópia antiga do
+    // cache mesmo depois de um novo upload. Adicionar um parâmetro de cache-busting
+    // aqui garante que a imagem mais recente do servidor sempre seja buscada.
+    const bustCache = (url) => {
+        if (!url) return url;
+        const separador = url.includes('?') ? '&' : '?';
+        return `${url}${separador}cb=${Date.now()}`;
+    };
+
     const backgroundValue = (bloco) => {
         if (!bloco) return '';
         if (bloco.modo === 'solida' && bloco.cor1) {
@@ -46,7 +56,7 @@
             return buildGradient(bloco);
         }
         if (bloco.imagem) {
-            return `url('${bloco.imagem}') center/cover no-repeat`;
+            return `url('${bustCache(bloco.imagem)}') center/cover no-repeat`;
         }
         return '';
     };
@@ -55,8 +65,9 @@
         if (!visual) return;
 
         if (visual.logo && visual.logo.imagem) {
+            const logoUrl = bustCache(visual.logo.imagem);
             document.querySelectorAll('.rio-hero-logo').forEach((img) => {
-                img.src = visual.logo.imagem;
+                img.src = logoUrl;
             });
         }
 

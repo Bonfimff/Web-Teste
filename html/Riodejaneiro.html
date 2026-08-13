@@ -11,13 +11,14 @@
     <link rel="apple-touch-icon" href="../imagem/Rio de Janeiro/assets/Logo.png?v=2">
     <link rel="icon" type="image/png" href="../imagem/Rio de Janeiro/assets/Logo.png?v=2">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400;600&family=Karla:wght@300..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=35">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=44">
+    <link rel="stylesheet" href="../css/hero-lockup.css?v=5">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=8">
 </head>
 <body>
-    <div class="rio-page">
+    <div class="rio-page rio-page--lockup rio-page--rio">
         <header>
            
                 <div class="nav-left">
@@ -81,12 +82,33 @@
         <section class="rio-hero">
             <div class="rio-hero-overlay"></div>
             <div class="rio-hero-content">
-                <img src="../imagem/Rio de Janeiro/assets/Logo.png" alt="Logo Tour no Rio de Janeiro" class="rio-hero-logo" loading="eager" decoding="async">
-                <h1 class="rio-hero-title"><span class="rio-city-highlight">Rio de Janeiro</span></h1>
-                <p class="rio-hero-location">Rio de Janeiro - Brasil</p>
-                <p id="rioHeroDesc" class="rio-hero-desc">Seja bem-vindo à Cidade Maravilhosa; o Rio dos amores e da beleza inconfundível te espera de braços abertos, com o Cristo Redentor a te acolher do alto e as praias mais famosas do mundo aos seus pés.</p>
-                <a href="#tours" class="btn-book" data-i18n="btn_book">Conhecer Tours</a>
+                <div class="rio-hero-brand">
+                    <!-- Só o pin é recortado da arte (janela medida em --pin-* no
+                         hero-lockup.css); o texto ao lado é escrito na tipografia
+                         do hero. A imagem mantém a classe .rio-hero-logo para que
+                         cidade-visual.js continue trocando pelo logo do servidor. -->
+                    <span class="rio-hero-brand-mark" aria-hidden="true">
+                        <img src="../imagem/Rio de Janeiro/assets/LogoV2.png" alt="" class="rio-hero-logo" loading="eager" decoding="async">
+                    </span>
+                    <span class="rio-hero-brand-word">
+                        <span class="rio-hero-brand-name">Visit Rio</span>
+                        <p class="rio-hero-logo-sub">Tour by Foot</p>
+                    </span>
+                </div>
+                <div class="rio-hero-text">
+                    <span class="rio-hero-ornament" aria-hidden="true">
+                        <svg viewBox="0 0 60 14" xmlns="http://www.w3.org/2000/svg"><path d="M2 7c4-6 8-6 12 0s8 6 12 0 8-6 12 0 8 6 12 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    <h1 class="rio-hero-title"><span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span></h1>
+                    <p class="rio-hero-location">Rio de Janeiro • Brasil</p>
+                    <p id="rioHeroDesc" class="rio-hero-desc">Seja bem-vindo à <span class="rio-hero-accent">Cidade Maravilhosa</span>; o Rio dos amores e da beleza inconfundível te espera de braços abertos, com o <span class="rio-hero-accent">Cristo Redentor</span> a te acolher do alto e as <span class="rio-hero-accent">praias mais famosas do mundo</span> aos seus pés.</p>
+                    <a href="#tours" class="btn-book" data-i18n="btn_book">Conhecer Tours</a>
+                </div>
             </div>
+            <svg class="rio-hero-wave-divider" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 58 C 240 18, 480 18, 720 46 S 1200 82, 1440 40" fill="none" stroke="#e0b653" stroke-width="3"/>
+                <path d="M0 74 C 240 34, 480 34, 720 62 S 1200 98, 1440 56" fill="none" stroke="#e0b653" stroke-width="2" opacity="0.5"/>
+            </svg>
         </section>
 
         <!-- AVISO (oculto por padrão; controlado por Gerenciamento > Gerenciamento da página > Aviso "Informações Importantes") -->
@@ -196,9 +218,9 @@
         </div>
     </div> 
     </div>
-    <script src="../js/Translation.js?v=2"></script>
+    <script src="../js/Translation.js?v=4"></script>
     <script src="../js/tour-interacoes.js?v=10"></script>
-    <script src="../js/Riodejaneiro.js?v=47"></script>
+    <script src="../js/Riodejaneiro.js?v=50"></script>
     <script src="../js/cidade-visual.js?v=3"></script>
     <script>
         (function () {

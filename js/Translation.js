@@ -2,9 +2,9 @@
 (() => {
     const pageTranslations = {
         pt: {
-            hero_title: '<span class="rio-city-highlight">Rio de Janeiro</span>',
-            hero_location: 'Rio de Janeiro - Brasil',
-            hero_desc: 'Seja bem-vindo à Cidade Maravilhosa; o Rio dos amores e da beleza inconfundível te espera de braços abertos, com o Cristo Redentor a te acolher do alto e as praias mais famosas do mundo aos seus pés.',
+            hero_title: '<span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span>',
+            hero_location: 'Rio de Janeiro • Brasil',
+            hero_desc: 'Seja bem-vindo à <span class="rio-hero-accent">Cidade Maravilhosa</span>; o Rio dos amores e da beleza inconfundível te espera de braços abertos, com o <span class="rio-hero-accent">Cristo Redentor</span> a te acolher do alto e as <span class="rio-hero-accent">praias mais famosas do mundo</span> aos seus pés.',
             hero_button: 'Conhecer Tours',
             notice_title: 'Gerenciamento de Reservas',
             notice_lines: [
@@ -80,9 +80,9 @@
             }
         },
         en: {
-            hero_title: '<span class="rio-city-highlight">Rio de Janeiro</span>',
-            hero_location: 'Rio de Janeiro - Brazil',
-            hero_desc: 'Welcome to the Marvelous City; Rio, a city of love and unmistakable beauty, welcomes you with open arms, with Christ the Redeemer watching over you from above and the world\'s most famous beaches at your feet.',
+            hero_title: '<span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span>',
+            hero_location: 'Rio de Janeiro • Brazil',
+            hero_desc: 'Welcome to the <span class="rio-hero-accent">Marvelous City</span>; Rio, a city of love and unmistakable beauty, welcomes you with open arms, with <span class="rio-hero-accent">Christ the Redeemer</span> watching over you from above and the <span class="rio-hero-accent">world\'s most famous beaches</span> at your feet.',
             hero_button: 'See Tours',
             notice_title: 'Important Information',
             notice_lines: [
@@ -161,9 +161,9 @@
     };
 
     pageTranslations.fr = {
-        hero_title: '<span class="rio-city-highlight">Rio de Janeiro</span>',
-        hero_location: 'Rio de Janeiro - Brésil',
-        hero_desc: 'Bienvenue dans la Ville Merveilleuse ; Rio, ville d\'amour et de beauté incomparable, vous accueille à bras ouverts, avec le Christ Rédempteur qui veille sur vous depuis les hauteurs et les plages les plus célèbres du monde à vos pieds.',
+        hero_title: '<span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span>',
+        hero_location: 'Rio de Janeiro • Brésil',
+        hero_desc: 'Bienvenue dans la <span class="rio-hero-accent">Ville Merveilleuse</span> ; Rio, ville d\'amour et de beauté incomparable, vous accueille à bras ouverts, avec le <span class="rio-hero-accent">Christ Rédempteur</span> qui veille sur vous depuis les hauteurs et les <span class="rio-hero-accent">plages les plus célèbres du monde</span> à vos pieds.',
         hero_button: 'Voir les tours',
         notice_title: 'Informations importantes',
         notice_lines: [
@@ -240,9 +240,9 @@
     };
 
     pageTranslations.es = {
-        hero_title: '<span class="rio-city-highlight">Rio de Janeiro</span>',
-        hero_location: 'Rio de Janeiro - Brasil',
-        hero_desc: '¡Bienvenido a la Ciudad Maravillosa! Río, ciudad de amores y de belleza inconfundible, te recibe con los brazos abiertos, con el Cristo Redentor velando por ti desde lo alto y las playas más famosas del mundo a tus pies.',
+        hero_title: '<span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span>',
+        hero_location: 'Rio de Janeiro • Brasil',
+        hero_desc: '¡Bienvenido a la <span class="rio-hero-accent">Ciudad Maravillosa</span>! Río, ciudad de amores y de belleza inconfundible, te recibe con los brazos abiertos, con el <span class="rio-hero-accent">Cristo Redentor</span> velando por ti desde lo alto y las <span class="rio-hero-accent">playas más famosas del mundo</span> a tus pies.',
         hero_button: 'Ver tours',
         notice_title: 'Información importante',
         notice_lines: [
@@ -319,9 +319,9 @@
     };
 
     pageTranslations.it = {
-        hero_title: '<span class="rio-city-highlight">Rio de Janeiro</span>',
-        hero_location: 'Rio de Janeiro - Brasile',
-        hero_desc: 'Benvenuto nella Città Meravigliosa; Rio, città dell\'amore e dalla bellezza inconfondibile, ti accoglie a braccia aperte, con il Cristo Redentore che veglia su di te dall\'alto e le spiagge più famose del mondo ai tuoi piedi.',
+        hero_title: '<span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span>',
+        hero_location: 'Rio de Janeiro • Brasile',
+        hero_desc: 'Benvenuto nella <span class="rio-hero-accent">Città Meravigliosa</span>; Rio, città dell\'amore e dalla bellezza inconfondibile, ti accoglie a braccia aperte, con il <span class="rio-hero-accent">Cristo Redentore</span> che veglia su di te dall\'alto e le <span class="rio-hero-accent">spiagge più famose del mondo</span> ai tuoi piedi.',
         hero_button: 'Vedi tour',
         notice_title: 'Informazioni importanti',
         notice_lines: [
@@ -398,9 +398,9 @@
     };
 
     pageTranslations.zh = {
-        hero_title: '<span class="rio-city-highlight">里约热内卢</span>',
-        hero_location: '里约热内卢 - 巴西',
-        hero_desc: '欢迎来到"奇迹之城"里约热内卢——这座充满爱与独特之美的城市张开双臂欢迎你，救世基督像从高处守护着你，世界最著名的海滩就在你脚下。',
+        hero_title: '<span class="rio-city-highlight">里约</span><span class="rio-city-accent">热内卢</span>',
+        hero_location: '里约热内卢 • 巴西',
+        hero_desc: '欢迎来到<span class="rio-hero-accent">"奇迹之城"</span>里约热内卢——这座充满爱与独特之美的城市张开双臂欢迎你，<span class="rio-hero-accent">救世基督像</span>从高处守护着你，<span class="rio-hero-accent">世界最著名的海滩</span>就在你脚下。',
         hero_button: '查看路线',
         notice_title: '重要信息',
         notice_lines: [

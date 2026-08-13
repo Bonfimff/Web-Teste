@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Experiências · Lençóis Maranhenses</title>
-    <link rel="apple-touch-icon" href="../imagem/Lencois/assets/Logo.png?v=2">
-    <link rel="icon" type="image/png" href="../imagem/Lencois/assets/Logo.png?v=2">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@700;900&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="../imagem/Lencois/assets/Logo2.png?v=3">
+    <link rel="icon" type="image/png" href="../imagem/Lencois/assets/Logo2.png?v=3">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;500;700;900&family=Lato:wght@300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=7">
 
-    <link rel="stylesheet" href="../css/Lencoismaranhenses.css?v=33">
+    <link rel="stylesheet" href="../css/Lencoismaranhenses.css?v=54">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=8">
 </head>
 <body>
@@ -73,15 +73,37 @@
         </div>
 
         <!-- HERO LENÇÓIS -->
-        <section class="rio-hero" style="background-image: url('../imagem/Lencois/assets/painel.jpeg');">
+        <section class="rio-hero">
             <div class="rio-hero-overlay"></div>
             <div class="rio-hero-content">
-                <img src="../imagem/Lencois/assets/Logo.png" alt="Logo Tour by Foot Lençóis" class="rio-hero-logo" loading="eager" decoding="async">
-                <h1 class="rio-hero-title"><span class="rio-city-highlight">Lençóis Maranhenses</span></h1>
-                <p class="rio-hero-location">Maranhão - Brasil</p>
-                <p class="rio-hero-desc">Descubra o paraíso das dunas e lagoas cristalinas no coração do Maranhão. Uma experiência única em um dos cenários naturais mais impressionantes do planeta.</p>
-                <a href="#tours" class="btn-book">Conhecer Tours</a>
+                <div class="rio-hero-brand">
+                    <!-- Telas pequenas: a arte completa do logo (símbolo sobre a tipografia). -->
+                    <img src="../imagem/Lencois/assets/Logo2.png" alt="Visit Lençóis" class="rio-hero-logo rio-hero-logo--full" loading="eager" decoding="async">
+                    <!-- Telas grandes: a MESMA arte recortada em símbolo + tipografia para
+                         ficarem lado a lado. Os recortes vivem em --mark-*/--word-* no CSS;
+                         as três imagens compartilham a classe .rio-hero-logo para que
+                         cidade-visual.js continue trocando todas pelo logo do servidor. -->
+                    <span class="rio-hero-brand-mark" aria-hidden="true">
+                        <img src="../imagem/Lencois/assets/Logo2.png" alt="" class="rio-hero-logo" loading="eager" decoding="async">
+                    </span>
+                    <span class="rio-hero-brand-word">
+                        <span class="rio-hero-brand-wordmark">
+                            <img src="../imagem/Lencois/assets/Logo2.png" alt="Visit Lençóis" class="rio-hero-logo" loading="eager" decoding="async">
+                        </span>
+                        <p class="rio-hero-logo-sub">Tour by Foot</p>
+                    </span>
+                </div>
+                <div class="rio-hero-text">
+                    <h1 class="rio-hero-title"><span class="rio-city-highlight">Lençóis Maranhenses</span></h1>
+                    <p class="rio-hero-location">Maranhão • Brasil</p>
+                    <p class="rio-hero-desc">Descubra o <span class="rio-hero-accent">paraíso das dunas</span> e lagoas cristalinas no coração do <span class="rio-hero-accent">Maranhão</span>. Uma experiência única em um dos cenários naturais mais impressionantes do planeta.</p>
+                    <a href="#tours" class="btn-book">Conhecer Tours</a>
+                </div>
             </div>
+            <svg class="rio-hero-wave-divider" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 58 C 240 18, 480 18, 720 46 S 1200 82, 1440 40" fill="none" stroke="#e0b653" stroke-width="3"/>
+                <path d="M0 74 C 240 34, 480 34, 720 62 S 1200 98, 1440 56" fill="none" stroke="#e0b653" stroke-width="2" opacity="0.5"/>
+            </svg>
         </section>
 
         <!-- AVISO -->
@@ -323,7 +345,7 @@
     <script src="../js/ui-translations.js"></script>
     <script src="../js/tour-interacoes.js?v=10"></script>
     <script src="../js/site-shell.js?v=52"></script>
-    <script src="../js/Lencoismaranhenses.js?v=8"></script>
-    <script src="../js/cidade-visual.js?v=3"></script>
+    <script src="../js/Lencoismaranhenses.js?v=10"></script>
+    <script src="../js/cidade-visual.js?v=4"></script>
 </body>
 </html>

@@ -49,11 +49,25 @@
        suavemente. height:100% acima é o fallback para navegadores sem suporte. */
     height: 100dvh;
     z-index: -1;
+    /* Sem imagem por baixo — só a cor sólida (do admin via --city-fundo-cor,
+       com fallback fixo aqui). --city-fundo-img só existe quando o admin
+       escolhe explicitamente modo degradê/imagem para o fundo da cidade. */
     background-color: var(--city-fundo-cor, #02415a);
-    background-image: var(--city-fundo-img, url('../imagem/Lencois/assets/Fundo lencois.jpg'));
+    background-image: var(--city-fundo-img, none);
     background-size: cover;
     background-position: center;
     will-change: transform;
+}
+
+/* O style.css compartilhado pinta a foto do Rio de Janeiro em DUAS camadas
+   fixas (body::before e .main-container::after, ambas z-index:-2) por baixo
+   de tudo. Como a cor de fundo desta página vem do admin com transparência
+   (ex.: 88%), essa foto aparecia por baixo da cor sólida. Neutralizada aqui
+   — só a cor sólida fica abaixo do conteúdo. Como este arquivo é carregado
+   depois do style.css, a mesma especificidade basta para vencer. */
+body::before,
+.main-container::after {
+    background-image: none;
 }
 
 html,
@@ -348,48 +362,102 @@ body {
 /* ===================================================== */
 .rio-hero {
     position: relative;
-    /* Em telas "formato PC" (paisagem), o painel não deve cobrir a tela
-       inteira — precisa sobrar uma ponta visível da seção de tours logo
-       abaixo, como dica de que há mais conteúdo por rolar. Por isso aqui é
-       vh puro (sem piso em px que force cobrir 100% da viewport). */
+    /* Abaixo de 1024px sobra de propósito uma ponta visível da seção de
+       tours logo abaixo, como dica de que há mais conteúdo por rolar. Por
+       isso vh puro (sem piso em px que force cobrir 100% da viewport).
+       A partir de 1024px o painel passa a cobrir a tela toda — ver o bloco
+       "HERO — TELAS GRANDES". */
     min-height: 72vh;
     display: flex;
-    align-items: center;
+    /* flex-start (não center): com o hero bem mais alto que o conteúdo,
+       centralizar empurrava o bloco pin+título para bem abaixo do header,
+       deixando um vão vazio no topo. O espaçamento do header vem do
+       padding-top de .rio-hero-content em cada breakpoint. */
+    align-items: flex-start;
     justify-content: center;
     text-align: center;
     overflow: visible;
     padding-top: 0;
     padding-bottom: 0;
-    background:
-      var(--city-painel-bg, url('../imagem/Lencois/assets/painel.jpeg') center/cover no-repeat);
-    -webkit-mask-image: none;
-    mask-image: none;
-    -webkit-mask-size: auto;
-    mask-size: auto;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
+    /* A foto em si vive em .rio-hero::before (ver abaixo) para poder ser
+       recortada seguindo a onda sem cortar junto o overlay, a onda decorativa
+       e o "Descubra mais". !important neutraliza o background inline que
+       cidade-visual.js ainda escreve neste elemento (compat com Salvador/São
+       Luís) — sem isso a foto retangular voltaria a aparecer por baixo do
+       recorte. */
+    background: transparent !important;
+    /* Recorte em onda, compartilhado pela foto (::before) e pelo véu escuro
+       (.rio-hero-overlay) — os dois cobrem o hero inteiro e precisam ficar
+       opacos em cima e cortar exatamente na mesma curva embaixo.
+
+       Não dá pra usar UMA curva só em % da altura do hero: a onda decorativa
+       (.rio-hero-wave-divider) é posicionada em pixels fixos (bottom:58px +
+       altura clamp(48px,9vw,90px)), e a altura real do hero varia demais
+       entre telas (não é só 72vh — o conteúdo estica além disso) pra uma
+       curva em % acompanhar. Por isso a máscara é 2 camadas UNIDAS (a
+       composição padrão do mask-image já é união — não precisa de
+       mask-composite, que é onde a tentativa anterior quebrou em alguns
+       navegadores):
+         camada 1: um retângulo 100% opaco cobrindo do topo do hero até o
+                   topo da faixa da onda (tudo isso nunca é cortado);
+         camada 2: dentro da faixa da onda (mesmos bottom:58px + clamp usados
+                   pela onda decorativa de verdade), a região ACIMA da curva
+                   da SEGUNDA linha (mais fraca/baixa, baseline 74) fica
+                   opaca; abaixo dela fica transparente.
+       As duas camadas juntas cobrem o hero inteiro sem sobra nem buraco. */
+    --hero-wave-band-height: calc(58px + clamp(48px, 9vw, 90px));
+    --hero-wave-band-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 148' preserveAspectRatio='none'%3E%3Cpath d='M0 74 C 240 34, 480 34, 720 62 S 1200 98, 1440 56 L1440 0 L0 0 Z' fill='white'/%3E%3C/svg%3E");
 }
 
-/* gradiente de transição em tom de areia com textura delicada */
+/* Foto de fundo do hero, recortada seguindo a curva de .rio-hero-wave-divider
+   para que a imagem termine em onda em vez de um retângulo reto. */
+.rio-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      var(--city-painel-bg, url('../imagem/Lencois/assets/painel.png') center/cover no-repeat);
+    -webkit-mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    /* +2px: sobrepõe de propósito a borda das duas camadas — sem isso sobra
+       uma linha branca fina exatamente na costura entre o retângulo de cima
+       e a faixa da onda (artefato de arredondamento na renderização). */
+    -webkit-mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    -webkit-mask-position: left top, left bottom;
+    mask-position: left top, left bottom;
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
+}
+
+/* Escurecimento da base para dar contraste à onda dourada e ao chevron.
+   Sempre ficou restrito à faixa perto do fundo (nunca cobriu o hero
+   inteiro), então só precisa da MESMA faixa/curva da onda decorativa,
+   sem precisar do retângulo superior que a foto/overlay usam. */
 .rio-hero::after {
     content: '';
     position: absolute;
-    bottom: -1px;
     left: 0;
-    width: 100%;
-    height: 120px;
+    right: 0;
+    bottom: 0;
+    height: var(--hero-wave-band-height);
     pointer-events: none;
-    background:
-        linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 0.16) 45%,
-            rgba(0, 0, 0, 0.35) 68%,
-            rgba(0, 0, 0, 0.65) 100%
-        ),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='60'%3E%3Cpath d='M0 30 C30 10, 60 10, 90 30 S150 50, 180 30' fill='none' stroke='%236b4c20' stroke-width='4'/%3E%3Cpath d='M0 50 C30 30, 60 30, 90 50 S150 70, 180 50' fill='none' stroke='%236b4c20' stroke-width='3'/%3E%3C/svg%3E") center/cover no-repeat;
-    background-blend-mode: normal;
-    opacity: 0.50;
+    background: linear-gradient(
+        to bottom,
+        rgba(4, 22, 40, 0) 0%,
+        rgba(4, 22, 40, 0.35) 45%,
+        rgba(4, 22, 40, 0.72) 78%,
+        rgba(4, 22, 40, 0.92) 100%
+    );
+    -webkit-mask-image: var(--hero-wave-band-svg);
+    mask-image: var(--hero-wave-band-svg);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
     z-index: 2;
 }
 
@@ -400,12 +468,25 @@ body {
   bottom: 0;
   left: -1px;
   right: -1px;
-    /* Degradê padronizado com base no Rio de Janeiro, base mais escura/sólida */
+    -webkit-mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
+    /* +2px: sobrepõe de propósito a borda das duas camadas — sem isso sobra
+       uma linha branca fina exatamente na costura entre o retângulo de cima
+       e a faixa da onda (artefato de arredondamento na renderização). */
+    -webkit-mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    mask-size: 100% calc(100% - var(--hero-wave-band-height) + 2px), 100% var(--hero-wave-band-height);
+    -webkit-mask-position: left top, left bottom;
+    mask-position: left top, left bottom;
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
+    /* Mais escuro no topo (contraste com header/logo) e na base (contraste com
+       texto/botão), com uma faixa central mais clara para revelar a foto. */
     background: linear-gradient(
         180deg,
-    rgba(12, 35, 64, 0.60) 0%,
-    rgba(26, 82, 118, 0.38) 60%,
-    rgba(12, 35, 64, 0.88) 100%
+    rgba(4, 20, 36, 0.72) 0%,
+    rgba(10, 40, 60, 0.32) 42%,
+    rgba(6, 28, 46, 0.50) 70%,
+    rgba(4, 18, 32, 0.86) 100%
     );
   pointer-events: none;
     z-index: 1;
@@ -416,7 +497,7 @@ body {
     z-index: 5;
     width: 100%;
     max-width: 1200px;
-    padding: calc(var(--rio-header-height, 72px) + 16px) 2.5rem 3rem;
+    padding: calc(var(--rio-header-height, 72px) + 16px) 2.5rem 7rem;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -425,26 +506,131 @@ body {
     animation: heroIntro 0.9s ease-out forwards;
 }
 
-.rio-hero-logo {
+/* -----------------------------------------------------------------
+   LOCKUP DA MARCA
+   Em telas grandes a marca fica deitada (símbolo à esquerda,
+   tipografia à direita). Como a arte enviada pelo admin é um arquivo
+   único e empilhado, o lockup deitado é montado recortando a MESMA
+   imagem duas vezes. As caixas abaixo foram medidas sobre a arte
+   original (701x356 px):
+       símbolo + ondas ...... x124  y7    444x225
+       "VISIT LENÇÓIS" ...... x22   y247  657x104
+   Cada recorte é dimensionado apenas pela altura (--mark-h/--word-h);
+   largura e deslocamento derivam dessas proporções. As três imagens
+   mantêm a classe .rio-hero-logo para que cidade-visual.js continue
+   trocando todas pelo logo vindo do servidor.
+   ----------------------------------------------------------------- */
+.rio-hero-brand {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.rio-hero-logo--full {
     display: block;
-    width: min(240px, 42vw);
-    height: min(240px, 42vw);
+    width: min(320px, 62vw);
+    height: auto;
+    aspect-ratio: 701 / 356;
     object-fit: contain;
-    margin: 0 auto 0.55rem;
+    margin: 0 auto 0.3rem;
     opacity: 1;
     filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.85));
+}
+
+/* Os recortes só entram no lockup deitado (ver @media adiante). */
+.rio-hero-brand-mark,
+.rio-hero-brand-wordmark {
+    display: none;
+    position: relative;
+    overflow: hidden;
+    flex: none;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.85));
+}
+
+.rio-hero-brand-mark > .rio-hero-logo,
+.rio-hero-brand-wordmark > .rio-hero-logo {
+    position: absolute;
+    height: auto;
+    max-width: none;
+    aspect-ratio: auto;
+    margin: 0;
+    filter: none;
+}
+
+.rio-hero-brand-mark {
+    width: calc(var(--mark-h) * 1.9733);   /* 444 / 225 */
+    height: var(--mark-h);
+}
+
+.rio-hero-brand-mark > .rio-hero-logo {
+    width: calc(var(--mark-h) * 3.1156);   /* 701 / 225 */
+    left: calc(var(--mark-h) * -0.5511);   /* -124 / 225 */
+    top: calc(var(--mark-h) * -0.0311);    /*   -7 / 225 */
+}
+
+.rio-hero-brand-wordmark {
+    width: calc(var(--word-h) * 6.3173);   /* 657 / 104 */
+    height: var(--word-h);
+}
+
+.rio-hero-brand-wordmark > .rio-hero-logo {
+    width: calc(var(--word-h) * 6.7404);   /* 701 / 104 */
+    left: calc(var(--word-h) * -0.2115);   /*  -22 / 104 */
+    top: calc(var(--word-h) * -2.375);     /* -247 / 104 */
+}
+
+.rio-hero-logo-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    margin: 0.1rem 0 0;
+    font-family: "Lato", "Montserrat", sans-serif;
+    font-weight: 400;
+    font-size: clamp(0.72rem, 2.4vw, 0.95rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+.rio-hero-logo-sub::before,
+.rio-hero-logo-sub::after {
+    content: '';
+    display: block;
+    width: clamp(26px, 8vw, 56px);
+    height: 1px;
+    background: #e0b653;
+}
+
+/* Bloco de texto alinhado à esquerda (logo permanece centralizada acima). */
+.rio-hero-text {
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
 }
 
 .rio-hero-title {
     font-family: "Playfair Display", Georgia, serif;
     font-weight: 900;
-    font-size: clamp(1.8rem, 4.5vw, 3.6rem);
-    color: #f0e5c0;
+    font-size: clamp(2.1rem, 6.2vw, 5.5rem);
+    color: #fdfbf7;
     text-transform: none;
     letter-spacing: 0.5px;
-    line-height: 1.15;
+    line-height: 1.05;
     margin: 0.4rem 0 0.2rem;
     text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+}
+
+/* Trechos dourados dentro da descrição (vêm marcados em translations.js). */
+.rio-hero-accent {
+    color: #e8c473;
 }
 
 #rioHeroDesc {
@@ -452,24 +638,46 @@ body {
 }
 
 .rio-hero-content .btn-book {
-    display: block;
-    width: min(180px, 75%);
-    margin: 0.5rem auto 0 auto;
-    padding: 0.5rem 1rem;
-    border: 2px solid #ffffff;
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.20);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    width: auto;
+    min-width: 0;
+    margin: 1.1rem 0 0;
+    padding: 0.75rem 1.7rem 0.75rem 0.75rem;
+    border: none;
+    color: #123049;
+    background: linear-gradient(180deg, #f7cf72 0%, #edbb4f 100%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-size: 0.85rem;
-    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    letter-spacing: 0.06em;
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* Badge circular escuro com a bússola, à esquerda do rótulo. */
+.rio-hero-content .btn-book::before {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.35em;
+    height: 2.35em;
+    border-radius: 50%;
+    background: #123049;
+    color: #f5c95f;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f14e";
+    font-size: 0.95em;
+    line-height: 1;
 }
 
 @media (min-width: 1200px) {
@@ -479,8 +687,8 @@ body {
     }
 
     .rio-hero-content .btn-book {
-        width: min(380px, 45%);
-        padding: 0.6rem 1.25rem;
+        width: auto;
+        padding: 0.6rem 1.6rem 0.6rem 0.6rem;
         max-width: 420px;
         overflow: visible;
         text-overflow: clip;
@@ -489,49 +697,206 @@ body {
 
 .rio-hero-content .btn-book:hover,
 .rio-hero-content .btn-book:focus {
-    background: rgba(255, 255, 255, 0.42);
+    filter: brightness(1.06);
     transform: translateY(-1px);
-    color: #a7834b;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4);
+    color: #123049;
 }
 
 .rio-city-highlight {
     display: block;
-     font-family: "Montserrat", "Lato", sans-serif;
-    background: linear-gradient(120deg, #c2b280 0%, #f0e5c0 45%, #c2b280 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: #fdfbf7;
     text-transform: none;
-    text-shadow: none;
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);
     letter-spacing: 0.5px;
 }
 
 .rio-hero-location {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
     font-family: "Lato", "Montserrat", sans-serif;
-    font-weight: 300;
-    font-size: clamp(0.95rem, 1.8vw, 1.2rem);
-    color: rgba(255,255,255,0.80);
-    letter-spacing: 3px;
+    font-weight: 600;
+    font-size: clamp(0.95rem, 3.4vw, 1.35rem);
+    color: #e0b653;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    margin: 0.2rem 0 0.4rem;
+    margin: 0.15rem 0 0;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Fio dourado curto só à esquerda do local, como na referência. */
+.rio-hero-location::before {
+    content: '';
+    flex: none;
+    width: clamp(24px, 3.2vw, 46px);
+    height: 1px;
+    background: currentColor;
+    opacity: 0.9;
 }
 
 .rio-hero-desc {
-    font-family: "Lato", "Montserrat", sans-serif;
+    font-family: "Playfair Display", Georgia, serif;
     font-weight: 400;
-    color: #dfeeff;
-    font-size: clamp(0.98rem, 1.7vw, 1.15rem);
-    line-height: 1.85;
-    width: min(100%, 1100px);
-    max-width: 1100px;
-    text-align: center;
-    margin: 0.3rem auto 1rem;
+    color: #edf1f3;
+    font-size: clamp(0.98rem, 1.55vw, 1.4rem);
+    line-height: 1.75;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    margin: 0.3rem 0 0;
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
     display: block;
     text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+}
+
+.rio-hero-wave-divider {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 58px;
+    width: 100%;
+    height: clamp(48px, 9vw, 90px);
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.rio-hero-scroll {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.15rem;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.rio-hero-scroll-label {
+    font-family: "Lato", "Montserrat", sans-serif;
+    font-size: clamp(0.6rem, 0.85vw, 0.72rem);
+    font-weight: 400;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #e0b653;
+}
+
+/* A seta pulsa sozinha — o wrapper carrega o translateX(-50%) da centralização. */
+.rio-hero-scroll > .fa {
+    animation: rioScrollBounce 2s ease-in-out infinite;
+}
+
+@keyframes rioScrollBounce {
+    0%, 100% { transform: translateY(0); opacity: 0.55; }
+    50% { transform: translateY(7px); opacity: 1; }
+}
+
+/* =====================================================
+   HERO — TELAS GRANDES
+   Composição de referência: conteúdo encostado à esquerda,
+   marca em lockup deitado e o lado direito da foto aberto.
+   ===================================================== */
+@media (min-width: 1024px) {
+    /* Aqui o painel cobre a tela inteira, como na referência. A "ponta
+       visível da seção de baixo" que servia de dica de rolagem (ver
+       comentário em .rio-hero) foi substituída pela dica explícita
+       "Descubra mais" + seta animada, que cumpre o mesmo papel. */
+    .rio-hero {
+        min-height: 100vh;
+    }
+
+    /* O escurecimento passa a vir da esquerda (onde mora o texto) em vez de
+       ser uma faixa horizontal, deixando as dunas visíveis à direita. */
+    .rio-hero-overlay {
+        background:
+            linear-gradient(180deg,
+                rgba(4, 20, 36, 0.55) 0%,
+                rgba(4, 20, 36, 0.05) 30%,
+                rgba(4, 20, 36, 0.05) 58%,
+                rgba(4, 18, 32, 0.88) 100%),
+            linear-gradient(95deg,
+                rgba(5, 22, 40, 0.90) 0%,
+                rgba(5, 22, 40, 0.68) 28%,
+                rgba(5, 22, 40, 0.28) 52%,
+                rgba(5, 22, 40, 0.04) 74%,
+                rgba(5, 22, 40, 0) 100%);
+    }
+
+    .rio-hero-content {
+        max-width: none;
+        align-items: flex-start;
+        text-align: left;
+        padding-left: clamp(3rem, 12vw, 15rem);
+        padding-right: 3rem;
+        padding-bottom: 8rem;
+    }
+
+    /* Troca a arte inteira pelos dois recortes, lado a lado. */
+    .rio-hero-brand {
+        --mark-h: clamp(60px, 5.9vw, 96px);
+        --word-h: clamp(34px, 3.35vw, 55px);
+        width: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: clamp(10px, 1.2vw, 20px);
+        margin-bottom: clamp(0.6rem, 1.6vw, 1.4rem);
+    }
+
+    .rio-hero-logo--full {
+        display: none;
+    }
+
+    .rio-hero-brand-mark,
+    .rio-hero-brand-wordmark {
+        display: block;
+    }
+
+    .rio-hero-brand-word {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .rio-hero-logo-sub {
+        font-size: clamp(0.62rem, 0.9vw, 0.82rem);
+        letter-spacing: 0.26em;
+        gap: 0.7rem;
+    }
+
+    .rio-hero-logo-sub::before,
+    .rio-hero-logo-sub::after {
+        width: clamp(20px, 2.2vw, 38px);
+    }
+
+    .rio-hero-text {
+        max-width: min(640px, 46vw);
+        margin: 0;
+    }
+
+    .rio-hero-title {
+        margin: 0.5rem 0 0.6rem;
+    }
+
+    .rio-hero-location {
+        margin-top: 0;
+    }
+
+    .rio-hero-desc {
+        margin-top: 1.1rem;
+    }
+
+    .rio-hero-content .btn-book {
+        margin-top: 1.9rem;
+    }
 }
 
 
@@ -644,11 +1009,26 @@ body {
     position: relative;
 }
 
-/* Textura sutil inspirada no calçadão — ondas em baixíssima opacidade */
+/* Seções dinâmicas (ex.: #expedicoes-compartilhadas, #expedicoes-privativas)
+   só recebem cards via JS quando há tours daquela modalidade cadastrados no
+   banco para a cidade. O grid tem só um comentário HTML como marcador de
+   posição, então :empty não pega (o comentário + a quebra de linha ao redor
+   contam como texto); por isso a checagem real é feita em JS (ver
+   Lencoismaranhenses.js) e esta classe só existe para o JS aplicar. */
+.rio-tours.rio-tours-vazia {
+    display: none;
+}
+
+/* Textura sutil inspirada no calçadão — ondas em baixíssima opacidade.
+   z-index:0 (em vez do z-index:auto padrão) garante que fique DEBAIXO dos
+   cards: um pseudo-elemento position:absolute com z-index:auto pinta acima
+   do conteúdo em fluxo normal do mesmo contexto de empilhamento, mesmo
+   vindo antes no DOM — por isso o grid abaixo precisa de z-index:1. */
 .rio-tours::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 0;
     pointer-events: none;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='48'%3E%3Cpath d='M0,12 C60,4 120,4 180,12 C240,20 300,20 360,12 L360,17 C300,25 240,25 180,17 C120,9 60,9 0,17Z' fill='%23000' opacity='0.025'/%3E%3Cpath d='M0,30 C60,22 120,22 180,30 C240,38 300,38 360,30 L360,35 C300,43 240,43 180,35 C120,27 60,27 0,35Z' fill='%23000' opacity='0.02'/%3E%3C/svg%3E") repeat;
     background-size: 360px 48px;
@@ -701,6 +1081,8 @@ body {
 /* CARDS DE TOURS                                        */
 /* ===================================================== */
 .rio-tours-grid {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1.8rem;
@@ -882,6 +1264,7 @@ body {
 }
 
 .rio-tour-details li {
+    position: relative;
     color: #4a5568;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -903,7 +1286,15 @@ body {
 
 /* Textos longos (Inclui, Roteiro, etc.) ficam limitados a 3 linhas para o
    card não crescer demais — "Ler mais" expande, mostrado só quando o texto
-   realmente estoura (ver wireTourDetailToggles no JS). */
+   realmente estoura (ver wireTourDetailToggles no JS).
+   Tentativa anterior usava max-height:2.5*line-height com overflow:hidden,
+   mas como o texto tem quebras de linha reais (\n do banco), o corte caía
+   no meio da altura de uma linha e mostrava letras pela metade.
+   -webkit-line-clamp corta sempre numa fronteira de linha completa (nunca
+   no meio de um glifo) e ainda troca o final por "…" automaticamente —
+   com 3 linhas, na prática quase sempre sobra só um pedaço da 3ª linha
+   visível antes do "…", o que já dá o efeito visual de "2 linhas e meia"
+   pedido, sem o bug de corte. */
 .rio-tour-detail-line {
     display: -webkit-box;
     width: 100%;
@@ -932,8 +1323,28 @@ body {
     text-decoration: underline;
 }
 
+/* Enquanto o texto está truncado, "Ler mais" fica sobreposto no final da
+   3ª linha (canto inferior direito do <li>, que é do tamanho do texto
+   clampado) — um degradê pro branco do card disfarça a sobreposição por
+   cima do "…" do line-clamp, dando a impressão de continuação da linha. */
 .rio-tour-detail-toggle.rio-detail-visible {
     display: inline-block;
+    position: absolute;
+    right: 0;
+    bottom: 0.35rem;
+    padding-left: 2.4em;
+    margin-top: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #ffffff 55%);
+}
+
+/* Texto expandido ("Ler menos"): volta ao fluxo normal, numa linha própria
+   abaixo do texto completo. */
+.rio-tour-detail-line.rio-detail-expanded + .rio-tour-detail-toggle.rio-detail-visible {
+    position: static;
+    display: inline-block;
+    padding-left: 0;
+    margin-top: 0.15rem;
+    background: none;
 }
 
 .rio-tour-details strong {
@@ -1148,7 +1559,7 @@ body {
     }
 
     .rio-hero-content {
-        padding: calc(var(--rio-header-height) + 12px) 1.5rem 2.5rem;
+        padding: calc(var(--rio-header-height) + 12px) 1.5rem 6.5rem;
         gap: 0.45rem;
     }
 
@@ -1180,12 +1591,16 @@ body {
     }
 
     .rio-hero {
-        min-height: max(50vh, 630px);
+        /* Sem piso fixo — o painel encolhe para caber só o conteúdo, sem
+           deixar espaço vazio entre o botão e a onda decorativa. A folga
+           necessária pra onda não colidir com o botão vem do padding-bottom
+           de .rio-hero-content, abaixo. */
+        min-height: 0;
         padding-top: 0;
     }
 
     .rio-hero-content {
-        padding: calc(var(--rio-header-height) + 10px) 1rem 2rem;
+        padding: calc(var(--rio-header-height) + 10px) 1rem calc(var(--hero-wave-band-height, 148px) + 24px);
         gap: 0.4rem;
     }
 
@@ -1302,27 +1717,27 @@ body {
     }
 
     .rio-hero {
-        min-height: max(45vh, 740px);
+        /* Sem piso fixo — o painel encolhe para caber só o conteúdo, sem
+           deixar espaço vazio entre o botão e a onda decorativa. A folga
+           necessária pra onda não colidir com o botão vem do padding-bottom
+           de .rio-hero-content, abaixo. */
+        min-height: 0;
         padding-top: 0;
     }
 
     .rio-hero-content {
         margin-top: 0;
-        padding: calc(var(--rio-header-height) + 10px) 1rem 2rem;
-        gap: 0.35rem;
+        padding: calc(var(--rio-header-height) + 34px) 1.35rem calc(var(--hero-wave-band-height, 148px) + 24px);
+        gap: 0.4rem;
     }
 
     .rio-hero-title {
-        font-size: clamp(1.4rem, 6vw, 2.2rem);
+        font-size: clamp(2.6rem, 12vw, 4rem);
         margin-bottom: 0.15rem;
     }
 
-    .rio-city-highlight {
-        font-size: clamp(2rem, 8vw, 3.2rem);
-    }
-
     .rio-hero-location {
-        font-size: clamp(0.75rem, 2.5vw, 0.95rem);
+        font-size: clamp(0.75rem, 2.8vw, 0.95rem);
         letter-spacing: 2px;
     }
 
@@ -1337,14 +1752,6 @@ body {
 
     .rio-tours-grid {
         grid-template-columns: 1fr;
-    }
-
-    .rio-hero-title {
-        font-size: clamp(1.4rem, 6vw, 2rem);
-    }
-
-    .rio-city-highlight {
-        font-size: clamp(2.2rem, 9vw, 3.4rem);
     }
 
     .rio-notice {
@@ -2593,23 +3000,18 @@ header {
 }
 
 @media (min-width: 1200px) {
-  .rio-hero {
-    min-height: 78vh;
-  }
-
+  /* Só o espaçamento vertical aqui — o recuo lateral do hero em telas
+     grandes é definido no bloco "HERO — TELAS GRANDES" (padding-left
+     proporcional). Usar o atalho `padding` neste ponto sobrescreveria
+     aquele recuo, já que esta regra vem depois no arquivo. */
   .rio-hero-content {
-    padding: calc(var(--rio-header-height, 72px) + 20px) 3.5rem 3.5rem;
+    padding-top: calc(var(--rio-header-height, 72px) + 20px);
     gap: 0.75rem;
   }
 
   #rioHeroDesc {
-    font-size: 1.1rem;
-    line-height: 1.85;
-  }
-
-  .rio-hero-content .btn-book {
-    margin-top: 1.4rem;
-    padding: 0.75rem 1.4rem;
+    font-size: 1.25rem;
+    line-height: 1.75;
   }
 }
 
@@ -2666,12 +3068,21 @@ header {
   padding: 1.2rem;
   box-shadow: 0 12px 40px rgba(0,0,0,0.28);
   overflow: hidden;
+  /* Layout em coluna com o form como único item flexível: em telas
+     grandes 90vh pode passar de 640px, e o form tentava crescer pra
+     acompanhar (calc(90vh - 120px)) em vez de respeitar o teto real do
+     modal — o excesso ficava cortado pelo overflow:hidden do modal sem
+     nunca acionar o próprio scroll do form. min-height:0 é o que permite
+     o form encolher abaixo do seu conteúdo e realmente rolar. */
+  display: flex;
+  flex-direction: column;
 }
 
 .reservation-modal form {
   display: grid;
   gap: 0.75rem;
-  max-height: calc(90vh - 120px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -2713,40 +3124,54 @@ header {
 .reservation-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.6rem;
-  margin-top: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .reservation-modal-actions .btn-book {
   border-radius: 999px;
-  min-width: 140px;
-  padding: 0.5rem 1rem;
-  border: 2px solid #b0b0b0;
-  color: #222;
-  background: #e0e0e0;
-  text-transform: uppercase;
+  min-width: 130px;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Cancelar — ação secundária, discreta (fundo transparente) */
+.reservation-modal-actions button[type="button"] {
+  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  color: #555;
+}
+
+.reservation-modal-actions button[type="button"]:hover,
+.reservation-modal-actions button[type="button"]:focus {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.35);
+  color: #222;
+  transform: none;
+}
+
+/* Confirmar Reserva — ação primária, preenchida na cor de destaque do site */
 .reservation-modal-actions button[type="submit"] {
-  background: #ffffff;
-  border: 2px solid #c2b280;
-  color: #c2b280;
+  background: #1da194;
+  border: 1.5px solid #1da194;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(29, 161, 148, 0.35);
 }
 
 .reservation-modal-actions button[type="submit"]:hover,
 .reservation-modal-actions button[type="submit"]:focus {
-  background: #fff8e5;
-  border-color: #b99e60;
-  color: #b99e60;
-}
-
-.reservation-modal-actions .btn-book:hover,
-.reservation-modal-actions .btn-book:focus {
-  background: rgba(220, 220, 220, 0.9);
+  background: #178f84;
+  border-color: #178f84;
+  color: #ffffff;
   transform: translateY(-1px);
-  color: #333;
+  box-shadow: 0 8px 20px rgba(29, 161, 148, 0.45);
 }
 
 .footer-info-icons {

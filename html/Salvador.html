@@ -6,15 +6,16 @@
     <title>Free Walking Tour · Salvador</title>
     <link rel="apple-touch-icon" href="../imagem/Salvador/assets/Logo.png?v=2">
     <link rel="icon" type="image/png" href="../imagem/Salvador/assets/Logo.png?v=2">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400;600&family=Karla:wght@300..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css?v=7">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=35">
-    <link rel="stylesheet" href="../css/Salvador.css?v=10">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=44">
+    <link rel="stylesheet" href="../css/Salvador.css?v=12">
+    <link rel="stylesheet" href="../css/hero-lockup.css?v=5">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=8">
 </head>
 <body>
-    <div class="main-container rio-page">
+    <div class="main-container rio-page rio-page--lockup rio-page--salvador">
         <header>
             <div class="nav-left">
                 <button class="hamburger" id="hamburger" type="button" aria-label="Menu">
@@ -73,15 +74,36 @@
         </div>
 
         <!-- HERO SALVADOR -->
-        <section class="rio-hero" style="background-image: url('../imagem/Salvador/assets/painel.png');">
+        <section class="rio-hero">
             <div class="rio-hero-overlay"></div>
             <div class="rio-hero-content">
-                <img src="../imagem/Salvador/assets/Logo.png" alt="Logo Tour by Foot Salvador" class="rio-hero-logo" loading="eager" decoding="async">
-                <h1 class="rio-hero-title"><span class="rio-city-highlight">Salvador</span></h1>
-                <p class="rio-hero-location">Bahia - Brasil</p>
-                <p class="rio-hero-desc">Descubra a alma vibrante do Pelourinho: ladeiras coloridas, o som do berimbau ecoando pelas ruas e séculos de história a cada passo. Mais que um passeio, uma imersão nos sabores, sons e cores da Bahia.</p>
-                <a href="#tours" class="btn-book">Conhecer Tours</a>
+                <div class="rio-hero-brand">
+                    <!-- Só o pin é recortado da arte (janela medida em --pin-* no
+                         hero-lockup.css); o texto ao lado é escrito na tipografia
+                         do hero. A imagem mantém a classe .rio-hero-logo para que
+                         cidade-visual.js continue trocando pelo logo do servidor. -->
+                    <span class="rio-hero-brand-mark" aria-hidden="true">
+                        <img src="../imagem/Salvador/assets/LogoV2.png" alt="" class="rio-hero-logo" loading="eager" decoding="async">
+                    </span>
+                    <span class="rio-hero-brand-word">
+                        <span class="rio-hero-brand-name">Visit Salvador</span>
+                        <p class="rio-hero-logo-sub">Tour by Foot</p>
+                    </span>
+                </div>
+                <div class="rio-hero-text">
+                    <span class="rio-hero-ornament" aria-hidden="true">
+                        <svg viewBox="0 0 60 14" xmlns="http://www.w3.org/2000/svg"><path d="M2 7c4-6 8-6 12 0s8 6 12 0 8-6 12 0 8 6 12 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    <h1 class="rio-hero-title"><span class="rio-city-highlight">Salvador</span></h1>
+                    <p class="rio-hero-location">Bahia • Brasil</p>
+                    <p class="rio-hero-desc">Descubra a alma vibrante do <span class="rio-hero-accent">Pelourinho</span>: ladeiras coloridas, o som do <span class="rio-hero-accent">berimbau</span> ecoando pelas ruas e séculos de história a cada passo. Mais que um passeio, uma imersão nos <span class="rio-hero-accent">sabores, sons e cores da Bahia</span>.</p>
+                    <a href="#tours" class="btn-book">Conhecer Tours</a>
+                </div>
             </div>
+            <svg class="rio-hero-wave-divider" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 58 C 240 18, 480 18, 720 46 S 1200 82, 1440 40" fill="none" stroke="#e0b653" stroke-width="3"/>
+                <path d="M0 74 C 240 34, 480 34, 720 62 S 1200 98, 1440 56" fill="none" stroke="#e0b653" stroke-width="2" opacity="0.5"/>
+            </svg>
         </section>
 
         <!-- AVISO -->
@@ -240,11 +262,11 @@
         </div>
     </div>
 
-    <script src="../js/translations.js"></script>
+    <script src="../js/translations.js?v=3"></script>
     <script src="../js/ui-translations.js"></script>
     <script src="../js/tour-interacoes.js?v=10"></script>
     <script src="../js/site-shell.js?v=52"></script>
-    <script src="../js/Salvador.js?v=8"></script>
+    <script src="../js/Salvador.js?v=9"></script>
     <script src="../js/cidade-visual.js?v=3"></script>
 </body>
 </html>
