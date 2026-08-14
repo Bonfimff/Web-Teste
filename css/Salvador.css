@@ -39,7 +39,7 @@
 }
 
 .rio-hero::before {
-    background: var(--city-painel-bg, url('../imagem/Salvador/assets/painel.png') center/cover no-repeat);
+    background: var(--city-painel-bg, transparent);
 }
 
 /* Remove padrão Copacabana — exclusivo do Rio; base escura padronizada

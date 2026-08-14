@@ -582,7 +582,7 @@ main {
 }
 
 /* Imagens de cada cidade */
-.city-thumb-rio { background-image: url('../imagem/assets/RiodeJaneiro.jpeg'); }
+.city-thumb-rio { background-image: url('../imagem/assets/RiodeJaneiro.jpeg'); background-position: center top; }
 .city-thumb-salvador { background-image: url('../imagem/assets/Salvador.jpeg'); }
 .city-thumb-saoluis { background-image: url('../imagem/assets/SaoLuis.jpeg'); }
 .city-thumb-lencois { background-image: url('../imagem/assets/Lencois.jpeg'); }
@@ -953,6 +953,94 @@ main {
 
 /* ---------- TABLET < 900px ----------------------------- */
 @media (max-width: 900px) {
+    /* Abaixo de 900px as cápsulas de vídeo somem e o conteúdo vira só o
+       bloco .hero-text — aqui ele precisa caber inteiro na tela (título +
+       subtítulo + botão + grade de cidades + ícones sociais) sem depender
+       de rolagem para ver a quarta cidade. Trocamos min-height por height
+       fixo (100dvh) com overflow-y:auto como rede de segurança (idiomas
+       muito longos, fonte do usuário aumentada etc. ainda conseguem
+       rolar), mas os espaçamentos abaixo usam clamp() com unidades dvh
+       para encolher automaticamente e evitar a rolagem no caso comum. */
+    /* :not(.rio-page) — essa regra é só para a home (grade de cidades). Nas
+       páginas de cidade (Salvador/São Luís/Lençóis, que também carregam este
+       arquivo) ela prendia .main-container numa altura fixa com scroll
+       interno, e como o .rio-hero dessas páginas já assume um
+       min-height:0 próprio (pensado pra um container que cresce livre com o
+       conteúdo), o flex-shrink zerava a altura do hero por completo. */
+    .main-container:not(.rio-page) {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow-y: auto;
+    }
+
+    main {
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
+    }
+
+    /* "flex:1" (herdado da regra base) dá ao main uma altura DEFINIDA em
+       pixels (preenche o espaço restante depois do header e do painel
+       Sobre/Contato/Ajuda, quando visível). "height:100%" aqui faz o
+       .hero-text ocupar exatamente essa altura — "align-items:stretch" no
+       main teoricamente faria o mesmo, mas stretch não repassa uma altura
+       definida através de um flex row (main) aninhado num flex column
+       (.main-container) em todos os casos; height:100% resolve isso de
+       forma explícita. Sem isso, .hero-text ficava do tamanho do próprio
+       conteúdo e vazava por cima do painel Sobre/Contato/Ajuda abaixo. */
+    .hero-text {
+        gap: clamp(0.3rem, 1.2dvh, 0.5rem);
+        justify-content: center;
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    /* Quando o painel Sobre/Contato/Ajuda está aberto (infoSections visível,
+       sem a classe is-empty), o .hero-text volta ao tamanho natural em vez
+       de ser espremido na altura do main — senão a grade de cidades era
+       cortada por uma rolagem interna (ver captura de tela do usuário) só
+       para caber ao lado do painel. Deixamos a página inteira rolar
+       normalmente nesse caso: os 4 cards aparecem completos e o painel vem
+       logo abaixo do último, sem sobrepor nada. */
+    .main-container:has(#infoSections:not(.is-empty)) main {
+        flex: 0 0 auto;
+    }
+
+    .main-container:has(#infoSections:not(.is-empty)) .hero-text {
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .hero-title {
+        margin-bottom: clamp(0.3rem, 1.2dvh, 1rem);
+    }
+
+    .hero-text .subtitle {
+        margin-bottom: clamp(0.5rem, 1.6dvh, 1.5rem);
+    }
+
+    .city-title {
+        margin: clamp(0.4rem, 1.6dvh, 1.5rem) 0 clamp(0.3rem, 1dvh, 0.8rem);
+    }
+
+    .city-list {
+        gap: clamp(0.5rem, 1.4dvh, 1rem);
+    }
+
+    .city-thumb {
+        width: 90%;
+        height: clamp(90px, 18dvh, 210px);
+        margin: clamp(4px, 1dvh, 8px) auto;
+    }
+
+    .city-name {
+        padding: clamp(0.25rem, 1dvh, 0.5rem) 0.5rem clamp(0.35rem, 1.2dvh, 0.7rem);
+    }
+
+    .social-icons {
+        margin-top: clamp(0.5rem, 1.6dvh, 2rem);
+    }
+
     header {
         flex-wrap: wrap;
         /* "space-between" espalharia hambúrguer/idioma/login em 3 espaços
@@ -1020,12 +1108,17 @@ main {
     }
 
     /* Aberto: nav-left ocupa a linha inteira para o dropdown (nav/idioma)
-       se expandir abaixo, com largura total. */
+       se expandir abaixo, com largura total. "order" maior que o do
+       nav-right (2) garante que o dropdown sempre desça abaixo de
+       hambúrguer/idioma/login, em vez de aparecer empurrado para cima
+       deles (ordem padrão do DOM, sem "order", colocava o nav-left antes
+       do hambúrguer no fluxo do flex). */
     header.menu-open .nav-left {
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap;
         flex: 1 1 100%;
+        order: 3;
     }
 
     /* No lugar da busca (escondida acima): chip compacto, igual ao
@@ -1084,11 +1177,6 @@ main {
 
     .city-card {
         min-height: auto;
-    }
-
-    .city-thumb {
-        aspect-ratio: 4 / 5;
-        height: auto;
     }
 
     .site-sections {
@@ -1163,9 +1251,7 @@ main {
     }
 
     .city-thumb {
-        aspect-ratio: 4 / 5;
-        height: auto;
-        margin: 6px;
+        margin: clamp(3px, 0.8dvh, 6px) auto;
     }
 
     .social-icons {

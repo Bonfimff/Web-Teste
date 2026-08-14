@@ -390,3 +390,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Modo de manutenção: a checagem que realmente decide isso agora é o script
+// bloqueante no <head> (ver index.html), que redireciona pra manutencao.html
+// antes de qualquer conteúdo renderizar — evita o flash da página real que
+// essa versão baseada em fetch assíncrono/pós-load tinha.

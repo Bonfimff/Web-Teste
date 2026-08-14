@@ -21,7 +21,9 @@ window.translations = {
 		award_title: "Reconhecimento Especial",
 		award_text: "Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰",
 		search_placeholder: "Pesquisar",
-		login: "LOGIN"
+		login: "LOGIN",
+		maintenance_title: "Site em manutenção",
+		maintenance_body: "Pedimos desculpas pelo transtorno. Estamos com o site temporariamente indisponível e voltaremos em breve. Qualquer dúvida, fale com a nossa equipe:"
 	},
 	en: {
 		hero_title: "Free Walking Tour",
@@ -44,7 +46,9 @@ window.translations = {
 		award_title: "Special Recognition",
 		award_text: "Did you know we were awarded as the <b>best choice</b> by <b>TripAdvisor</b> in 2021? 🥰",
 		search_placeholder: "Search",
-		login: "LOGIN"
+		login: "LOGIN",
+		maintenance_title: "Site under maintenance",
+		maintenance_body: "We apologize for the inconvenience. Our site is temporarily unavailable and will be back soon. For any questions, contact our team:"
 	},
 	fr: {
 		hero_title: "Free Walking Tour",
@@ -67,7 +71,9 @@ window.translations = {
 		award_title: "Reconnaissance Spéciale",
 		award_text: "Saviez-vous que nous avons été récompensés comme le <b>meilleur choix</b> par <b>TripAdvisor</b> en 2021 ? 🥰",
 		search_placeholder: "Rechercher",
-		login: "LOGIN"
+		login: "LOGIN",
+		maintenance_title: "Site en maintenance",
+		maintenance_body: "Nous nous excusons pour la gêne occasionnée. Notre site est temporairement indisponible et sera bientôt de retour. Pour toute question, contactez notre équipe :"
 	},
 	es: {
 		hero_title: "Free Walking Tour",
@@ -90,7 +96,9 @@ window.translations = {
 		award_title: "Reconocimiento Especial",
 		award_text: "¿Sabías que fuimos premiados como la <b>mejor elección</b> por <b>TripAdvisor</b> en 2021? 🥰",
 		search_placeholder: "Buscar",
-		login: "LOGIN"
+		login: "LOGIN",
+		maintenance_title: "Sitio en mantenimiento",
+		maintenance_body: "Pedimos disculpas por las molestias. Nuestro sitio está temporalmente no disponible y volverá pronto. Para cualquier duda, contacta a nuestro equipo:"
 	},
 	it: {
 		hero_title: "Free Walking Tour",
@@ -113,7 +121,9 @@ window.translations = {
 		award_title: "Riconoscimento Speciale",
 		award_text: "Sapevi che siamo stati premiati come la <b>migliore scelta</b> da <b>TripAdvisor</b> nel 2021? 🥰",
 		search_placeholder: "Cerca",
-		login: "LOGIN"
+		login: "LOGIN",
+		maintenance_title: "Sito in manutenzione",
+		maintenance_body: "Ci scusiamo per il disagio. Il nostro sito è temporaneamente non disponibile e tornerà presto online. Per qualsiasi dubbio, contatta il nostro team:"
 	},
     zh: {
         hero_title: "徒步旅行团",
@@ -136,7 +146,9 @@ window.translations = {
         award_title: "特别荣誉",
         award_text: "您知道吗？我们在2021年被<b>TripAdvisor</b>评为<b>最佳选择</b>！",
         search_placeholder: "搜索",
-        login: "登录"
+        login: "登录",
+        maintenance_title: "网站维护中",
+        maintenance_body: "给您带来的不便，我们深表歉意。网站暂时无法访问，我们会尽快恢复。如有任何疑问，请联系我们："
     }
 };
 

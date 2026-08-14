@@ -244,6 +244,10 @@
 
     console.debug('API_BASE_URL configurado para:', API_BASE_URL);
 
+    // Modo de manutenção: a checagem que decide isso é o script bloqueante
+    // no <head> de cada página de cidade (redireciona pra ../manutencao.html
+    // antes de qualquer conteúdo renderizar — sem flash da página real).
+
     const apiFetch = async (path, options = {}) => {
         const url = path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
         const defaultOptions = {
@@ -2511,7 +2515,8 @@
             canal_reserva: (tour?.canal_reserva || 'web').toLowerCase(),
             imagens: Array.isArray(tour?.imagens) ? tour.imagens : [],
             ordem: tour?.ordem ?? 0,
-            horarios: tour?.horarios || ''
+            horarios: tour?.horarios || '',
+            horarios_por_dia: tour?.horarios_por_dia || ''
         };
     };
 
@@ -2557,40 +2562,79 @@
         zh: { map: '查看地图', reserve: '立即预订', reviews: '评价', dontShow: '不再显示', proceed: '继续' }
     };
     window.TOUR_ACTION_LABELS = TOUR_ACTION_LABELS;
-    // campos realmente estouraram o clamp de 3 linhas e só aí mostra o botão
-    // — evita um "Ler mais" que não faz nada em textos curtos. Com
-    // -webkit-line-clamp o navegador nem chega a "layoutar" as linhas
-    // cortadas, então scrollHeight == clientHeight mesmo com texto truncado;
-    // por isso a comparação usa a altura SEM o clamp (.rio-detail-expanded,
-    // aplicada e desfeita na hora) contra a altura COM o clamp.
+    // Corta o TEXTO em si (não só visualmente) para caber em 3 linhas com
+    // "…" e o botão "Ler mais" terminando NA mesma linha, coladinho no fim
+    // do texto — pedido explícito pra bater com a referência enviada.
+    // -webkit-line-clamp/max-height só escondiam o excesso visualmente,
+    // então o botão nunca conseguia ficar "no fim da 3ª linha": ou ficava
+    // sobreposto (position:absolute) ou empurrado pra linha de baixo (fluxo
+    // normal). Value fica isolado em .rio-tour-detail-value (fora do ícone
+    // e do rótulo em negrito, que nunca são cortados) especificamente pra
+    // essa busca binária ter só o texto variável pra truncar.
+    const CLAMP_LINES = 3;
     const wireTourDetailToggles = (container) => {
         if (!container) return;
         // Medir logo após o innerHTML ser trocado pega o card ainda sem layout
         // assentado (altura 0 ou desatualizada) — o botão nunca aparecia mesmo
-        // com texto claramente cortado pelo "...". Adiar pro próximo frame
-        // garante que o navegador já terminou de desenhar antes de medir.
+        // com texto claramente cortado. Adiar pro próximo frame garante que o
+        // navegador já terminou de desenhar antes de medir.
         requestAnimationFrame(() => {
-            container.querySelectorAll('.rio-tour-detail-line').forEach((valueEl) => {
-                const toggle = valueEl.nextElementSibling;
-                if (!toggle || !toggle.classList.contains('rio-tour-detail-toggle')) return;
-                toggle.classList.remove('rio-detail-visible');
-                valueEl.classList.remove('rio-detail-expanded');
-                const clampedHeight = valueEl.clientHeight;
-                valueEl.classList.add('rio-detail-expanded');
-                const fullHeight = valueEl.scrollHeight;
-                valueEl.classList.remove('rio-detail-expanded');
-                // Reforço: além da medição de altura, um texto longo o
-                // suficiente (~3 linhas nesse tamanho de fonte) sempre mostra
-                // o botão, mesmo se a medição de layout falhar por algum motivo.
-                const overflowed = (fullHeight - clampedHeight > 1) || valueEl.textContent.trim().length > 130;
-                if (overflowed) {
-                    toggle.classList.add('rio-detail-visible');
-                    toggle.textContent = toggle.dataset.more;
-                    toggle.onclick = () => {
-                        const expanded = valueEl.classList.toggle('rio-detail-expanded');
-                        toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
-                    };
+            container.querySelectorAll('.rio-tour-detail-line').forEach((lineEl) => {
+                const valueEl = lineEl.querySelector('.rio-tour-detail-value');
+                const toggle = lineEl.querySelector('.rio-tour-detail-toggle');
+                if (!valueEl || !toggle) return;
+
+                // O texto original só é guardado uma vez — chamadas seguintes
+                // (troca de idioma, etc.) sempre recriam o HTML do zero, mas
+                // por segurança evita truncar um texto que já foi truncado.
+                if (valueEl.dataset.fullText === undefined) {
+                    valueEl.dataset.fullText = valueEl.textContent;
                 }
+                const fullText = valueEl.dataset.fullText;
+
+                toggle.classList.remove('rio-detail-visible');
+                lineEl.classList.remove('rio-detail-expanded');
+                valueEl.textContent = fullText;
+                toggle.remove();
+                valueEl.after(toggle);
+
+                const lineHeight = parseFloat(getComputedStyle(lineEl).lineHeight) || 22.5;
+                const maxHeight = lineHeight * CLAMP_LINES + 1;
+
+                if (lineEl.scrollHeight <= maxHeight) {
+                    return; // texto completo já cabe, sem truncar nem mostrar o botão
+                }
+
+                toggle.classList.add('rio-detail-visible');
+                toggle.textContent = toggle.dataset.more;
+
+                // Busca binária pelo maior prefixo de fullText que, com "…" e
+                // o botão logo em seguida (já no DOM, então entra na medição),
+                // ainda cabe nas CLAMP_LINES linhas.
+                const fits = (n) => {
+                    valueEl.textContent = fullText.slice(0, n).trimEnd() + '…';
+                    return lineEl.scrollHeight <= maxHeight;
+                };
+                let lo = 0;
+                let hi = fullText.length;
+                let best = 0;
+                while (lo <= hi) {
+                    const mid = (lo + hi) >> 1;
+                    if (fits(mid)) {
+                        best = mid;
+                        lo = mid + 1;
+                    } else {
+                        hi = mid - 1;
+                    }
+                }
+                const truncatedText = fullText.slice(0, best).trimEnd() + '…';
+                valueEl.textContent = truncatedText;
+
+                toggle.onclick = () => {
+                    const expanded = lineEl.classList.toggle('rio-detail-expanded');
+                    valueEl.textContent = expanded ? fullText : truncatedText;
+                    toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
+                };
             });
         });
     };
@@ -2724,7 +2768,7 @@
             if (translateKeyByField[key]) {
                 value = translateTourCardDetailValue(translateKeyByField[key], value, lang);
             }
-            html += `<li><span class="rio-tour-detail-line"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> ${value}</span><button type="button" class="rio-tour-detail-toggle" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></li>`;
+            html += `<li><span class="rio-tour-detail-line"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> <span class="rio-tour-detail-value">${value}</span><button type="button" class="rio-tour-detail-toggle" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></span></li>`;
             // "Valor" vai logo depois de "Horários disponíveis" em vez de sempre
             // no final da lista — pedido explícito, já que ambos os campos
             // costumam ser lidos juntos ("quando" e "quanto").
@@ -2756,6 +2800,18 @@
     const applyTourVisibility = (card, tour) => {
         const estado = (tour.estado || tour.status || '').toString().trim().toLowerCase();
         card.style.display = (estado === 'oculto' || estado === 'hidden') ? 'none' : '';
+    };
+
+    // Cada legenda de modalidade (#tours, #transfers, #expedicoes-privativas)
+    // só deve aparecer se a página tiver ao menos um tour visível daquele tipo.
+    const toggleEmptyModalitySections = () => {
+        ['#tours', '#transfers', '#expedicoes-privativas', '#expedicoes-compartilhadas'].forEach((sel) => {
+            const section = document.querySelector(sel);
+            if (!section) return;
+            const hasVisibleCard = Array.from(section.querySelectorAll('.rio-tour-card'))
+                .some((card) => card.style.display !== 'none');
+            section.style.display = hasVisibleCard ? '' : 'none';
+        });
     };
 
     // Tour criado em Gerenciamento > "+ Adicionar Tour" sem card correspondente
@@ -2997,6 +3053,7 @@
                 });
 
                 appendMissingSiteShellTourCards(tours, matchedTourIds, currentLangForNewCards);
+                toggleEmptyModalitySections();
 
                 if (typeof window.startTourSliders === 'function') {
                     window.startTourSliders();
@@ -3975,6 +4032,40 @@
 
     window.openUserDataModal = openUserDataModal;
 
+    const DIAS_SEMANA_KEYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+
+    const parseHorariosPorDia = (raw) => {
+        if (!raw) return null;
+        try {
+            const obj = JSON.parse(raw);
+            return obj && typeof obj === 'object' ? obj : null;
+        } catch {
+            return null;
+        }
+    };
+
+    // reservationDate.value é sempre "YYYY-MM-DD" (input type=date); decompor
+    // manualmente e montar a data em horário local evita o bug clássico de
+    // "new Date('YYYY-MM-DD')" (parseia como UTC meia-noite) devolver o dia
+    // da semana errado dependendo do fuso do navegador.
+    const weekdayKeyForDate = (dateStr) => {
+        const [y, m, d] = (dateStr || '').split('-').map(Number);
+        if (!y || !m || !d) return null;
+        return DIAS_SEMANA_KEYS[new Date(y, m - 1, d).getDay()];
+    };
+
+    // Horários válidos pra um tour numa data específica. Tours sem
+    // horarios_por_dia configurado (legado) caem no comportamento antigo:
+    // mesma lista plana de horários, independente do dia da semana.
+    const horariosParaData = (tour, dateStr) => {
+        const porDia = parseHorariosPorDia(tour?.horarios_por_dia);
+        if (!porDia) {
+            return (tour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
+        }
+        const dia = weekdayKeyForDate(dateStr);
+        return dia && Array.isArray(porDia[dia]) ? porDia[dia] : [];
+    };
+
     const initReservationTracking = () => {
         const reservationModal = document.getElementById('reservationModal');
         const reservationForm = document.getElementById('reservationForm');
@@ -3994,6 +4085,177 @@
             if (!reservationModal) return;
             reservationModal.classList.add('hidden');
         };
+
+        let activeReservationTour = null;
+
+        const buildReservationTimeOptions = (horarios) => {
+            if (!reservationTime || !reservationTimeField) return;
+            const currentLang = typeof window.getCurrentLanguage === 'function'
+                ? window.getCurrentLanguage()
+                : (document.documentElement.lang || 'pt').slice(0, 2);
+            const strings = window.uiTranslations?.[currentLang] || window.uiTranslations?.pt || {};
+
+            reservationTime.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.setAttribute('data-i18n', 'reservation_time_placeholder');
+            defaultOption.textContent = strings.reservation_time_placeholder || 'Selecione um horário';
+            reservationTime.appendChild(defaultOption);
+
+            horarios.forEach(horario => {
+                const option = document.createElement('option');
+                option.value = horario;
+                option.textContent = horario;
+                reservationTime.appendChild(option);
+            });
+
+            if (horarios.length) {
+                reservationTimeField.hidden = false;
+                reservationTime.setAttribute('required', 'required');
+                if (horarios.length === 1) {
+                    reservationTime.value = horarios[0];
+                }
+            } else {
+                reservationTimeField.hidden = true;
+                reservationTime.removeAttribute('required');
+                reservationTime.value = '';
+            }
+        };
+
+        // Tours com horários por dia da semana só liberam o campo de horário
+        // depois que uma data é escolhida (sem data não dá pra saber o dia da
+        // semana). Tours legados (só a lista plana "horarios") continuam
+        // mostrando o campo direto, com os mesmos horários pra qualquer dia.
+        const updateReservationTimeForSelectedDate = () => {
+            if (!activeReservationTour) return;
+            const porDia = parseHorariosPorDia(activeReservationTour.horarios_por_dia);
+            if (!porDia) {
+                buildReservationTimeOptions((activeReservationTour.horarios || '').split(',').map(h => h.trim()).filter(Boolean));
+                return;
+            }
+            const dateValue = reservationDate ? reservationDate.value : '';
+            if (!dateValue) {
+                buildReservationTimeOptions([]);
+                return;
+            }
+            const horariosDoDia = horariosParaData(activeReservationTour, dateValue);
+            buildReservationTimeOptions(horariosDoDia);
+            if (!horariosDoDia.length) {
+                showGlobalNotification('Este tour não está disponível no dia da semana escolhido. Selecione outra data.', 'error');
+            }
+        };
+
+        if (reservationDate) {
+            reservationDate.addEventListener('change', updateReservationTimeForSelectedDate);
+        }
+
+        // Calendário customizado: o popup nativo de <input type="date"> não é
+        // estilizável, então o campo vira um botão que abre um mini-calendário
+        // próprio pintando de verde os dias em que o tour funciona. O input
+        // nativo continua no DOM (oculto) como fonte da verdade — o resto do
+        // fluxo (payload, updateReservationTimeForSelectedDate) não muda.
+        const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        let calendarViewDate = new Date();
+        let calendarPopover = null;
+        let calendarDisplay = null;
+
+        const formatDateDisplay = (dateStr) => {
+            if (!dateStr) return 'Selecione uma data';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        };
+
+        const handleCalendarOutsideClick = (event) => {
+            if (calendarPopover && !calendarPopover.contains(event.target) && event.target !== calendarDisplay && !calendarDisplay?.contains(event.target)) {
+                closeCalendarPopover();
+            }
+        };
+
+        function closeCalendarPopover() {
+            calendarPopover?.remove();
+            calendarPopover = null;
+            document.removeEventListener('click', handleCalendarOutsideClick, true);
+        }
+
+        const renderCalendarPopover = () => {
+            if (!calendarPopover) return;
+            const year = calendarViewDate.getFullYear();
+            const month = calendarViewDate.getMonth();
+            const porDia = parseHorariosPorDia(activeReservationTour?.horarios_por_dia);
+            const firstWeekday = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const selected = reservationDate?.value || '';
+
+            let cells = '';
+            for (let i = 0; i < firstWeekday; i++) cells += '<span class="res-calendar-day res-calendar-day--empty"></span>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const diaKey = DIAS_SEMANA_KEYS[new Date(year, month, day).getDay()];
+                const disponivel = !porDia || (Array.isArray(porDia[diaKey]) && porDia[diaKey].length > 0);
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const classes = ['res-calendar-day', disponivel ? 'res-calendar-day--available' : 'res-calendar-day--unavailable'];
+                if (dateStr === selected) classes.push('res-calendar-day--selected');
+                cells += `<button type="button" class="${classes.join(' ')}" data-date="${dateStr}" ${disponivel ? '' : 'disabled'}>${day}</button>`;
+            }
+
+            calendarPopover.innerHTML = `
+                <div class="res-calendar-header">
+                    <button type="button" class="res-calendar-nav" data-nav="-1" aria-label="Mês anterior">&lsaquo;</button>
+                    <span class="res-calendar-title">${MESES_PT[month]} ${year}</span>
+                    <button type="button" class="res-calendar-nav" data-nav="1" aria-label="Próximo mês">&rsaquo;</button>
+                </div>
+                <div class="res-calendar-weekdays"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+                <div class="res-calendar-grid">${cells}</div>
+                ${porDia ? '<div class="res-calendar-legend"><span class="res-calendar-legend-dot"></span> Dias disponíveis para este tour</div>' : ''}
+            `;
+
+            calendarPopover.querySelectorAll('[data-nav]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    calendarViewDate = new Date(year, month + Number(btn.getAttribute('data-nav')), 1);
+                    renderCalendarPopover();
+                });
+            });
+            calendarPopover.querySelectorAll('.res-calendar-day--available').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    reservationDate.value = btn.getAttribute('data-date');
+                    reservationDate.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (calendarDisplay) calendarDisplay.querySelector('.res-date-display-text').textContent = formatDateDisplay(reservationDate.value);
+                    closeCalendarPopover();
+                });
+            });
+        };
+
+        const openCalendarPopover = () => {
+            if (calendarPopover) {
+                closeCalendarPopover();
+                return;
+            }
+            calendarViewDate = reservationDate?.value ? new Date(`${reservationDate.value}T00:00:00`) : new Date();
+            calendarPopover = document.createElement('div');
+            calendarPopover.className = 'res-calendar-popover';
+            document.body.appendChild(calendarPopover);
+            const rect = calendarDisplay.getBoundingClientRect();
+            calendarPopover.style.position = 'fixed';
+            calendarPopover.style.top = `${rect.bottom + 6}px`;
+            calendarPopover.style.left = `${rect.left}px`;
+            renderCalendarPopover();
+            setTimeout(() => document.addEventListener('click', handleCalendarOutsideClick, true), 0);
+        };
+
+        const initCustomReservationCalendar = () => {
+            if (!reservationDate || reservationDate.dataset.customCalendarInit) return;
+            reservationDate.dataset.customCalendarInit = '1';
+            reservationDate.hidden = true;
+            reservationDate.style.display = 'none';
+
+            calendarDisplay = document.createElement('button');
+            calendarDisplay.type = 'button';
+            calendarDisplay.className = 'res-date-display';
+            calendarDisplay.innerHTML = '<span class="res-date-display-text">Selecione uma data</span><i class="fa fa-calendar"></i>';
+            reservationDate.insertAdjacentElement('afterend', calendarDisplay);
+            calendarDisplay.addEventListener('click', openCalendarPopover);
+        };
+
+        initCustomReservationCalendar();
 
         const matchTourByName = (tourName) => getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tourName));
 
@@ -4032,6 +4294,7 @@
             reservationTour.value = tourName;
             reservationName.value = userName || '';
             reservationDate.value = '';
+            if (calendarDisplay) calendarDisplay.querySelector('.res-date-display-text').textContent = formatDateDisplay('');
             reservationQuantity.value = 1;
             reservationPhone.value = userPhone || '';
             reservationEmail.value = userEmail || '';
@@ -4065,35 +4328,8 @@
                 }
             }
 
-            const horarios = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
-
-            if (reservationTime && reservationTimeField) {
-                reservationTime.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.setAttribute('data-i18n', 'reservation_time_placeholder');
-                defaultOption.textContent = strings.reservation_time_placeholder || 'Selecione um horário';
-                reservationTime.appendChild(defaultOption);
-
-                horarios.forEach(horario => {
-                    const option = document.createElement('option');
-                    option.value = horario;
-                    option.textContent = horario;
-                    reservationTime.appendChild(option);
-                });
-
-                if (horarios.length) {
-                    reservationTimeField.hidden = false;
-                    reservationTime.setAttribute('required', 'required');
-                    if (horarios.length === 1) {
-                        reservationTime.value = horarios[0];
-                    }
-                } else {
-                    reservationTimeField.hidden = true;
-                    reservationTime.removeAttribute('required');
-                    reservationTime.value = '';
-                }
-            }
+            activeReservationTour = matchedTour || null;
+            updateReservationTimeForSelectedDate();
 
             reservationModal.classList.remove('hidden');
         };
@@ -4175,7 +4411,7 @@
                 // no formulário do cliente. O backend também valida isso de forma independente.
                 const matchedTour = getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tour));
                 const modality = (matchedTour?.modalidade || 'free').toLowerCase();
-                const horariosDisponiveis = (matchedTour?.horarios || '').split(',').map(h => h.trim()).filter(Boolean);
+                const horariosDisponiveis = horariosParaData(matchedTour, date);
                 const selectedTime = reservationTime ? reservationTime.value : '';
 
                 if (!tour || !clientName || !date || !quantity || !language || !phone || !email) {
@@ -4183,8 +4419,18 @@
                     return;
                 }
 
+                if (parseHorariosPorDia(matchedTour?.horarios_por_dia) && !horariosDisponiveis.length) {
+                    showGlobalNotification('Este tour não está disponível no dia da semana escolhido. Selecione outra data.', 'error');
+                    return;
+                }
+
                 if (horariosDisponiveis.length && !selectedTime) {
                     showGlobalNotification('Escolha um horário para a reserva.', 'error');
+                    return;
+                }
+
+                if (horariosDisponiveis.length && selectedTime && !horariosDisponiveis.includes(selectedTime)) {
+                    showGlobalNotification('O horário selecionado não está mais disponível para essa data. Escolha novamente.', 'error');
                     return;
                 }
 

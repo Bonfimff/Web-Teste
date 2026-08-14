@@ -630,6 +630,7 @@ const mapBackendTourToPageTour = (tour) => {
     pastaImagens: tour?.pasta_imagens || '',
     ordem: tour?.ordem ?? 0,
     horarios: tour?.horarios || '',
+    horariosPorDia: tour?.horarios_por_dia || '',
     diasSemana: tour?.dias_semana || ''
   };
 };
@@ -691,7 +692,19 @@ const formatTourValueBRL = (value) => {
 
 let currentlyEditingTourId = null;
 let isCreatingNewTour = false;
-let currentTourHorarios = [];
+
+// Chaves fixas usadas em todo o front e no backend (ver DIAS_SEMANA_KEYS em
+// app.py) para o JSON de horários por dia da semana.
+const DIAS_SEMANA = [
+  { key: 'dom', label: 'Domingo' },
+  { key: 'seg', label: 'Segunda' },
+  { key: 'ter', label: 'Terça' },
+  { key: 'qua', label: 'Quarta' },
+  { key: 'qui', label: 'Quinta' },
+  { key: 'sex', label: 'Sexta' },
+  { key: 'sab', label: 'Sábado' }
+];
+let currentTourHorariosPorDia = {};
 
 // Campos de texto livre do tour preenchidos separadamente para cada idioma
 // (aba de tradução do modal de edição). "pt" é o idioma padrão/obrigatório;
@@ -741,38 +754,90 @@ const switchTourEditLang = (lang) => {
   });
 };
 
-const renderTourHorarios = (horarios) => {
-  const container = document.getElementById('tourModalHorarios');
-  if (!container) return;
-
-  currentTourHorarios = Array.isArray(horarios) ? [...horarios] : [];
-
-  if (!currentTourHorarios.length) {
-    container.innerHTML = '<span class="tour-horarios-empty">Nenhum horário cadastrado — a reserva não pede horário.</span>';
-    return;
+// Preenche currentTourHorariosPorDia a partir do JSON salvo (ou, para tours
+// antigos sem configuração por dia, aplica a lista plana "horarios" a todos
+// os dias — assim editar um tour legado não perde os horários já cadastrados).
+const setTourHorariosPorDia = (horariosPorDiaJson, horariosFlat) => {
+  let parsed = {};
+  if (horariosPorDiaJson) {
+    try {
+      const obj = JSON.parse(horariosPorDiaJson);
+      if (obj && typeof obj === 'object') parsed = obj;
+    } catch {
+      parsed = {};
+    }
   }
 
-  container.innerHTML = currentTourHorarios.map((horario) => `
-    <span class="tour-horario-chip">
-      ${escapeHtml(horario)}
-      <button type="button" class="tour-horario-remove" data-horario="${escapeHtml(horario)}" aria-label="Remover horário ${escapeHtml(horario)}">&times;</button>
-    </span>
-  `).join('');
+  const temPorDia = DIAS_SEMANA.some(({ key }) => Array.isArray(parsed[key]) && parsed[key].length);
+  const fallback = !temPorDia && horariosFlat
+    ? horariosFlat.split(',').map((h) => h.trim()).filter(Boolean).sort()
+    : null;
 
-  container.querySelectorAll('.tour-horario-remove').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      renderTourHorarios(currentTourHorarios.filter((h) => h !== btn.getAttribute('data-horario')));
-    });
+  currentTourHorariosPorDia = {};
+  DIAS_SEMANA.forEach(({ key }) => {
+    currentTourHorariosPorDia[key] = temPorDia
+      ? (Array.isArray(parsed[key]) ? [...parsed[key]].sort() : [])
+      : (fallback ? [...fallback] : []);
   });
+
+  renderTourHorariosPorDia();
 };
 
-const adicionarTourHorario = () => {
-  const input = document.getElementById('tourModalHorarioInput');
-  if (!input || !input.value) return;
-  const novos = new Set(currentTourHorarios);
-  novos.add(input.value);
-  renderTourHorarios(Array.from(novos).sort());
-  input.value = '';
+const renderTourHorariosPorDia = () => {
+  const container = document.getElementById('tourModalHorariosPorDia');
+  if (!container) return;
+
+  container.innerHTML = DIAS_SEMANA.map(({ key, label }) => {
+    const horarios = currentTourHorariosPorDia[key] || [];
+    const chips = horarios.length
+      ? horarios.map((horario) => `
+          <span class="tour-horario-chip">
+            ${escapeHtml(horario)}
+            <button type="button" class="tour-horario-remove" data-dia="${key}" data-horario="${escapeHtml(horario)}" aria-label="Remover horário ${escapeHtml(horario)} de ${label}">&times;</button>
+          </span>
+        `).join('')
+      : '<span class="tour-horarios-empty">Sem horários — indisponível neste dia</span>';
+
+    return `
+      <div class="tour-horario-dia-row" data-dia="${key}">
+        <span class="tour-horario-dia-label">${label}</span>
+        <div class="tour-horario-dia-chips">${chips}</div>
+        <div class="tour-horario-dia-add">
+          <input type="time" class="tour-horario-dia-input" data-dia="${key}" aria-label="Adicionar horário em ${label}" />
+          <button type="button" class="tour-horario-dia-add-btn" data-dia="${key}" aria-label="Adicionar horário em ${label}">+</button>
+        </div>
+      </div>`;
+  }).join('');
+};
+
+const initTourHorariosPorDiaEvents = () => {
+  const container = document.getElementById('tourModalHorariosPorDia');
+  if (!container || container.dataset.bound) return;
+  container.dataset.bound = '1';
+
+  container.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.tour-horario-remove');
+    if (removeBtn) {
+      const dia = removeBtn.getAttribute('data-dia');
+      const horario = removeBtn.getAttribute('data-horario');
+      currentTourHorariosPorDia[dia] = (currentTourHorariosPorDia[dia] || []).filter((h) => h !== horario);
+      renderTourHorariosPorDia();
+      return;
+    }
+
+    const addBtn = e.target.closest('.tour-horario-dia-add-btn');
+    if (addBtn) {
+      const dia = addBtn.getAttribute('data-dia');
+      const input = container.querySelector(`.tour-horario-dia-input[data-dia="${dia}"]`);
+      if (input && input.value) {
+        const set = new Set(currentTourHorariosPorDia[dia] || []);
+        set.add(input.value);
+        currentTourHorariosPorDia[dia] = Array.from(set).sort();
+        input.value = '';
+        renderTourHorariosPorDia();
+      }
+    }
+  });
 };
 
 const parseTourLanguages = (value) => {
@@ -1823,8 +1888,7 @@ const openTourEditModal = (tourData) => {
   renderTourImagePreview([]);
   renderTourGallery(Array.isArray(tourData.imagens) ? tourData.imagens : []);
 
-  const horariosBrutos = tourData.horarios || '';
-  renderTourHorarios(horariosBrutos ? horariosBrutos.split(',').map((h) => h.trim()).filter(Boolean).sort() : []);
+  setTourHorariosPorDia(tourData.horariosPorDia || tourData.horarios_por_dia || '', tourData.horarios || '');
   loadTourComments(tourData.id);
 
   const pauseButton = document.getElementById('tourModalPause');
@@ -1966,7 +2030,7 @@ const saveTourEditModal = async () => {
     modalidade,
     canal_reserva: canalReserva,
     pasta_imagens: pastaImagens,
-    horarios: currentTourHorarios.join(','),
+    horarios_por_dia: JSON.stringify(currentTourHorariosPorDia),
     traducoes,
     admin_email: adminEmail
   };
@@ -2025,7 +2089,8 @@ const saveTourEditModal = async () => {
           modalidade,
           canal_reserva: canalReserva,
           pastaImagens,
-          horarios: currentTourHorarios.join(','),
+          horarios: Array.from(new Set(Object.values(currentTourHorariosPorDia).flat())).sort().join(','),
+          horariosPorDia: JSON.stringify(currentTourHorariosPorDia),
           traducoes
         };
       }
@@ -2060,7 +2125,7 @@ const reorderTours = async (novaOrdemIds, previousTours) => {
       // anterior pra não deixar a tela mostrando uma ordem que não foi salva.
       lastLoadedTours = previousTours;
       lastMovedTourId = null;
-      renderTourManagementTable(lastLoadedTours);
+      renderFilteredTourManagementTable();
       return;
     }
   } catch (error) {
@@ -2068,7 +2133,7 @@ const reorderTours = async (novaOrdemIds, previousTours) => {
     alert('Erro ao reordenar tours. Verifique sua conexão e tente novamente.');
     lastLoadedTours = previousTours;
     lastMovedTourId = null;
-    renderTourManagementTable(lastLoadedTours);
+    renderFilteredTourManagementTable();
   }
 };
 
@@ -2108,7 +2173,7 @@ const moveTourOrder = (tourId, direction) => {
 
   lastLoadedTours = sortToursForTable(toursAtualizados);
   lastMovedTourId = tourId;
-  renderTourManagementTable(lastLoadedTours);
+  renderFilteredTourManagementTable();
 
   reorderTours(ids, previousTours);
 };
@@ -2150,7 +2215,12 @@ const renderTourManagementTable = (tours) => {
     // no primeiro/último tour DESSA cidade, não da tabela inteira. A posição
     // exibida é o índice dentro da cidade (1-based), não a coluna `ordem` crua,
     // pra sempre bater com a ordem visual das linhas mesmo se houver gaps.
-    const sameCityTours = tours.filter(t => t.cidade === tour.cidade);
+    // Usa sempre `lastLoadedTours` (lista completa, não filtrada) — se
+    // `tours` aqui já vier filtrado (Cidade/Modalidade/Status), a posição
+    // dentro da cidade e o habilitar/desabilitar dos botões precisam
+    // continuar refletindo a ordem real entre TODOS os tours da cidade,
+    // não só os que passam no filtro atual.
+    const sameCityTours = (lastLoadedTours.length ? lastLoadedTours : tours).filter(t => t.cidade === tour.cidade);
     const sameCityIndex = sameCityTours.findIndex(t => String(t.id) === String(tour.id));
     const isFirstOfCity = sameCityIndex === 0;
     const isLastOfCity = sameCityIndex === sameCityTours.length - 1;
@@ -2188,11 +2258,196 @@ const renderTourManagementTable = (tours) => {
   lastMovedTourId = null;
 };
 
+// Filtros da tabela "Tours da Página" (Cidade / Modalidade / Status) — a
+// filtragem é só de exibição: `lastLoadedTours` continua guardando a lista
+// completa, sem filtro, porque moveTourOrder/reorderTours precisam da
+// posição real do tour dentro da cidade inteira, não só dos tours visíveis
+// no momento no filtro.
+const getTourManagementFilters = () => ({
+  cidade: document.getElementById('filterTourManagementCidade')?.value || '',
+  modalidade: document.getElementById('filterTourManagementModalidade')?.value || 'all',
+  status: document.getElementById('filterTourManagementStatus')?.value || 'all'
+});
+
+const filterToursForManagementTable = (tours) => {
+  const { cidade, modalidade, status } = getTourManagementFilters();
+  return tours.filter((tour) => {
+    if (cidade && tour.cidade !== cidade) return false;
+    if (modalidade !== 'all' && (tour.modalidade || 'free').toLowerCase() !== modalidade) return false;
+    if (status !== 'all' && (tour.status || 'Ativo') !== status) return false;
+    return true;
+  });
+};
+
+const renderFilteredTourManagementTable = () => {
+  renderTourManagementTable(filterToursForManagementTable(lastLoadedTours));
+};
+
+const initTourManagementFilters = () => {
+  ['filterTourManagementCidade', 'filterTourManagementModalidade', 'filterTourManagementStatus'].forEach((id) => {
+    const select = document.getElementById(id);
+    if (select && !select.dataset.bound) {
+      select.dataset.bound = '1';
+      select.addEventListener('change', renderFilteredTourManagementTable);
+    }
+  });
+};
+
 const carregarToursGerenciamento = async () => {
+  initTourManagementFilters();
   const remoteTours = await fetchPageToursFromBackend();
   const tours = sortToursForTable(Array.isArray(remoteTours) ? remoteTours : getPageTours());
   lastLoadedTours = tours;
-  renderTourManagementTable(tours);
+  renderFilteredTourManagementTable();
+};
+
+const initMaintenanceModeToggle = () => {
+  const section = document.getElementById('maintenanceModeSection');
+  const checkboxes = Array.from(document.querySelectorAll('.maintenance-target-checkbox'));
+  if (!section || !checkboxes.length) return;
+
+  const role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+  section.style.display = role === 'super_admin' ? '' : 'none';
+  if (role !== 'super_admin' || section.dataset.bound) return;
+  section.dataset.bound = '1';
+
+  const status = document.getElementById('maintenanceModeStatus');
+
+  fetchWithApiFallback('/get_site_config')
+    .then((res) => res.json())
+    .then((config) => {
+      const targets = Array.isArray(config.maintenance_targets) ? config.maintenance_targets : [];
+      checkboxes.forEach((cb) => { cb.checked = targets.includes(cb.dataset.target); });
+    })
+    .catch((error) => console.error('Erro ao carregar configuração do site:', error));
+
+  const saveTargets = async (checkboxThatChanged) => {
+    const adminEmail = localStorage.getItem('userEmail');
+    const targets = checkboxes.filter((cb) => cb.checked).map((cb) => cb.dataset.target);
+    checkboxes.forEach((cb) => { cb.disabled = true; });
+    if (status) status.textContent = 'Salvando...';
+    try {
+      const response = await fetchWithApiFallback('/update_site_config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maintenance_targets: targets, admin_email: adminEmail })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result.success) {
+        if (status) status.textContent = 'Salvo com sucesso.';
+      } else {
+        if (checkboxThatChanged) checkboxThatChanged.checked = !checkboxThatChanged.checked;
+        if (status) status.textContent = result.message || 'Erro ao salvar.';
+      }
+    } catch (error) {
+      if (checkboxThatChanged) checkboxThatChanged.checked = !checkboxThatChanged.checked;
+      console.error('Erro ao salvar configuração do site:', error);
+      if (status) status.textContent = 'Erro de conexão ao salvar.';
+    } finally {
+      checkboxes.forEach((cb) => { cb.disabled = false; });
+      setTimeout(() => { if (status) status.textContent = ''; }, 4000);
+    }
+  };
+
+  // Ligar manutenção tira a página do ar pros visitantes — pede confirmação
+  // por barra deslizante (arrastar até o fim), pra não ser um clique
+  // acidental. Desligar (voltar ao ar) é a ação "segura", salva na hora.
+  const requestSlideConfirmation = () => new Promise((resolve) => {
+    const overlay = document.getElementById('maintenanceConfirmOverlay');
+    const track = document.getElementById('maintenanceSlideTrack');
+    const fill = document.getElementById('maintenanceSlideFill');
+    const handle = document.getElementById('maintenanceSlideHandle');
+    const label = document.getElementById('maintenanceSlideLabel');
+    const closeBtn = document.getElementById('maintenanceConfirmClose');
+    if (!overlay || !track || !fill || !handle) {
+      resolve(true);
+      return;
+    }
+
+    const finish = (confirmed) => {
+      overlay.classList.remove('open');
+      document.body.classList.remove('modal-open');
+      handle.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      closeBtn?.removeEventListener('click', onCancel);
+      resolve(confirmed);
+    };
+
+    const onCancel = () => finish(false);
+
+    let dragging = false;
+    let maxOffset = 0;
+
+    const setOffset = (offset) => {
+      const clamped = Math.max(0, Math.min(maxOffset, offset));
+      handle.style.transform = `translateX(${clamped}px)`;
+      fill.style.width = `${52 + clamped}px`;
+      return clamped;
+    };
+
+    const onPointerDown = (event) => {
+      dragging = true;
+      maxOffset = track.clientWidth - handle.clientWidth - 4;
+      handle.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event) => {
+      if (!dragging) return;
+      const trackRect = track.getBoundingClientRect();
+      const offset = event.clientX - trackRect.left - handle.clientWidth / 2;
+      const clamped = setOffset(offset);
+      if (clamped >= maxOffset * 0.92) {
+        track.classList.add('confirmed');
+        if (label) label.textContent = 'Solte para confirmar';
+      } else {
+        track.classList.remove('confirmed');
+        if (label) label.textContent = 'Arraste para confirmar';
+      }
+    };
+
+    const onPointerUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (track.classList.contains('confirmed')) {
+        finish(true);
+        return;
+      }
+      setOffset(0);
+      track.classList.remove('confirmed');
+      if (label) label.textContent = 'Arraste para confirmar';
+    };
+
+    setOffset(0);
+    track.classList.remove('confirmed');
+    if (label) label.textContent = 'Arraste para confirmar';
+    handle.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    closeBtn?.addEventListener('click', onCancel);
+
+    overlay.classList.add('open');
+    document.body.classList.add('modal-open');
+  });
+
+  checkboxes.forEach((cb) => {
+    cb.addEventListener('change', async () => {
+      if (!cb.checked) {
+        saveTargets(cb);
+        return;
+      }
+      const confirmText = document.getElementById('maintenanceConfirmText');
+      const label = cb.parentElement?.textContent?.trim() || cb.dataset.target;
+      if (confirmText) confirmText.textContent = `Isso vai tirar "${label}" do ar para os visitantes. Arraste até o fim para confirmar.`;
+
+      const confirmed = await requestSlideConfirmation();
+      if (confirmed) {
+        saveTargets(cb);
+      } else {
+        cb.checked = false;
+      }
+    });
+  });
 };
 
 let cidadeContatoAtual = {};
@@ -2291,14 +2546,12 @@ const atualizarCidadeVisualModoUI = (alvo) => {
   const imagemBox = document.getElementById(`cidadeVisual${AlvoCap}ImagemBox`);
   const corBox = document.getElementById(`cidadeVisual${AlvoCap}CorBox`);
   const cor2Label = document.getElementById(`cidadeVisual${AlvoCap}Cor2Label`);
-  const cor2AlphaLabel = document.getElementById(`cidadeVisual${AlvoCap}Cor2AlphaLabel`);
   const degradeTipoLabel = document.getElementById(`cidadeVisual${AlvoCap}DegradeTipoLabel`);
   if (!modoSelect) return;
   const modo = modoSelect.value;
   if (imagemBox) imagemBox.style.display = modo === 'imagem' ? '' : 'none';
   if (corBox) corBox.style.display = modo === 'imagem' ? 'none' : '';
   if (cor2Label) cor2Label.style.display = modo === 'degrade' ? '' : 'none';
-  if (cor2AlphaLabel) cor2AlphaLabel.style.display = modo === 'degrade' ? '' : 'none';
   if (degradeTipoLabel) degradeTipoLabel.style.display = modo === 'degrade' ? '' : 'none';
 };
 
@@ -2331,6 +2584,14 @@ const preencherCidadeVisualForm = (cidade) => {
     if (cor1Alpha) cor1Alpha.value = bloco.cor1Alpha ?? 100;
     if (cor2Alpha) cor2Alpha.value = bloco.cor2Alpha ?? 100;
     if (degradeTipo) degradeTipo.value = bloco.degradeTipo || 'linear';
+    // O seletor de cor/transparência (js/color-alpha-picker.js) guarda seu
+    // próprio estado a partir desses inputs ocultos — precisa ser avisado
+    // depois que trocamos os .value programaticamente (setar .value não
+    // dispara 'input'/'change' sozinho).
+    if (window.refreshColorAlphaPicker) {
+      window.refreshColorAlphaPicker(`cidadeVisual${AlvoCap}Cor1`);
+      window.refreshColorAlphaPicker(`cidadeVisual${AlvoCap}Cor2`);
+    }
     atualizarCidadeVisualModoUI(alvo);
   });
 
@@ -3538,13 +3799,15 @@ const mostrarSecao = (secao) => {
     'cidadeAwardSection',
     'paginaSecaoSection',
     'cidadeVisualSection',
-    'pageManagementToursSection'
+    'pageManagementToursSection',
+    'maintenanceModeSection'
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.style.display = canManagePageContent ? '' : 'none';
   });
 
   if (secao === 'gerenciamento' && canManagePageContent) {
+    initMaintenanceModeToggle();
     carregarToursGerenciamento();
     carregarCidadeContatoGerenciamento();
     carregarCidadeAvisoGerenciamento();
@@ -3833,6 +4096,13 @@ const populateRoleOptionsInto = (selectEl, selectedValue) => {
   const options = new Set(roleNames.length ? roleNames : ['cliente_user', 'admin', 'super_admin']);
   if (selectedValue) options.add(selectedValue);
 
+  // Só uma conta super_admin pode conceder/manter a role super_admin em
+  // outra conta (o backend já recusa, isso só evita oferecer a opção).
+  const currentRole = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+  if (currentRole !== 'super_admin' && selectedValue !== 'super_admin') {
+    options.delete('super_admin');
+  }
+
   selectEl.innerHTML = Array.from(options).map(role => `<option value="${escapeHtml(role)}">${escapeHtml(role)}</option>`).join('');
   if (selectedValue) selectEl.value = selectedValue;
 };
@@ -3898,6 +4168,15 @@ const openAccountModal = (account) => {
     roleInput.addEventListener('change', () => updateAccountWhatsAppFieldsVisibility('accountRole', 'accountWhatsAppFields', 'accountWhatsAppAlerta'));
     roleInput.dataset.whatsappVisibilityAttached = '1';
   }
+
+  // Só uma conta super_admin pode editar a role ou excluir outra conta
+  // super_admin (o backend já recusa; isso só evita a tentativa na UI).
+  const currentRole = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+  const targetIsSuperAdmin = (account.role || '').trim().toLowerCase() === 'super_admin';
+  const isSuperAdminLocked = targetIsSuperAdmin && currentRole !== 'super_admin';
+  if (roleInput) roleInput.disabled = isSuperAdminLocked;
+  const accountDeleteBtn = document.getElementById('accountDelete');
+  if (accountDeleteBtn) accountDeleteBtn.style.display = isSuperAdminLocked ? 'none' : '';
 
   accountModal.classList.remove('hidden');
 };
@@ -4173,12 +4452,7 @@ const setupAccountModalEvents = () => {
     });
   }
 
-  const tourModalAddHorario = document.getElementById('tourModalAddHorario');
-  if (tourModalAddHorario) {
-    tourModalAddHorario.addEventListener('click', () => {
-      adicionarTourHorario();
-    });
-  }
+  initTourHorariosPorDiaEvents();
 };
 
 const attachSectionLinks = () => {
@@ -5642,7 +5916,27 @@ const initCurrencyConverter = () => {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  const userEmail = localStorage.getItem('userEmail');
   const role = localStorage.getItem('userRole');
+
+  if (!userEmail || !role) {
+    // Acesso direto sem sessão (ex: link salvo, aba nova): em vez de
+    // redirecionar, abre o mesmo modal de login/cadastro/recuperação das
+    // páginas públicas (já carregado por Riodejaneiro.js — ver
+    // initLoginModal, que roda antes deste listener). O login bem-sucedido
+    // recarrega a página (ver createLoginModal), que passa de novo por este
+    // guard já autenticado.
+    document.body.classList.add('gerenciamento-login-gate');
+    const loginTrigger = document.querySelector('[data-profile-action="login"]');
+    if (loginTrigger) {
+      loginTrigger.click();
+    } else {
+      alert('Acesso negado: faça login para gerenciar reservas.');
+      window.location.href = '/';
+    }
+    return;
+  }
+
   currentUserPermissions = getEffectivePermissionsForRole(role);
 
   if (!currentUserPermissions?.manageReservas) {

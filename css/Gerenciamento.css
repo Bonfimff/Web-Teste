@@ -1264,6 +1264,79 @@ body {
   flex-wrap: wrap;
 }
 
+.tour-horarios-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7a8d;
+}
+
+.tour-horarios-dias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tour-horario-dia-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.tour-horario-dia-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0b3c6d;
+}
+
+.tour-horario-dia-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tour-horario-dia-add {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tour-horario-dia-input {
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.tour-horario-dia-add-btn {
+  width: 28px;
+  height: 28px;
+  line-height: 1;
+  border: none;
+  border-radius: 50%;
+  background: #123049;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.tour-horario-dia-add-btn:hover {
+  background: #1c4a70;
+}
+
+@media (max-width: 640px) {
+  .tour-horario-dia-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
 .tour-comments-admin-list {
   max-height: 220px;
   overflow-y: auto;
@@ -2151,21 +2224,361 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* Modais login/cadastro escondidos por padrão */
+/* Modais login/cadastro/recuperação de senha — mesmo componente usado nas
+   páginas públicas (ver createLoginModal/createRegisterModal em
+   Riodejaneiro.js, já carregado nesta página). Escondidos por padrão; usados
+   tanto pelo menu de perfil quanto pelo gate de sessão no topo de
+   Gerenciamento.js (acesso direto sem estar logado). */
 .login-modal-overlay,
-.register-modal-overlay {
+.register-modal-overlay,
+.maintenance-confirm-overlay {
   display: none !important;
   position: fixed !important;
   inset: 0 !important;
   align-items: center !important;
   justify-content: center !important;
   background: rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   z-index: 2000 !important;
 }
 
 .login-modal-overlay.open,
-.register-modal-overlay.open {
+.register-modal-overlay.open,
+.maintenance-confirm-overlay.open {
   display: flex !important;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay):not(.maintenance-confirm-overlay):not(.app-notification-overlay) {
+  filter: blur(3px);
+  transition: filter 0.2s ease;
+}
+
+.login-modal {
+  width: min(420px, 92%);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  padding: 2rem 1.8rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.login-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.login-modal__title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+  font-weight: 800;
+  color: #0b3c6d;
+}
+
+.login-modal__close {
+  background: transparent;
+  border: none;
+  font-size: 1.35rem;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.login-modal__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.login-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.register-step {
+  display: none;
+}
+
+.register-step.active {
+  display: block;
+}
+
+.login-modal__field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.login-modal__field input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.login-modal__field--password .login-modal__password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.login-modal__field--password input {
+  padding-left: 2.5rem;
+}
+
+.login-modal__toggle-password {
+  position: absolute;
+  top: 50%;
+  left: 0.65rem;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modal__toggle-password:hover {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.login-modal__field input:focus {
+  border-color: rgba(0, 77, 140, 0.8);
+}
+
+.login-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.login-modal__resend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.register-resend-button {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(11, 77, 139, 0.9);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.register-resend-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.register-resend-button:not(:disabled):hover {
+  background: rgba(11, 77, 139, 1);
+}
+
+.login-modal__actions--row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.login-modal__submit,
+.login-modal__next,
+.login-modal__back {
+  padding: 0.85rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(11, 77, 139, 0.95);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.login-modal__submit:hover,
+.login-modal__next:hover,
+.login-modal__back:hover {
+  background: rgba(11, 77, 139, 1);
+}
+
+.login-modal__next.loading {
+  position: relative;
+  cursor: wait;
+  opacity: 0.85;
+  padding-right: 2.5rem;
+}
+
+.login-modal__next.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-top-color: transparent;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  animation: login-button-spinner 0.8s linear infinite;
+}
+
+@keyframes login-button-spinner {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.login-modal__back {
+  background: rgba(0, 0, 0, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.login-modal__back:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.login-modal__forgot {
+  background: transparent;
+  border: none;
+  color: rgba(0, 0, 0, 0.7);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  align-self: flex-start;
+}
+
+.login-modal__forgot.loading {
+  position: relative;
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.login-modal__forgot.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -0.25rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  border-top-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  animation: login-button-spinner 0.8s linear infinite;
+}
+
+.register-code-group {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.register-code-input {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.3rem;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #333;
+}
+
+.register-code-input:focus {
+  outline: none;
+  border-color: #017cff;
+  box-shadow: 0 0 0 2px rgba(1, 124, 255, 0.2);
+}
+
+.register-code-valid {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2) !important;
+}
+
+.register-code-invalid {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2) !important;
+}
+
+/* Barra "arraste para confirmar" — usada antes de colocar uma página em
+   manutenção (ação com impacto real pros visitantes, não pode ser um clique
+   acidental). O preenchimento e a alça acompanham o dedo/mouse; só dispara a
+   confirmação se soltar perto do fim (ver initMaintenanceModeToggle). */
+.slide-confirm-track {
+  position: relative;
+  height: 52px;
+  border-radius: 999px;
+  background: #eef2f7;
+  border: 1px solid #d8dee8;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+.slide-confirm-fill {
+  position: absolute;
+  inset: 0;
+  width: 52px;
+  background: linear-gradient(90deg, #fca5a5, #dc2626);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.slide-confirm-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4b5563;
+  pointer-events: none;
+}
+
+.slide-confirm-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.slide-confirm-handle:active {
+  cursor: grabbing;
+}
+
+.slide-confirm-track.confirmed .slide-confirm-fill {
+  background: linear-gradient(90deg, #86efac, #16a34a);
+}
+
+.slide-confirm-track.confirmed .slide-confirm-handle {
+  background: #16a34a;
 }
 
 /* Remover fundos sólidos que escondem imagem */
@@ -3162,22 +3575,279 @@ section,
   gap: 0.5rem;
 }
 
+/* ===== Identidade Visual da Cidade =====
+   O card usa uma coluna única: cada bloco (Logo / Painel / Fundo) empilha
+   título -> modo -> conteúdo, e só os controles de dentro fluem na
+   horizontal. Antes tudo (título, select de modo, caixa de imagem e caixa
+   de cores) eram irmãos do mesmo flex-wrap, então o título "flutuava" ao
+   lado dos campos e a caixa de cores era espremida numa coluna estreita. */
+/* Grid (e não flex-column) de propósito: como .cidade-contato-card é
+   content-box, os itens de um flex-column esticavam além do padding-right
+   do card e vazavam ~29px para fora do fundo branco. Com
+   grid-template-columns:minmax(0,1fr) a faixa é exatamente a content-box,
+   então nada escapa nem força rolagem horizontal. */
+.cidade-visual-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+}
+
+.cidade-visual-titulo {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.cidade-visual-card .cidade-visual-cidade {
+  flex: 0 0 auto;
+  max-width: 340px;
+  margin-bottom: 0.35rem;
+}
+
 .cidade-visual-bloco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e5e9ef;
+}
+
+.cidade-visual-bloco-titulo {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1f3350;
+}
+
+/* O select de "Modo" não precisa esticar: o restante da linha ficava vazio. */
+.cidade-visual-card .cidade-visual-modo-label {
+  flex: 0 0 auto;
+  max-width: 240px;
+}
+
+/* Linha de upload: prévia + seletor de arquivo + botão, alinhados e com
+   quebra previsível em telas estreitas. */
+.cidade-visual-upload {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.6rem 0;
-  border-top: 1px solid #e5e9ef;
 }
 
 .cidade-visual-preview {
-  width: 70px;
-  height: 70px;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #d6dce4;
   background: #f3f5f8;
+}
+
+.cidade-visual-card .cidade-visual-file {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 340px;
+  padding: 0.4rem 0.55rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.cidade-visual-card .cidade-visual-file::file-selector-button {
+  margin-right: 0.6rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cidade-visual-card .cidade-visual-file::file-selector-button:hover {
+  background: #e2e8f0;
+}
+
+/* ===== Seletor de cor com transparência integrada =====
+   Antes: <input type="color"> (sem canal alfa) + <input type="range"> lado
+   a lado, cada um mostrando só metade da informação. Agora: um único
+   "swatch" mostra a cor já com a transparência aplicada (fundo xadrez por
+   trás) e o código exibido/editável no popover é sempre #RRGGBBAA — a
+   transparência faz parte do próprio código, não de um campo à parte. */
+.color-alpha-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+
+.color-alpha-field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #33485f;
+}
+
+.color-alpha-picker {
+  position: relative;
+}
+
+.color-alpha-swatch {
+  position: relative;
+  width: 78px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #d6dce4;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.color-alpha-swatch-fill {
+  position: absolute;
+  inset: 0;
+}
+
+.color-alpha-swatch-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+}
+
+.color-alpha-popover {
+  position: fixed;
+  z-index: 2200;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #d6dce4;
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(15, 30, 50, 0.22);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.color-alpha-svbox {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  background-color: hsl(var(--hue, 0), 100%, 50%);
+  background-image:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.color-alpha-svbox-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.color-alpha-poplabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #33485f;
+}
+
+.color-alpha-hue,
+.color-alpha-alpha {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.color-alpha-hue {
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+
+.color-alpha-hue::-webkit-slider-thumb,
+.color-alpha-alpha::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #33485f;
+  cursor: pointer;
+  margin-top: -2px;
+}
+
+.color-alpha-hue::-moz-range-thumb,
+.color-alpha-alpha::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #33485f;
+  cursor: pointer;
+}
+
+.color-alpha-hexinput {
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  height: 36px !important;
+}
+
+/* Linha de cores: os labels aqui são compactos (cor/range têm largura
+   própria), então não herdam o "flex:1 1 220px" dos labels do card. */
+.cidade-visual-cores {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 1.1rem;
+}
+
+.cidade-visual-card .cidade-visual-cores > label {
+  flex: 0 0 auto;
+}
+
+/* O botão de salvar fica à direita: além de ser a posição usual da ação
+   primária, evita o canto inferior esquerdo, onde as ferramentas
+   flutuantes (.floating-calculator-group, position:fixed) passariam por
+   cima dele ao rolar até o fim do card. */
+.cidade-visual-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e5e9ef;
+}
+
+/* A mensagem de status acompanha o botão (em vez de esticar por toda a
+   linha): esticada, ela começava no canto inferior esquerdo e ficava
+   parcialmente coberta pelas ferramentas flutuantes. */
+.cidade-visual-rodape .cidade-contato-status {
+  order: -1;
+  flex: 0 1 auto;
+  text-align: right;
 }
 
 .cidade-contato-card input[type="color"] {

@@ -39,7 +39,7 @@
 }
 
 .rio-hero::before {
-    background: var(--city-painel-bg, url('../imagem/Sao Luis/assets/painel.png') center/cover no-repeat);
+    background: var(--city-painel-bg, transparent);
 }
 
 /* Remove padrão Copacabana — exclusivo do Rio; base escura padronizada
@@ -341,6 +341,11 @@
 }
 
 .rio-hero-content .btn-book {
+    /* z-index acima das duas ondas decorativas (.rio-hero-wave-divider,
+       z-index:4) — sem isso a onda passava por cima do botão em telas onde
+       o hero encolhe e as duas se sobrepõem. */
+    position: relative;
+    z-index: 10;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;

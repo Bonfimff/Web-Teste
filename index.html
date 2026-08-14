@@ -3,6 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Checagem BLOQUEANTE de manutenção — precisa ser a primeira coisa no
+         <head>, antes de qualquer CSS/imagem, senão o navegador já pode ter
+         pintado parte da página real antes do redirect. XHR síncrono
+         (não fetch) é proposital: trava o parsing até a resposta chegar, só
+         assim não existe nem um frame do conteúdo real sendo exibido. Falha
+         de rede/CORS não bloqueia o acesso (fail open). admin/super_admin
+         nunca são redirecionados. -->
+    <script>
+    (function () {
+        try {
+            var role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+            if (role === 'admin' || role === 'super_admin') return;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://api-tour.exksvol.com/get_site_config', false);
+            xhr.send(null);
+            if (xhr.status === 200) {
+                var targets = JSON.parse(xhr.responseText).maintenance_targets || [];
+                if (targets.indexOf('Inicio') !== -1) {
+                    window.location.replace('manutencao.html');
+                }
+            }
+        } catch (e) { /* offline/CORS/erro: não bloqueia o acesso */ }
+    })();
+    </script>
     <title>Travel the World · Experiências</title>
     <link rel="apple-touch-icon" href="imagem/assets/Logo.png?v=2">
     <link rel="icon" type="image/png" href="imagem/assets/Logo.png?v=2">
@@ -10,7 +34,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <!-- CSS externo -->
-    <link rel="stylesheet" href="css/style.css?v=17">
+    <link rel="stylesheet" href="css/style.css?v=32">
     <!-- Remove a imagem de fundo (ondas) só na página inicial; as demais
          páginas continuam usando body::before/.main-container::after de
          style.css normalmente. -->
@@ -20,13 +44,9 @@
             background-image: none;
         }
     </style>
-    <!-- Pré-carrega as imagens de painel de cada cidade para evitar loading
-         perceptível ao entrar na página da cidade (ver js/preload-paineis.js
-         para as imagens configuradas dinamicamente pelo admin). -->
-    <link rel="preload" as="image" href="imagem/Rio de Janeiro/assets/painel.jpeg">
-    <link rel="preload" as="image" href="https://tourbyfootcom.swipepages.media/2021/11/6154b435ca6c9c0010a3dead/imagem-pelourinho-500.webp">
-    <link rel="preload" as="image" href="https://tourbyfootcom.swipepages.media/2023/9/6154b435ca6c9c0010a3dead/foto-principal-1500.webp">
-    <link rel="preload" as="image" href="imagem/Lencois/assets/painel.jpeg">
+    <!-- Os painéis das cidades são pré-carregados por js/preload-paineis.js, a
+         partir das imagens cadastradas no banco. Não há preload estático aqui:
+         qualquer arte fixa no HTML acabaria exibida no lugar da configurada. -->
 </head>
 <body>
     <div class="main-container" id="inicio">
@@ -153,10 +173,10 @@
 
     </div>
 
-    <script src="js/translations.js"></script>
-    <script src="js/ui-translations.js"></script>
-    <script src="js/script.js?v=2"></script>
+    <script src="js/translations.js?v=1"></script>
+    <script src="js/ui-translations.js?v=1"></script>
+    <script src="js/script.js?v=5"></script>
     <script src="js/auth.js?v=3"></script>
-    <script src="js/preload-paineis.js?v=1"></script>
+    <script src="js/preload-paineis.js?v=2"></script>
 </body>
 </html>

@@ -5,6 +5,8 @@
     const translations = {
         pt: {
             lang_label: 'Português',
+            maintenance_title: 'Site em manutenção',
+            maintenance_body: 'Pedimos desculpas pelo transtorno. Estamos com o site temporariamente indisponível e voltaremos em breve. Qualquer dúvida, fale com a nossa equipe:',
             nav_home: 'INÍCIO',
             nav_about: 'SOBRE',
             nav_contact: 'CONTATO',
@@ -187,6 +189,8 @@
         },
         en: {
             lang_label: 'English',
+            maintenance_title: 'Site under maintenance',
+            maintenance_body: 'We apologize for the inconvenience. Our site is temporarily unavailable and will be back soon. For any questions, contact our team:',
             nav_home: 'HOME',
             nav_about: 'ABOUT',
             nav_contact: 'CONTACT',
@@ -368,6 +372,8 @@
         },
         fr: {
             lang_label: 'Français',
+            maintenance_title: 'Site en maintenance',
+            maintenance_body: "Nous nous excusons pour la gêne occasionnée. Notre site est temporairement indisponible et sera bientôt de retour. Pour toute question, contactez notre équipe :",
             nav_home: 'ACCUEIL',
             nav_about: 'À PROPOS',
             nav_contact: 'CONTACT',
@@ -549,6 +555,8 @@
         },
         es: {
             lang_label: 'Español',
+            maintenance_title: 'Sitio en mantenimiento',
+            maintenance_body: 'Pedimos disculpas por las molestias. Nuestro sitio está temporalmente no disponible y volverá pronto. Para cualquier duda, contacta a nuestro equipo:',
             nav_home: 'INICIO',
             nav_about: 'SOBRE',
             nav_contact: 'CONTACTO',
@@ -731,6 +739,8 @@
         },
         it: {
             lang_label: 'Italiano',
+            maintenance_title: 'Sito in manutenzione',
+            maintenance_body: 'Ci scusiamo per il disagio. Il nostro sito è temporaneamente non disponibile e tornerà presto online. Per qualsiasi dubbio, contatta il nostro team:',
             nav_home: 'INIZIO',
             nav_about: 'SUL',
             nav_contact: 'CONTATTO',
@@ -913,6 +923,8 @@
         },
         zh: {
             lang_label: '中文',
+            maintenance_title: '网站维护中',
+            maintenance_body: '给您带来的不便，我们深表歉意。网站暂时无法访问，我们会尽快恢复。如有任何疑问，请联系我们：',
             nav_home: '首页',
             nav_about: '关于',
             nav_contact: '联系',

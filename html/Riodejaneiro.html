@@ -4,6 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Checagem BLOQUEANTE de manutenção — ver comentário em index.html. -->
+    <script>
+    (function () {
+        try {
+            var role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+            if (role === 'admin' || role === 'super_admin') return;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://api-tour.exksvol.com/get_site_config', false);
+            xhr.send(null);
+            if (xhr.status === 200) {
+                var targets = JSON.parse(xhr.responseText).maintenance_targets || [];
+                if (targets.indexOf('Rio de Janeiro') !== -1) {
+                    window.location.replace('../manutencao.html');
+                }
+            }
+        } catch (e) {}
+    })();
+    </script>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#02415a">
@@ -13,7 +31,7 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400;600&family=Karla:wght@300..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=44">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=50">
     <link rel="stylesheet" href="../css/hero-lockup.css?v=5">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=8">
 </head>
@@ -99,8 +117,8 @@
                     <span class="rio-hero-ornament" aria-hidden="true">
                         <svg viewBox="0 0 60 14" xmlns="http://www.w3.org/2000/svg"><path d="M2 7c4-6 8-6 12 0s8 6 12 0 8-6 12 0 8 6 12 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                     </span>
-                    <h1 class="rio-hero-title"><span class="rio-city-highlight">Rio de</span><span class="rio-city-accent">Janeiro</span></h1>
-                    <p class="rio-hero-location">Rio de Janeiro • Brasil</p>
+                    <h1 class="rio-hero-title"><span class="rio-city-highlight">Rio de Janeiro</span></h1>
+                    <p class="rio-hero-location">Brasil</p>
                     <p id="rioHeroDesc" class="rio-hero-desc">Seja bem-vindo à <span class="rio-hero-accent">Cidade Maravilhosa</span>; o Rio dos amores e da beleza inconfundível te espera de braços abertos, com o <span class="rio-hero-accent">Cristo Redentor</span> a te acolher do alto e as <span class="rio-hero-accent">praias mais famosas do mundo</span> aos seus pés.</p>
                     <a href="#tours" class="btn-book" data-i18n="btn_book">Conhecer Tours</a>
                 </div>
@@ -131,11 +149,23 @@
             <div class="rio-tours-grid">
                 <!-- Cards de tour entram aqui, montados via JS a partir do banco (ver carregarToursDoBanco em Riodejaneiro.js) -->
             </div>
+        </section>
 
-            <!-- TOURS PAGOS -->
-            <div class="rio-section-divider rio-divider-small"></div>
+        <section class="rio-tours" id="expedicoes-privativas" style="display:none;">
+            <h2 class="rio-section-title" data-i18n="privado_section_title">Experiências exclusivas</h2>
+            <div class="rio-section-divider"></div>
 
             <div class="rio-tours-grid">
+                <!-- Cards de tour (modalidade "privado") entram aqui, montados via JS a partir do banco -->
+            </div>
+        </section>
+
+        <section class="rio-tours" id="transfers" style="display:none;">
+            <h2 class="rio-section-title" data-i18n="transfers_section_title">Transfers</h2>
+            <div class="rio-section-divider"></div>
+
+            <div class="rio-tours-grid">
+                <!-- Cards de transfer entram aqui -->
             </div>
         </section>
 
@@ -218,9 +248,9 @@
         </div>
     </div> 
     </div>
-    <script src="../js/Translation.js?v=4"></script>
+    <script src="../js/Translation.js?v=5"></script>
     <script src="../js/tour-interacoes.js?v=10"></script>
-    <script src="../js/Riodejaneiro.js?v=50"></script>
+    <script src="../js/Riodejaneiro.js?v=58"></script>
     <script src="../js/cidade-visual.js?v=3"></script>
     <script>
         (function () {

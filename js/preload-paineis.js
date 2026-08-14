@@ -1,8 +1,7 @@
 // Pré-carrega, a partir do index, as imagens de painel (hero) de cada cidade
-// que foram customizadas via Gerenciamento > Identidade Visual. As imagens
-// padrão (fallback do CSS) já são pré-carregadas via <link rel="preload"> no
-// <head> do index.html — este script cobre o caso de imagem customizada pelo
-// admin, cuja URL só é conhecida após consultar a API.
+// definidas em Gerenciamento > Identidade Visual. Não existe mais imagem
+// padrão no CSS: o painel só exibe o que estiver cadastrado no banco, e a URL
+// só é conhecida após consultar a API — daí o preload ser feito por aqui.
 (() => {
     const apiBase = window.API_BASE_URL || 'https://api-tour.exksvol.com';
     const endpoints = [

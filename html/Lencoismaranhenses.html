@@ -3,14 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Checagem BLOQUEANTE de manutenção — ver comentário em index.html. -->
+    <script>
+    (function () {
+        try {
+            var role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+            if (role === 'admin' || role === 'super_admin') return;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://api-tour.exksvol.com/get_site_config', false);
+            xhr.send(null);
+            if (xhr.status === 200) {
+                var targets = JSON.parse(xhr.responseText).maintenance_targets || [];
+                if (targets.indexOf('Lencois') !== -1) {
+                    window.location.replace('../manutencao.html');
+                }
+            }
+        } catch (e) {}
+    })();
+    </script>
     <title>Experiências · Lençóis Maranhenses</title>
     <link rel="apple-touch-icon" href="../imagem/Lencois/assets/Logo2.png?v=3">
     <link rel="icon" type="image/png" href="../imagem/Lencois/assets/Logo2.png?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;500;700;900&family=Lato:wght@300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css?v=7">
+    <link rel="stylesheet" href="../css/style.css?v=22">
 
-    <link rel="stylesheet" href="../css/Lencoismaranhenses.css?v=54">
+    <link rel="stylesheet" href="../css/Lencoismaranhenses.css?v=58">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=8">
 </head>
 <body>
@@ -132,21 +150,16 @@
             </div>
         </section>
 
-        <section class="rio-tours" id="expedicoes-compartilhadas">
+        <section class="rio-tours" id="expedicoes-privativas" style="display:none;">
+            <h2 class="rio-section-title">Experiências exclusivas</h2>
+            <div class="rio-section-divider"></div>
 
             <div class="rio-tours-grid">
                 <!-- Cards de tour (modalidade "privado") entram aqui, montados via JS a partir do banco -->
             </div>
         </section>
 
-        <section class="rio-tours" id="expedicoes-privativas">
-
-            <div class="rio-tours-grid">
-                <!-- Cards de tour (modalidade "privado") entram aqui, montados via JS a partir do banco -->
-            </div>
-        </section>
-
-        <section class="rio-tours" id="transfers">
+        <section class="rio-tours" id="transfers" style="display:none;">
             <h2 class="rio-section-title">Transfers</h2>
             <div class="rio-section-divider rio-divider-small"></div>
 
@@ -341,10 +354,10 @@
         </div>
     </div>
 
-    <script src="../js/translations.js"></script>
-    <script src="../js/ui-translations.js"></script>
+    <script src="../js/translations.js?v=1"></script>
+    <script src="../js/ui-translations.js?v=1"></script>
     <script src="../js/tour-interacoes.js?v=10"></script>
-    <script src="../js/site-shell.js?v=52"></script>
+    <script src="../js/site-shell.js?v=59"></script>
     <script src="../js/Lencoismaranhenses.js?v=10"></script>
     <script src="../js/cidade-visual.js?v=4"></script>
 </body>

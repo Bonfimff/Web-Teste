@@ -417,7 +417,7 @@ body {
     inset: 0;
     z-index: 0;
     background:
-      var(--city-painel-bg, url('../imagem/Lencois/assets/painel.png') center/cover no-repeat);
+      var(--city-painel-bg, transparent);
     -webkit-mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
     mask-image: linear-gradient(#fff, #fff), var(--hero-wave-band-svg);
     /* +2px: sobrepõe de propósito a borda das duas camadas — sem isso sobra
@@ -638,6 +638,11 @@ body {
 }
 
 .rio-hero-content .btn-book {
+    /* z-index acima das duas ondas decorativas (.rio-hero-wave-divider,
+       z-index:4) — sem isso a onda passava por cima do botão em telas onde
+       o hero encolhe e as duas se sobrepõem. */
+    position: relative;
+    z-index: 10;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
@@ -1264,7 +1269,6 @@ body {
 }
 
 .rio-tour-details li {
-    position: relative;
     color: #4a5568;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -1284,30 +1288,16 @@ body {
     font-size: 0.85rem;
 }
 
-/* Textos longos (Inclui, Roteiro, etc.) ficam limitados a 3 linhas para o
-   card não crescer demais — "Ler mais" expande, mostrado só quando o texto
-   realmente estoura (ver wireTourDetailToggles no JS).
-   Tentativa anterior usava max-height:2.5*line-height com overflow:hidden,
-   mas como o texto tem quebras de linha reais (\n do banco), o corte caía
-   no meio da altura de uma linha e mostrava letras pela metade.
-   -webkit-line-clamp corta sempre numa fronteira de linha completa (nunca
-   no meio de um glifo) e ainda troca o final por "…" automaticamente —
-   com 3 linhas, na prática quase sempre sobra só um pedaço da 3ª linha
-   visível antes do "…", o que já dá o efeito visual de "2 linhas e meia"
-   pedido, sem o bug de corte. */
+/* Textos longos (Inclui, Roteiro, etc.) ficam limitados a 3 linhas — o
+   corte agora é feito no próprio TEXTO pelo JS (wireTourDetailToggles, busca
+   binária), não visualmente por CSS, porque só assim "Ler mais" termina
+   colado no fim do texto, na mesma linha (pedido explícito). O "…" e o botão
+   já saem prontos do JS dentro de .rio-tour-detail-value / .rio-tour-detail-line
+   — aqui só é preciso deixar tudo fluir normalmente. */
 .rio-tour-detail-line {
-    display: -webkit-box;
+    display: block;
     width: 100%;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    overflow: hidden;
-}
-
-.rio-tour-detail-line.rio-detail-expanded {
-    -webkit-line-clamp: unset;
-    line-clamp: unset;
-    overflow: visible;
+    line-height: 1.5;
 }
 
 .rio-tour-detail-toggle {
@@ -1315,36 +1305,17 @@ body {
     background: none;
     border: none;
     padding: 0;
-    margin-top: 0.15rem;
+    margin-left: 0.35em;
     color: #1da194;
     font-weight: 700;
     font-size: 0.82rem;
     cursor: pointer;
     text-decoration: underline;
+    white-space: nowrap;
 }
 
-/* Enquanto o texto está truncado, "Ler mais" fica sobreposto no final da
-   3ª linha (canto inferior direito do <li>, que é do tamanho do texto
-   clampado) — um degradê pro branco do card disfarça a sobreposição por
-   cima do "…" do line-clamp, dando a impressão de continuação da linha. */
 .rio-tour-detail-toggle.rio-detail-visible {
-    display: inline-block;
-    position: absolute;
-    right: 0;
-    bottom: 0.35rem;
-    padding-left: 2.4em;
-    margin-top: 0;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #ffffff 55%);
-}
-
-/* Texto expandido ("Ler menos"): volta ao fluxo normal, numa linha própria
-   abaixo do texto completo. */
-.rio-tour-detail-line.rio-detail-expanded + .rio-tour-detail-toggle.rio-detail-visible {
-    position: static;
-    display: inline-block;
-    padding-left: 0;
-    margin-top: 0.15rem;
-    background: none;
+    display: inline;
 }
 
 .rio-tour-details strong {
@@ -3119,6 +3090,135 @@ header {
   border-radius: 8px;
   border: 1px solid rgba(0,0,0,0.2);
   font-size: 0.9rem;
+}
+
+/* Calendário customizado da data de reserva — o popup nativo de
+   <input type="date"> não é estilizável, então o campo vira um botão que
+   abre este mini-calendário próprio, onde os dias em que o tour funciona
+   (ver horarios_por_dia) ficam em verde. */
+.res-date-display {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.2);
+  font-size: 0.9rem;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.res-date-display:hover,
+.res-date-display:focus-visible {
+  border-color: rgba(11, 77, 139, 0.6);
+}
+
+.res-calendar-popover {
+  z-index: 2100;
+  width: 260px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.25);
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+.res-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.res-calendar-nav {
+  border: none;
+  background: rgba(11, 77, 139, 0.08);
+  color: #0b4d8b;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.res-calendar-nav:hover {
+  background: rgba(11, 77, 139, 0.18);
+}
+
+.res-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.res-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.res-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  cursor: default;
+}
+
+.res-calendar-day--empty {
+  visibility: hidden;
+}
+
+.res-calendar-day--available {
+  background: rgba(34, 139, 87, 0.15);
+  color: #1a7a4a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.res-calendar-day--available:hover {
+  background: rgba(34, 139, 87, 0.32);
+}
+
+.res-calendar-day--unavailable {
+  color: #c1c7cf;
+  cursor: not-allowed;
+}
+
+.res-calendar-day--selected {
+  outline: 2px solid #1a7a4a;
+  outline-offset: -2px;
+}
+
+.res-calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  font-size: 0.72rem;
+  color: #4b5563;
+}
+
+.res-calendar-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(34, 139, 87, 0.6);
+  display: inline-block;
 }
 
 .reservation-modal-actions {
