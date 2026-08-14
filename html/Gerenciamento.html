@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=50">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=52">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -400,30 +400,6 @@
 
             </div>
 
-            <div id="maintenanceModeSection" class="super-admin-only" style="display:none; margin-bottom: 1.25rem;">
-                <div id="maintenanceModeCard" class="cidade-contato-card">
-                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Modo de Manutenção</h3>
-                    <div style="flex:1 1 100%; display:flex; flex-wrap:wrap; gap:0.75rem;">
-                        <label style="flex-direction:row; align-items:center; gap:0.4rem; width:auto;">
-                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Inicio" style="width:auto;" /> Página Inicial
-                        </label>
-                        <label style="flex-direction:row; align-items:center; gap:0.4rem; width:auto;">
-                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Rio de Janeiro" style="width:auto;" /> Rio de Janeiro
-                        </label>
-                        <label style="flex-direction:row; align-items:center; gap:0.4rem; width:auto;">
-                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Salvador" style="width:auto;" /> Salvador
-                        </label>
-                        <label style="flex-direction:row; align-items:center; gap:0.4rem; width:auto;">
-                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Sao Luis" style="width:auto;" /> São Luís do Maranhão
-                        </label>
-                        <label style="flex-direction:row; align-items:center; gap:0.4rem; width:auto;">
-                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Lencois" style="width:auto;" /> Lençóis Maranhenses
-                        </label>
-                    </div>
-                    <span id="maintenanceModeStatus" class="cidade-contato-status"></span>
-                </div>
-            </div>
-
             <div id="cidadeContatoSection" style="margin-bottom: 1.25rem;">
                 <div id="cidadeContatoCard" class="cidade-contato-card">
                     <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Contato por Cidade</h3>
@@ -697,6 +673,30 @@
                         <tr><td colspan="11" style="padding:0.75rem;">Nenhum tour carregado.</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div id="maintenanceModeSection" class="super-admin-only" style="display:none; margin-bottom: 1.25rem;">
+                <div id="maintenanceModeCard" class="cidade-contato-card">
+                    <h3 style="margin:0 0 0.5rem; font-size:1rem; flex:1 1 100%;">Modo de Manutenção</h3>
+                    <div class="maintenance-target-list">
+                        <label class="maintenance-target-label">
+                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Inicio" /> Página Inicial
+                        </label>
+                        <label class="maintenance-target-label">
+                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Rio de Janeiro" /> Rio de Janeiro
+                        </label>
+                        <label class="maintenance-target-label">
+                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Salvador" /> Salvador
+                        </label>
+                        <label class="maintenance-target-label">
+                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Sao Luis" /> São Luís do Maranhão
+                        </label>
+                        <label class="maintenance-target-label">
+                            <input type="checkbox" class="maintenance-target-checkbox" data-target="Lencois" /> Lençóis Maranhenses
+                        </label>
+                    </div>
+                    <span id="maintenanceModeStatus" class="cidade-contato-status"></span>
+                </div>
             </div>
 
         </section>

@@ -3567,6 +3567,45 @@ section,
   width: 100%;
 }
 
+/* Modo de Manutenção: lista de checkboxes por página. Chumaço menor que um
+   checkbox padrão (16px em vez do ~20px nativo) e quebra em coluna única
+   nas telas mais estreitas, onde 5 rótulos lado a lado ficavam espremidos. */
+.maintenance-target-list {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
+/* Seletor com 2 classes (.maintenance-target-list .maintenance-target-label)
+   de propósito: precisa vencer .cidade-contato-card label (classe+tag) na
+   especificidade — sem isso o flex:1 1 220px genérico esticava cada rótulo
+   por uma fatia igual da altura do container, criando o vão gigante entre
+   checkboxes visto no admin. */
+.maintenance-target-list .maintenance-target-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  width: auto;
+  font-size: 0.85rem;
+}
+
+.maintenance-target-list .maintenance-target-label .maintenance-target-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: none;
+}
+
+@media (max-width: 560px) {
+  .maintenance-target-list {
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+}
+
 .cidade-aviso-itens {
   list-style: none;
   margin: 0;
