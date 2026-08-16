@@ -2636,6 +2636,29 @@
                     toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
                 };
             });
+
+            // Inclui/Roteiro viram HTML (parágrafos/listas), então não dá
+            // pra cortar caractere a caractere como o texto puro acima —
+            // aqui o clamp é visual (max-height) e o botão só alterna a
+            // classe que libera a altura total.
+            container.querySelectorAll('.rio-tour-detail-rich-item').forEach((itemEl) => {
+                const bodyEl = itemEl.querySelector('.rio-tour-detail-richbody');
+                const toggle = itemEl.querySelector('.rio-tour-detail-toggle-rich');
+                if (!bodyEl || !toggle) return;
+
+                itemEl.classList.remove('rio-detail-expanded');
+                toggle.classList.remove('rio-detail-visible');
+                toggle.textContent = toggle.dataset.more;
+
+                if (bodyEl.scrollHeight <= bodyEl.clientHeight + 1) {
+                    return; // conteúdo já cabe no clamp, sem botão
+                }
+                toggle.classList.add('rio-detail-visible');
+                toggle.onclick = () => {
+                    const expanded = itemEl.classList.toggle('rio-detail-expanded');
+                    toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
+                };
+            });
         });
     };
     const setTourDetailsHtml = (el, tour, lang) => {
@@ -2735,6 +2758,43 @@
         Object.entries(map).forEach(([pt, tr]) => { out = out.replaceAll(pt, tr); });
         return out;
     };
+    // Campos como "Inclui"/"Roteiro" aceitam um mini-formato digitado no
+    // admin: quebra de linha vira parágrafo, linhas iniciadas com ✓ / ✕ / *
+    // viram lista com marcador, e **texto** vira negrito. Foge do resto dos
+    // campos (curtos, sempre em uma linha) que continuam em texto puro.
+    const escapeHtmlText = (str) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    // "**texto**" e "*texto*" (asterisco duplo ou simples envolvendo o
+    // trecho) viram negrito; só o "* " no INÍCIO da linha (com espaço logo
+    // depois) é tratado como marcador de lista — ver bulletMatch abaixo.
+    const applyRichInlineBold = (str) => str
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<strong>$1</strong>');
+    const isTourRichField = (key) => key === 'inclui' || key === 'roteiro';
+    const formatTourRichText = (raw) => {
+        const lines = escapeHtmlText((raw || '').toString()).split(/\r?\n/);
+        let html = '';
+        let inList = false;
+        const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+        lines.forEach((rawLine) => {
+            const line = rawLine.trim();
+            if (!line) { closeList(); return; }
+            const bulletMatch = line.match(/^(✓|✕|\*)\s+(.*)$/);
+            if (bulletMatch) {
+                if (!inList) { html += '<ul class="rio-tour-detail-list">'; inList = true; }
+                const marker = bulletMatch[1];
+                const markerClass = marker === '✓' ? 'rio-tour-list-check' : marker === '✕' ? 'rio-tour-list-cross' : 'rio-tour-list-dot';
+                html += `<li class="${markerClass}">${applyRichInlineBold(bulletMatch[2])}</li>`;
+            } else {
+                closeList();
+                html += `<p class="rio-tour-detail-paragraph">${applyRichInlineBold(line)}</p>`;
+            }
+        });
+        closeList();
+        return html;
+    };
     const buildTourDetailsHtml = (tour, lang) => {
         const labels = TOUR_DETAIL_LABELS[lang] || TOUR_DETAIL_LABELS.pt;
         const rawValues = {
@@ -2768,7 +2828,11 @@
             if (translateKeyByField[key]) {
                 value = translateTourCardDetailValue(translateKeyByField[key], value, lang);
             }
-            html += `<li><span class="rio-tour-detail-line"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> <span class="rio-tour-detail-value">${value}</span><button type="button" class="rio-tour-detail-toggle" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></span></li>`;
+            if (isTourRichField(key)) {
+                html += `<li class="rio-tour-detail-rich-item"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong><div class="rio-tour-detail-richbody">${formatTourRichText(value)}</div><button type="button" class="rio-tour-detail-toggle rio-tour-detail-toggle-rich" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></li>`;
+            } else {
+                html += `<li><span class="rio-tour-detail-line"><i class="fa ${TOUR_DETAIL_ICONS[key]}"></i> <strong>${labels[key]}:</strong> <span class="rio-tour-detail-value">${value}</span><button type="button" class="rio-tour-detail-toggle" data-more="${readMoreLabel.more}" data-less="${readMoreLabel.less}">${readMoreLabel.more}</button></span></li>`;
+            }
             // "Valor" vai logo depois de "Horários disponíveis" em vez de sempre
             // no final da lista — pedido explícito, já que ambos os campos
             // costumam ser lidos juntos ("quando" e "quanto").

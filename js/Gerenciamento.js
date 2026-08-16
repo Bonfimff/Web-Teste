@@ -709,11 +709,13 @@ let currentTourHorariosPorDia = {};
 // Campos de texto livre do tour preenchidos separadamente para cada idioma
 // (aba de tradução do modal de edição). "pt" é o idioma padrão/obrigatório;
 // os outros são opcionais e vão pra coluna `traducoes` (JSON) no banco.
+// "duracao" NÃO entra aqui de propósito: é um dado numérico (ex: "2h15") que
+// não muda com o idioma, então tem um valor só, compartilhado por todas as
+// abas — ver .tour-lang-only-pt / updateTourLangFieldVisibility.
 const TOUR_LANG_FIELD_IDS = {
   periodo: 'tourModalPeriodo',
   saida: 'tourModalSaida',
   grupo: 'tourModalGrupo',
-  duracao: 'tourModalDuracao',
   encontro: 'tourModalMeeting',
   identificacao: 'tourModalIdentification',
   ponto_embarque: 'tourModalPontoEmbarque',
@@ -738,10 +740,85 @@ const writeTourLangFieldsToInputs = (valores) => {
     const el = document.getElementById(elId);
     if (el) el.value = (valores && valores[campo]) || '';
   });
+  syncDuracaoSelectsFromField();
+};
+
+// Duração continua sendo um campo de texto livre por idioma (mesmo dado que
+// TOUR_LANG_FIELD_IDS/readTourLangFieldsFromInputs leem/escrevem) — os
+// seletores de horas/minutos abaixo só existem pra facilitar o preenchimento
+// no formato usual ("2h15", "3h"); digitar direto no campo continua
+// funcionando pra casos fora do padrão (ex: "Dia inteiro").
+const formatDuracaoFromSelects = (horas, minutos) => {
+  const h = parseInt(horas, 10);
+  const m = parseInt(minutos, 10);
+  const temHoras = !Number.isNaN(h) && h > 0;
+  const temMinutos = !Number.isNaN(m) && m > 0;
+  if (!temHoras && !temMinutos) return Number.isNaN(h) && Number.isNaN(m) ? null : '';
+  if (!temHoras) return `${m}min`;
+  if (!temMinutos) return `${h}h`;
+  return `${h}h${String(m).padStart(2, '0')}`;
+};
+
+const parseDuracaoToSelects = (valor) => {
+  const horasSelect = document.getElementById('tourModalDuracaoHoras');
+  const minutosSelect = document.getElementById('tourModalDuracaoMinutos');
+  if (!horasSelect || !minutosSelect) return;
+
+  const texto = String(valor || '').trim();
+  const matchH = texto.match(/^(\d{1,2})h(\d{1,2})?$/i);
+  const matchMin = texto.match(/^(\d{1,2})min$/i);
+
+  if (matchH) {
+    horasSelect.value = matchH[1];
+    minutosSelect.value = matchH[2] ? String(parseInt(matchH[2], 10)) : '0';
+  } else if (matchMin) {
+    horasSelect.value = '0';
+    minutosSelect.value = matchMin[1];
+  } else {
+    // Valor fora do padrão (texto livre legado, ex: "Dia inteiro") — não dá
+    // pra representar nos seletores, então eles voltam pro estado neutro em
+    // vez de mostrar um horário que não bate com o texto real.
+    horasSelect.value = '';
+    minutosSelect.value = '';
+  }
+};
+
+const syncDuracaoSelectsFromField = () => {
+  parseDuracaoToSelects(document.getElementById('tourModalDuracao')?.value || '');
+};
+
+const initTourDuracaoSelects = () => {
+  const horasSelect = document.getElementById('tourModalDuracaoHoras');
+  const minutosSelect = document.getElementById('tourModalDuracaoMinutos');
+  const input = document.getElementById('tourModalDuracao');
+  if (!horasSelect || !minutosSelect || !input || horasSelect.dataset.bound) return;
+  horasSelect.dataset.bound = '1';
+
+  const aplicarSelecao = () => {
+    const formatado = formatDuracaoFromSelects(horasSelect.value, minutosSelect.value);
+    if (formatado !== null) input.value = formatado;
+  };
+
+  horasSelect.addEventListener('change', aplicarSelecao);
+  minutosSelect.addEventListener('change', aplicarSelecao);
+  // Editar o texto na mão (formato fora do padrão) também deve refletir nos
+  // seletores quando possível, pra eles não ficarem mostrando um valor velho.
+  input.addEventListener('input', syncDuracaoSelectsFromField);
 };
 
 const syncCurrentTourEditLang = () => {
   tourEditLangValues[tourEditCurrentLang] = readTourLangFieldsFromInputs();
+};
+
+// Campos como Duração e Link do local de encontro não fazem parte da
+// tradução (têm um valor só, não um por idioma) — só ficam visíveis na aba
+// Português; nas demais abas, mostrar um campo que "não muda" só teria o
+// efeito de o admin achar que precisa preencher de novo em cada idioma.
+const updateTourLangFieldVisibility = (lang) => {
+  const somenteEmPt = lang === 'pt';
+  document.querySelectorAll('.tour-lang-only-pt').forEach((el) => {
+    el.style.display = somenteEmPt ? '' : 'none';
+  });
 };
 
 const switchTourEditLang = (lang) => {
@@ -749,6 +826,7 @@ const switchTourEditLang = (lang) => {
   syncCurrentTourEditLang();
   tourEditCurrentLang = lang;
   writeTourLangFieldsToInputs(tourEditLangValues[lang] || {});
+  updateTourLangFieldVisibility(lang);
   document.querySelectorAll('#tourModalLangTabs .tour-lang-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
   });
@@ -783,6 +861,55 @@ const setTourHorariosPorDia = (horariosPorDiaJson, horariosFlat) => {
   renderTourHorariosPorDia();
 };
 
+// Ordem de exibição (semana começando na segunda) usada só para compor o
+// texto de "Dias da semana" a partir dos dias que têm horário cadastrado —
+// DIAS_SEMANA (dom primeiro) continua sendo a ordem de exibição da grade.
+const DIAS_SEMANA_ORDEM_TEXTO = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+const DIAS_SEMANA_LABEL_POR_KEY = DIAS_SEMANA.reduce((acc, { key, label }) => {
+  acc[key] = label;
+  return acc;
+}, {});
+
+// Deriva o texto de "Dias da semana" a partir de quais dias têm pelo menos
+// um horário cadastrado em currentTourHorariosPorDia — em vez de deixar o
+// admin preencher isso à mão (e correr o risco de ficar dessincronizado dos
+// horários reais), comprime dias seguidos em intervalo ("Segunda a Sexta")
+// e lista os demais separadamente.
+const formatDiasSemanaFromHorarios = () => {
+  const ativos = DIAS_SEMANA_ORDEM_TEXTO.filter((key) => (currentTourHorariosPorDia[key] || []).length > 0);
+  if (!ativos.length) return '';
+  if (ativos.length === 7) return 'Todos os dias';
+
+  const grupos = [];
+  let grupoAtual = [ativos[0]];
+  for (let i = 1; i < ativos.length; i += 1) {
+    const idxAnterior = DIAS_SEMANA_ORDEM_TEXTO.indexOf(grupoAtual[grupoAtual.length - 1]);
+    const idxAtual = DIAS_SEMANA_ORDEM_TEXTO.indexOf(ativos[i]);
+    if (idxAtual === idxAnterior + 1) {
+      grupoAtual.push(ativos[i]);
+    } else {
+      grupos.push(grupoAtual);
+      grupoAtual = [ativos[i]];
+    }
+  }
+  grupos.push(grupoAtual);
+
+  const partes = grupos.map((grupo) => {
+    if (grupo.length >= 3) {
+      return `${DIAS_SEMANA_LABEL_POR_KEY[grupo[0]]} a ${DIAS_SEMANA_LABEL_POR_KEY[grupo[grupo.length - 1]]}`;
+    }
+    return grupo.map((key) => DIAS_SEMANA_LABEL_POR_KEY[key]).join(' e ');
+  });
+
+  if (partes.length === 1) return partes[0];
+  return `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`;
+};
+
+const updateDiasSemanaField = () => {
+  const input = document.getElementById('tourModalDiasSemana');
+  if (input) input.value = formatDiasSemanaFromHorarios();
+};
+
 const renderTourHorariosPorDia = () => {
   const container = document.getElementById('tourModalHorariosPorDia');
   if (!container) return;
@@ -808,6 +935,8 @@ const renderTourHorariosPorDia = () => {
         </div>
       </div>`;
   }).join('');
+
+  updateDiasSemanaField();
 };
 
 const initTourHorariosPorDiaEvents = () => {
@@ -1866,7 +1995,10 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalSaida').value = tourData.saida || '';
   document.getElementById('tourModalGrupo').value = tourData.grupo || '';
   document.getElementById('tourModalDuracao').value = tourData.duracao || '';
-  document.getElementById('tourModalDiasSemana').value = tourData.diasSemana || tourData.dias_semana || '';
+  syncDuracaoSelectsFromField();
+  // tourModalDiasSemana não é preenchido aqui: setTourHorariosPorDia(), logo
+  // abaixo, recalcula o valor a partir dos horários por dia (ver
+  // updateDiasSemanaField) — a fonte da verdade agora é a grade de horários.
   document.getElementById('tourModalInclui').value = tourData.inclui || '';
   document.getElementById('tourModalRoteiro').value = tourData.roteiro || '';
   document.getElementById('tourModalPontoEmbarque').value = tourData.pontoEmbarque || tourData.ponto_embarque || '';
@@ -1881,6 +2013,7 @@ const openTourEditModal = (tourData) => {
     tourEditLangValues[lang] = { ...(traducoesExistentes[lang] || {}) };
   });
   tourEditCurrentLang = 'pt';
+  updateTourLangFieldVisibility('pt');
   document.querySelectorAll('#tourModalLangTabs .tour-lang-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-lang') === 'pt');
   });
@@ -1912,6 +2045,172 @@ const closeTourEditModal = () => {
 // atualizar um existente (PUT); ver saveTourEditModal.
 const openTourCreateModal = () => {
   openTourEditModal({ status: 'Ativo', modalidade: 'free', canal_reserva: 'web' });
+};
+
+// Baixar/Importar JSON por tour: ao contrário da barra de Tours (que edita
+// todos de uma vez direto no banco via /bulk_update_tours_pagina), aqui o
+// JSON só preenche os campos do formulário já aberto — o admin ainda
+// precisa clicar em "Salvar" pra gravar, dando chance de revisar antes.
+const showTourModalJsonStatus = (success, message) => {
+  const statusEl = document.getElementById('tourModalJsonStatus');
+  if (!statusEl) return;
+  statusEl.style.display = '';
+  statusEl.className = `tour-bulk-import-status tour-bulk-import-status--${success ? 'success' : 'error'}`;
+  statusEl.innerHTML = `<p>${escapeHtml(message)}</p>`;
+};
+
+const buildTourJsonFromModal = () => {
+  syncCurrentTourEditLang();
+  const traducoes = {};
+  TOUR_TRANSLATE_LANGS.forEach((lang) => {
+    const valores = tourEditLangValues[lang] || {};
+    if (Object.values(valores).some((v) => v)) traducoes[lang] = valores;
+  });
+
+  const idTexto = document.getElementById('tourModalId').textContent.trim();
+  const id = /^\d+$/.test(idTexto) ? Number(idTexto) : null;
+
+  return {
+    id,
+    nome_tour: document.getElementById('tourModalName').value.trim(),
+    cidade: document.getElementById('tourModalCidade').value,
+    idiomas: getTourModalLanguages(),
+    pasta_imagens: document.getElementById('tourModalPastaImagens').value.trim(),
+    periodo: document.getElementById('tourModalPeriodo').value.trim(),
+    saida: document.getElementById('tourModalSaida').value.trim(),
+    grupo: document.getElementById('tourModalGrupo').value.trim(),
+    duracao: document.getElementById('tourModalDuracao').value.trim(),
+    dias_semana: document.getElementById('tourModalDiasSemana').value.trim(),
+    encontro: document.getElementById('tourModalMeeting').value.trim(),
+    identificacao: document.getElementById('tourModalIdentification').value.trim(),
+    ponto_embarque: document.getElementById('tourModalPontoEmbarque').value.trim(),
+    ponto_desembarque: document.getElementById('tourModalPontoDesembarque').value.trim(),
+    inclui: document.getElementById('tourModalInclui').value.trim(),
+    roteiro: document.getElementById('tourModalRoteiro').value.trim(),
+    link_tour: document.getElementById('tourModalLink').value.trim(),
+    valor: document.getElementById('tourModalValue').value,
+    estado: document.getElementById('tourModalStatus').value,
+    modalidade: document.getElementById('tourModalModalidade').value,
+    canal_reserva: document.getElementById('tourModalCanalReserva').value,
+    horarios_por_dia: JSON.stringify(currentTourHorariosPorDia),
+    traducoes
+  };
+};
+
+const downloadSingleTourJson = () => {
+  const data = buildTourJsonFromModal();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const slug = (data.nome_tour || 'tour').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'tour';
+  a.href = url;
+  a.download = `tour-${data.id || 'novo'}-${slug}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+// Só preenche os campos do tour já aberto no modal — nunca troca qual tour
+// está sendo editado (currentlyEditingTourId/isCreatingNewTour continuam
+// como estavam), então o "id" que porventura venha no arquivo é ignorado.
+const applyTourJsonToModal = (tourData) => {
+  document.getElementById('tourModalName').value = tourData.nome_tour || tourData.name || '';
+  document.getElementById('tourModalCidade').value = tourData.cidade || '';
+  document.getElementById('tourModalPastaImagens').value = tourData.pasta_imagens || tourData.pastaImagens || '';
+  setTourModalLanguages(tourData.idiomas || tourData.languages || '');
+  document.getElementById('tourModalMeeting').value = tourData.encontro || tourData.meeting || '';
+  document.getElementById('tourModalIdentification').value = tourData.identificacao || tourData.identification || '';
+  document.getElementById('tourModalLink').value = tourData.link_tour || tourData.link || '';
+  document.getElementById('tourModalValue').value = tourData.valor != null ? tourData.valor : (tourData.value != null ? tourData.value : '');
+  document.getElementById('tourModalPeriodo').value = tourData.periodo || '';
+  document.getElementById('tourModalSaida').value = tourData.saida || '';
+  document.getElementById('tourModalGrupo').value = tourData.grupo || '';
+  document.getElementById('tourModalDuracao').value = tourData.duracao || '';
+  syncDuracaoSelectsFromField();
+  document.getElementById('tourModalInclui').value = tourData.inclui || '';
+  document.getElementById('tourModalRoteiro').value = tourData.roteiro || '';
+  document.getElementById('tourModalPontoEmbarque').value = tourData.ponto_embarque || tourData.pontoEmbarque || '';
+  document.getElementById('tourModalPontoDesembarque').value = tourData.ponto_desembarque || tourData.pontoDesembarque || '';
+  document.getElementById('tourModalStatus').value = tourData.estado || tourData.status || 'Ativo';
+  document.getElementById('tourModalModalidade').value = (tourData.modalidade || 'free').toLowerCase();
+  document.getElementById('tourModalCanalReserva').value = (tourData.canal_reserva || tourData.canalReserva || 'web').toLowerCase();
+
+  const traducoesExistentes = tourData.traducoes || {};
+  tourEditLangValues = { pt: readTourLangFieldsFromInputs() };
+  TOUR_TRANSLATE_LANGS.forEach((lang) => {
+    tourEditLangValues[lang] = { ...(traducoesExistentes[lang] || {}) };
+  });
+  tourEditCurrentLang = 'pt';
+  updateTourLangFieldVisibility('pt');
+  document.querySelectorAll('#tourModalLangTabs .tour-lang-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === 'pt');
+  });
+
+  const horariosRaw = tourData.horarios_por_dia || tourData.horariosPorDia;
+  const horariosJson = typeof horariosRaw === 'string' ? horariosRaw : (horariosRaw ? JSON.stringify(horariosRaw) : '');
+  setTourHorariosPorDia(horariosJson, tourData.horarios || '');
+
+  // pasta_imagens/cidade acabaram de mudar por atribuição direta (sem
+  // disparar 'change') — dispara manualmente pra recarregar a prévia da
+  // galeria com base na pasta importada.
+  document.getElementById('tourModalCidade').dispatchEvent(new Event('change'));
+};
+
+const importSingleTourJsonFile = async (file) => {
+  const statusEl = document.getElementById('tourModalJsonStatus');
+  if (statusEl) statusEl.style.display = 'none';
+
+  let texto;
+  try {
+    texto = await file.text();
+  } catch (error) {
+    showTourModalJsonStatus(false, 'Não foi possível ler o arquivo selecionado.');
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(texto);
+  } catch (error) {
+    showTourModalJsonStatus(false, 'Arquivo inválido: não é um JSON válido.');
+    return;
+  }
+
+  // Aceita tanto um objeto único (formato do "Baixar JSON deste tour") quanto
+  // uma lista (ex: um arquivo baixado da barra de Tours) — nesse caso usa o
+  // primeiro item, já que aqui só um tour é editado por vez.
+  const tourData = Array.isArray(parsed) ? parsed[0] : parsed;
+  if (!tourData || typeof tourData !== 'object') {
+    showTourModalJsonStatus(false, 'O arquivo precisa conter um objeto (ou lista de objetos) com os dados do tour.');
+    return;
+  }
+
+  applyTourJsonToModal(tourData);
+  showTourModalJsonStatus(true, 'Campos preenchidos a partir do arquivo. Revise e clique em "Salvar" para gravar.');
+};
+
+const initTourModalJsonButtons = () => {
+  const downloadBtn = document.getElementById('tourModalDownloadJson');
+  const importBtn = document.getElementById('tourModalImportJson');
+  const fileInput = document.getElementById('tourModalImportJsonInput');
+
+  if (downloadBtn && !downloadBtn.dataset.bound) {
+    downloadBtn.dataset.bound = '1';
+    downloadBtn.addEventListener('click', downloadSingleTourJson);
+  }
+
+  if (importBtn && fileInput && !importBtn.dataset.bound) {
+    importBtn.dataset.bound = '1';
+    importBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (file) importSingleTourJsonFile(file);
+      fileInput.value = '';
+    });
+  }
 };
 
 const toggleTourPauseFromModal = () => {
@@ -2291,6 +2590,127 @@ const initTourManagementFilters = () => {
       select.addEventListener('change', renderFilteredTourManagementTable);
     }
   });
+};
+
+// Edição em massa via JSON: "baixar" não passa por nenhum endpoint novo —
+// só pega o que /get_tours_pagina já devolve (o mesmo formato aceito de
+// volta em /bulk_update_tours_pagina) e monta o arquivo inteiramente no
+// navegador (Blob + <a download>), sem gerar nada no servidor.
+const showTourBulkImportStatus = (success, message, errors) => {
+  const statusEl = document.getElementById('tourBulkImportStatus');
+  if (!statusEl) return;
+  statusEl.style.display = '';
+  statusEl.className = `tour-bulk-import-status tour-bulk-import-status--${success ? 'success' : 'error'}`;
+  const listaErros = Array.isArray(errors) && errors.length
+    ? `<ul>${errors.map((erro) => `<li>${escapeHtml(String(erro))}</li>`).join('')}</ul>`
+    : '';
+  statusEl.innerHTML = `<p>${escapeHtml(message)}</p>${listaErros}`;
+};
+
+const downloadToursJson = async () => {
+  const btn = document.getElementById('tourBulkDownloadButton');
+  const email = localStorage.getItem('userEmail');
+  if (!email) return;
+
+  if (btn) btn.disabled = true;
+  try {
+    const response = await fetchWithApiFallback(`/get_tours_pagina?email=${encodeURIComponent(email)}`);
+    if (!response.ok) throw new Error('Falha ao buscar tours do servidor.');
+    const tours = await response.json();
+    if (!Array.isArray(tours)) throw new Error('Resposta inesperada do servidor.');
+
+    const blob = new Blob([JSON.stringify(tours, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tours-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Erro ao baixar JSON de tours:', error);
+    showTourBulkImportStatus(false, 'Erro ao baixar o arquivo. Tente novamente.', []);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+// O arquivo é lido inteiramente no navegador (FileReader/File.text — nunca
+// enviado "como arquivo" pro servidor); só o JSON já interpretado (a lista
+// de tours) vai no corpo da requisição pra /bulk_update_tours_pagina, que
+// valida tudo antes de gravar qualquer linha no banco (tudo ou nada).
+const importToursJsonFile = async (file) => {
+  const statusEl = document.getElementById('tourBulkImportStatus');
+  if (statusEl) statusEl.style.display = 'none';
+
+  let texto;
+  try {
+    texto = await file.text();
+  } catch (error) {
+    showTourBulkImportStatus(false, 'Não foi possível ler o arquivo selecionado.', []);
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(texto);
+  } catch (error) {
+    showTourBulkImportStatus(false, 'Arquivo inválido: não é um JSON válido.', []);
+    return;
+  }
+
+  const tours = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.tours) ? parsed.tours : null);
+  if (!tours || !tours.length) {
+    showTourBulkImportStatus(false, 'O arquivo precisa conter uma lista de tours (array JSON) com pelo menos um item.', []);
+    return;
+  }
+
+  const email = localStorage.getItem('userEmail');
+  const importBtn = document.getElementById('tourBulkImportButton');
+  if (importBtn) importBtn.disabled = true;
+
+  try {
+    const response = await fetchWithApiFallback('/bulk_update_tours_pagina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_email: email, tours })
+    });
+    const result = await response.json().catch(() => ({}));
+
+    if (response.ok && result.success) {
+      showTourBulkImportStatus(true, result.message || 'Importação concluída com sucesso.', []);
+      await carregarToursGerenciamento();
+    } else {
+      showTourBulkImportStatus(false, result.message || 'Não foi possível importar o arquivo.', result.errors || []);
+    }
+  } catch (error) {
+    console.error('Erro ao importar tours em massa:', error);
+    showTourBulkImportStatus(false, 'Erro de conexão ao enviar o arquivo.', []);
+  } finally {
+    if (importBtn) importBtn.disabled = false;
+  }
+};
+
+const initTourBulkImportExport = () => {
+  const downloadBtn = document.getElementById('tourBulkDownloadButton');
+  const importBtn = document.getElementById('tourBulkImportButton');
+  const fileInput = document.getElementById('tourBulkImportInput');
+
+  if (downloadBtn && !downloadBtn.dataset.bound) {
+    downloadBtn.dataset.bound = '1';
+    downloadBtn.addEventListener('click', downloadToursJson);
+  }
+
+  if (importBtn && fileInput && !importBtn.dataset.bound) {
+    importBtn.dataset.bound = '1';
+    importBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (file) importToursJsonFile(file);
+      fileInput.value = '';
+    });
+  }
 };
 
 const carregarToursGerenciamento = async () => {
@@ -3345,7 +3765,7 @@ const carregarAgendamentosDoBanco = async () => {
 
   const userEmail = localStorage.getItem('userEmail');
   if (!userEmail) {
-    tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Sessao expirada. Faca login novamente.</td></tr>';
+    tableBodyElement.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Sessao expirada. Faca login novamente.</td></tr>';
     return;
   }
 
@@ -3353,19 +3773,19 @@ const carregarAgendamentosDoBanco = async () => {
   currentUserPermissions = currentUserPermissions || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
 
   if (!currentUserPermissions.manageReservas) {
-    tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Verificando permissão no servidor...</td></tr>';
+    tableBodyElement.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Verificando permissão no servidor...</td></tr>';
 
     try {
       const response = await fetchWithApiFallback(`/check_permission?email=${encodeURIComponent(userEmail)}&permission=manageReservas`);
       if (!response.ok) {
         const reasonData = await response.json().catch(() => ({}));
-        tableBodyElement.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Acesso negado no servidor: ${reasonData.reason || reasonData.message || 'sem razão'}.</td></tr>`;
+        tableBodyElement.innerHTML = `<tr><td colspan="9" style="padding:0.75rem;">Acesso negado no servidor: ${reasonData.reason || reasonData.message || 'sem razão'}.</td></tr>`;
         return;
       }
 
       const result = await response.json();
       if (!result.allowed) {
-        tableBodyElement.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Acesso negado ao Gerenciamento de reservas: ${result.reason || 'não autorizado'}.</td></tr>`;
+        tableBodyElement.innerHTML = `<tr><td colspan="9" style="padding:0.75rem;">Acesso negado ao Gerenciamento de reservas: ${result.reason || 'não autorizado'}.</td></tr>`;
         return;
       }
 
@@ -3373,7 +3793,7 @@ const carregarAgendamentosDoBanco = async () => {
       currentUserPermissions.manageReservas = true;
     } catch (error) {
       console.warn('Falha ao verificar permissão no servidor:', error);
-      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Erro de verificação de permissões. Tente novamente mais tarde.</td></tr>';
+      tableBodyElement.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Erro de verificação de permissões. Tente novamente mais tarde.</td></tr>';
       return;
     }
   }
@@ -3401,7 +3821,7 @@ const carregarAgendamentosDoBanco = async () => {
 
     if (response.status === 403) {
       alert('Erro: Você não tem permissão de Administrador para ver esta página.');
-      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Sem permissão para visualizar reservas.</td></tr>';
+      tableBodyElement.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Sem permissão para visualizar reservas.</td></tr>';
       return;
     }
 
@@ -3413,7 +3833,7 @@ const carregarAgendamentosDoBanco = async () => {
         detail: errorText
       });
       alert(`Falha ao carregar reservas (${response.status}).`);
-      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Falha ao carregar reservas do banco de dados.</td></tr>';
+      tableBodyElement.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Falha ao carregar reservas do banco de dados.</td></tr>';
       return;
     }
 
@@ -3443,7 +3863,7 @@ const carregarAgendamentosDoBanco = async () => {
     });
 
     if (!filtered.length) {
-      tableBodyElement.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Nenhuma reserva encontrada.</td></tr>';
+      tableBodyElement.innerHTML = '<tr><td colspan="9" style="padding:0.75rem;">Nenhuma reserva encontrada.</td></tr>';
     }
 
     // Salva reservas para uso na aba Gerenciamento da página
@@ -3462,6 +3882,7 @@ const carregarAgendamentosDoBanco = async () => {
       const idiomaValue = ag.idioma || '-';
       const modalidadeValue = ag.modalidade || 'free';
       const guiaValue = ag.guia || '-';
+      const origemValue = ag.origem || 'Tour by food';
 
       row.innerHTML = `
         <td data-label="Tour">${ag.tour}</td>
@@ -3472,6 +3893,7 @@ const carregarAgendamentosDoBanco = async () => {
         <td data-label="Hora">${ag.hora}</td>
         <td data-label="Pessoas">${qtdValue}</td>
         <td data-label="Status"><span class="status-badge ${statusClass}">${statusValue}</span></td>
+        <td data-label="Origem">${origemValue}</td>
       `;
 
       if (currentUserPermissions?.manageReservas) {
@@ -3644,7 +4066,7 @@ const carregarAgendamentosDoBanco = async () => {
   } catch (error) {
     console.error('Erro de conexão ao carregar tabela:', error);
     const detail = (error && error.message) ? ` Detalhe: ${error.message}` : '';
-    tableBodyElement.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Erro de conexão com a API ao carregar reservas.${detail}</td></tr>`;
+    tableBodyElement.innerHTML = `<tr><td colspan="9" style="padding:0.75rem;">Erro de conexão com a API ao carregar reservas.${detail}</td></tr>`;
   }
 };
 
@@ -4424,6 +4846,8 @@ const setupAccountModalEvents = () => {
     });
   }
 
+  initTourBulkImportExport();
+
   if (tourModalSave) {
     tourModalSave.addEventListener('click', () => {
       saveTourEditModal();
@@ -4453,6 +4877,8 @@ const setupAccountModalEvents = () => {
   }
 
   initTourHorariosPorDiaEvents();
+  initTourDuracaoSelects();
+  initTourModalJsonButtons();
 };
 
 const attachSectionLinks = () => {
@@ -4552,6 +4978,7 @@ const openEditModalFromBackend = (ag) => {
   const modalGuide = document.getElementById('modalGuide');
   const modalQuantity = document.getElementById('modalQuantity');
   const modalStatus = document.getElementById('modalStatus');
+  const modalOrigem = document.getElementById('modalOrigem');
   const modalDelete = document.getElementById('modalDelete');
 
   if (modalTour) {
@@ -4602,6 +5029,7 @@ const openEditModalFromBackend = (ag) => {
   if (modalGuide) modalGuide.value = ag.guia || '';
   if (modalQuantity) modalQuantity.value = ag.qtd || ag.qtd_pessoas || 1;
   if (modalStatus) modalStatus.value = ag.status || 'Pendente';
+  if (modalOrigem) modalOrigem.value = ag.origem || 'Tour by food';
 
   const modalTitle = modal.querySelector('#modalTitle');
   if (modalTitle) modalTitle.textContent = 'Editar reserva';
@@ -4657,6 +5085,7 @@ const initReservationManagement = () => {
   const modalGuide = document.getElementById('modalGuide');
   const modalQuantity = document.getElementById('modalQuantity');
   const modalStatus = document.getElementById('modalStatus');
+  const modalOrigem = document.getElementById('modalOrigem');
   const modalSave = document.getElementById('modalSave');
   const modalCancel = document.getElementById('modalCancel');
   const modalDelete = document.getElementById('modalDelete');
@@ -4866,6 +5295,7 @@ const initReservationManagement = () => {
     modalGuide.value = reservation.guide || reservation.guia || '';
     modalQuantity.value = reservation.quantity || reservation.qtd || reservation.qtd_pessoas || 1;
     modalStatus.value = reservation.status || 'Pendente';
+    if (modalOrigem) modalOrigem.value = reservation.origem || 'Tour by food';
 
     modal.classList.remove('hidden');
   };
@@ -4896,6 +5326,7 @@ const initReservationManagement = () => {
     modalGuide.value = '';
     modalQuantity.value = 1;
     modalStatus.value = 'Pendente';
+    if (modalOrigem) modalOrigem.value = '';
 
     modal.classList.remove('hidden');
   };
@@ -4928,6 +5359,7 @@ const initReservationManagement = () => {
       celular: modalPhone.value.trim() || '',
       email: modalEmail?.value.trim() || '',
       status: modalStatus?.value || 'Pendente',
+      origem: modalOrigem?.value.trim() || '',
       admin_email: currentUserEmail || ''
     };
 
@@ -6320,50 +6752,56 @@ window.addEventListener('DOMContentLoaded', () => {
       event.stopPropagation();
     });
 
-    profileMenu.querySelectorAll('.profile-item').forEach((item) => {
-      item.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+    // Delegação no .profile-menu (nunca é recriado) em vez de vincular direto
+    // nos .profile-item: updateProfileMenuByPermissions() substitui o
+    // innerHTML de .profile-dropdown depois que as permissões carregam, o que
+    // destruía os itens originais e, com eles, os listeners abaixo — os
+    // botões ficavam visíveis mas clicar não fazia nada.
+    profileMenu.addEventListener('click', (event) => {
+      const item = event.target.closest('.profile-item');
+      if (!item || !profileMenu.contains(item)) return;
 
-        const action = item.getAttribute('data-profile-action');
-        const origin = window.location.origin;
-        if (action === 'my-reservations') {
-          window.openMyReservationsModal?.();
-          closeProfileMenu();
-          return;
-        }
+      event.preventDefault();
+      event.stopPropagation();
 
-        if (action === 'my-data') {
-          window.openUserDataModal?.();
-          closeProfileMenu();
-          return;
-        }
-
-        if (action === 'principal') {
-          window.location.href = `${origin}/index.html`;
-          closeProfileMenu();
-          return;
-        }
-
-        if (action === 'manage') {
-          window.location.href = `${origin}/html/Gerenciamento.html`;
-          closeProfileMenu();
-          return;
-        }
-
-        if (action === 'logout') {
-          localStorage.removeItem('userRole');
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('userName');
-          localStorage.removeItem('userPhoto');
-          localStorage.removeItem('authToken');
-          alert('Logout realizado. A página será recarregada.');
-          window.location.href = '../index.html';
-          return;
-        }
-
+      const action = item.getAttribute('data-profile-action');
+      const origin = window.location.origin;
+      if (action === 'my-reservations') {
+        window.openMyReservationsModal?.();
         closeProfileMenu();
-      });
+        return;
+      }
+
+      if (action === 'my-data') {
+        window.openUserDataModal?.();
+        closeProfileMenu();
+        return;
+      }
+
+      if (action === 'principal') {
+        window.location.href = `${origin}/index.html`;
+        closeProfileMenu();
+        return;
+      }
+
+      if (action === 'manage') {
+        window.location.href = `${origin}/html/Gerenciamento.html`;
+        closeProfileMenu();
+        return;
+      }
+
+      if (action === 'logout') {
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userPhoto');
+        localStorage.removeItem('authToken');
+        alert('Logout realizado. A página será recarregada.');
+        window.location.href = '../index.html';
+        return;
+      }
+
+      closeProfileMenu();
     });
   }
 

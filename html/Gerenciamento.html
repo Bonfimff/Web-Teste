@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=52">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=59">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -158,10 +158,11 @@
                             <th>Hora</th>
                             <th>Pessoas</th>
                             <th>Status</th>
+                            <th>Origem</th>
                         </tr>
                     </thead>
                     <tbody id="reservationsBody">
-                        <tr><td colspan="7" style="padding:0.75rem;">Carregando reservas...</td></tr>
+                        <tr><td colspan="8" style="padding:0.75rem;">Carregando reservas...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -622,8 +623,14 @@
             <div id="pageManagementToursSection" style="overflow-x:auto; margin-bottom: 1.25rem;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.5rem;">
                     <h3 style="margin:0; font-size:1rem;">Tours da Página</h3>
-                    <button type="button" id="tourAddButton" class="btn-book">+ Adicionar Tour</button>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button type="button" id="tourBulkDownloadButton" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Baixar JSON</button>
+                        <button type="button" id="tourBulkImportButton" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Importar JSON</button>
+                        <input type="file" id="tourBulkImportInput" accept="application/json,.json" hidden />
+                        <button type="button" id="tourAddButton" class="btn-book">+ Adicionar Tour</button>
+                    </div>
                 </div>
+                <div id="tourBulkImportStatus" class="tour-bulk-import-status" style="display:none;"></div>
                 <div style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:0.9rem;">
                     <div class="filtro-reservas-grid">
                         <label>Cidade
@@ -768,6 +775,10 @@
                           <option value="Confirmado">Confirmado</option>
                           <option value="Cancelado">Cancelado</option>                            <option value="Finalizado">Finalizado</option>                      </select>
                   </label>
+                  <label>
+                      Origem da reserva
+                      <input type="text" id="modalOrigem" placeholder="Ex: WhatsApp direto, Indicação, GetYourGuide..." />
+                  </label>
                   <div class="modal-actions">
                       <button type="button" id="modalDelete" class="btn-book btn-danger">Excluir</button>
                       <button type="button" id="modalCancel" class="btn-book">Cancelar</button>
@@ -810,37 +821,45 @@
       <div class="modal-content">
         <h3 id="tourModalTitle">Editar Tour</h3>
         <div class="modal-body">
+          <div id="tourModalJsonStatus" class="tour-bulk-import-status" style="display:none;"></div>
           <form id="tourEditForm">
-            <p><strong>ID:</strong> <span id="tourModalId">--</span></p>
-            <label>
-              Nome
-              <input type="text" id="tourModalName" required />
-            </label>
-            <label>
-              Cidade
-              <select id="tourModalCidade">
-                <option value="">Selecione</option>
-                <option value="Rio de Janeiro">Rio de Janeiro</option>
-                <option value="Lencois">Lençóis Maranhenses</option>
-                <option value="Sao Luis">São Luís do Maranhão</option>
-                <option value="Salvador">Salvador</option>
-              </select>
-            </label>
-            <label>
-              Pasta de Imagens
-              <input type="text" id="tourModalPastaImagens" placeholder="Ex: CentroHistorico" />
-            </label>
             <fieldset>
-              <legend>Idiomas</legend>
+              <legend>Dados básicos</legend>
+              <p class="tour-modal-id"><strong>ID:</strong> <span id="tourModalId">--</span></p>
+              <div class="tour-modal-json-toolbar">
+                <button type="button" id="tourModalDownloadJson" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Baixar JSON deste tour</button>
+                <button type="button" id="tourModalImportJson" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Importar JSON para este tour</button>
+                <input type="file" id="tourModalImportJsonInput" accept="application/json,.json" hidden />
+              </div>
+              <div class="modal-field-grid">
+                <label>
+                  Nome
+                  <input type="text" id="tourModalName" required />
+                </label>
+                <label>
+                  Cidade
+                  <select id="tourModalCidade">
+                    <option value="">Selecione</option>
+                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                    <option value="Lencois">Lençóis Maranhenses</option>
+                    <option value="Sao Luis">São Luís do Maranhão</option>
+                    <option value="Salvador">Salvador</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                Pasta de Imagens
+                <input type="text" id="tourModalPastaImagens" placeholder="Ex: CentroHistorico" />
+              </label>
+              <label class="modal-subgroup-label">Idiomas do tour</label>
               <div class="checkbox-row">
                 <label><input type="checkbox" id="tourModalLanguagePt" value="Português" /> Português</label>
                 <label><input type="checkbox" id="tourModalLanguageEn" value="Inglês" /> Inglês</label>
                 <label><input type="checkbox" id="tourModalLanguageEs" value="Espanhol" /> Espanhol</label>
               </div>
             </fieldset>
-            <fieldset class="tour-translate-fieldset">
-              <legend>Idioma destas informações</legend>
-              <p class="tour-translate-hint">Selecione o idioma e preencha os campos abaixo para ele. Cada idioma é salvo separadamente; o Português é o idioma padrão (obrigatório).</p>
+
+            <div class="tour-lang-card">
               <div class="tour-lang-tabs" id="tourModalLangTabs">
                 <button type="button" class="tour-lang-tab active" data-lang="pt">Português</button>
                 <button type="button" class="tour-lang-tab" data-lang="en">English</button>
@@ -849,87 +868,137 @@
                 <button type="button" class="tour-lang-tab" data-lang="it">Italiano</button>
                 <button type="button" class="tour-lang-tab" data-lang="zh">中文</button>
               </div>
+              <div class="tour-lang-card-body">
+                <fieldset class="tour-lang-section">
+                  <legend>Informações do tour</legend>
+                  <div class="modal-field-grid">
+                    <label>
+                      Período
+                      <input type="text" id="tourModalPeriodo" placeholder="Ex: Junho a Setembro (deixe em branco ou N/U para ocultar)" />
+                    </label>
+                    <label>
+                      Saída
+                      <input type="text" id="tourModalSaida" placeholder="Ex: São Luís ou Barreirinhas (deixe em branco ou N/U para ocultar)" />
+                    </label>
+                    <label>
+                      Grupo
+                      <input type="text" id="tourModalGrupo" placeholder="Ex: Mínimo 2 pessoas (deixe em branco ou N/U para ocultar)" />
+                    </label>
+                    <label class="tour-lang-only-pt">
+                      Duração
+                      <div class="tour-duracao-picker">
+                        <select id="tourModalDuracaoHoras" aria-label="Horas de duração">
+                          <option value="">Horas</option>
+                          <option value="0">0h</option>
+                          <option value="1">1h</option>
+                          <option value="2">2h</option>
+                          <option value="3">3h</option>
+                          <option value="4">4h</option>
+                          <option value="5">5h</option>
+                          <option value="6">6h</option>
+                          <option value="7">7h</option>
+                          <option value="8">8h</option>
+                          <option value="9">9h</option>
+                          <option value="10">10h</option>
+                          <option value="11">11h</option>
+                          <option value="12">12h</option>
+                        </select>
+                        <select id="tourModalDuracaoMinutos" aria-label="Minutos de duração">
+                          <option value="">Min</option>
+                          <option value="0">00</option>
+                          <option value="15">15</option>
+                          <option value="30">30</option>
+                          <option value="45">45</option>
+                        </select>
+                        <input type="text" id="tourModalDuracao" placeholder="Ex: 2h15 (ou selecione horas/min ao lado)" />
+                      </div>
+                    </label>
+                  </div>
+                  <label>
+                    Dias da semana
+                    <input type="text" id="tourModalDiasSemana" placeholder="Defina os horários por dia abaixo" readonly />
+                  </label>
+                </fieldset>
+
+                <fieldset class="tour-lang-section">
+                  <legend>Ponto de encontro</legend>
+                  <div class="modal-field-grid">
+                    <label>
+                      Encontro
+                      <input type="text" id="tourModalMeeting" placeholder="Deixe em branco ou N/U para ocultar" />
+                    </label>
+                    <label>
+                      Identificação do guia
+                      <input type="text" id="tourModalIdentification" placeholder="Deixe em branco ou N/U para ocultar" />
+                    </label>
+                    <label>
+                      Ponto de embarque
+                      <input type="text" id="tourModalPontoEmbarque" placeholder="Deixe em branco ou N/U para ocultar" />
+                    </label>
+                    <label>
+                      Ponto de desembarque
+                      <input type="text" id="tourModalPontoDesembarque" placeholder="Deixe em branco ou N/U para ocultar" />
+                    </label>
+                  </div>
+                  <label class="tour-lang-only-pt">
+                    Link do local de encontro
+                    <input type="url" id="tourModalLink" placeholder="https://..." />
+                  </label>
+                </fieldset>
+
+                <fieldset class="tour-lang-section">
+                  <legend>Descrição</legend>
+                  <label>
+                    Inclui
+                    <textarea id="tourModalInclui" placeholder="Deixe em branco ou N/U para ocultar. Use Enter para nova linha, ✓/✕/* com espaço no início da linha para lista, *texto* ou **texto** para negrito"></textarea>
+                  </label>
+                  <label>
+                    Roteiro
+                    <textarea id="tourModalRoteiro" placeholder="Deixe em branco ou N/U para ocultar. Use Enter para nova linha, ✓/✕/* com espaço no início da linha para lista, *texto* ou **texto** para negrito"></textarea>
+                  </label>
+                </fieldset>
+              </div>
+            </div>
+
+            <fieldset>
+              <legend>Comercial e reserva</legend>
+              <div class="modal-field-grid">
+                <label>
+                  Valor por pessoa
+                  <input type="number" id="tourModalValue" min="0" step="0.01" placeholder="0.00" />
+                </label>
+                <label>
+                  Status
+                  <select id="tourModalStatus">
+                    <option value="Ativo">Ativo</option>
+                    <option value="Pausado">Pausado (reserva indisponível, tour continua visível)</option>
+                    <option value="Oculto">Oculto (some da página pública)</option>
+                  </select>
+                </label>
+                <label>
+                  Modalidade
+                  <select id="tourModalModalidade">
+                    <option value="free">Aberto (Free)</option>
+                    <option value="privado">Privado</option>
+                    <option value="transfer">Transfer</option>
+                  </select>
+                </label>
+                <label>
+                  Reserva ("Reservar agora")
+                  <select id="tourModalCanalReserva">
+                    <option value="web">Site (abre o formulário de reserva)</option>
+                    <option value="whatsapp">WhatsApp (redireciona com mensagem pronta)</option>
+                  </select>
+                </label>
+              </div>
             </fieldset>
-            <label>
-              Período
-              <input type="text" id="tourModalPeriodo" placeholder="Ex: Junho a Setembro (deixe em branco ou N/U para ocultar)" />
-            </label>
-            <label>
-              Saída
-              <input type="text" id="tourModalSaida" placeholder="Ex: São Luís ou Barreirinhas (deixe em branco ou N/U para ocultar)" />
-            </label>
-            <label>
-              Grupo
-              <input type="text" id="tourModalGrupo" placeholder="Ex: Mínimo 2 pessoas (deixe em branco ou N/U para ocultar)" />
-            </label>
-            <label>
-              Duração
-              <input type="text" id="tourModalDuracao" placeholder="Ex: 2h15 (deixe em branco ou N/U para ocultar)" />
-            </label>
-            <label>
-              Dias da semana
-              <input type="text" id="tourModalDiasSemana" placeholder="Ex: Segunda a sexta (deixe em branco ou N/U para ocultar)" />
-            </label>
-            <label>
-              Encontro
-              <input type="text" id="tourModalMeeting" placeholder="Deixe em branco ou N/U para ocultar" />
-            </label>
-            <label>
-              Identificação
-              <input type="text" id="tourModalIdentification" placeholder="Deixe em branco ou N/U para ocultar" />
-            </label>
-            <label>
-              Ponto de embarque
-              <input type="text" id="tourModalPontoEmbarque" placeholder="Deixe em branco ou N/U para ocultar" />
-            </label>
-            <label>
-              Ponto de desembarque
-              <input type="text" id="tourModalPontoDesembarque" placeholder="Deixe em branco ou N/U para ocultar" />
-            </label>
-            <label>
-              Inclui
-              <textarea id="tourModalInclui" placeholder="Deixe em branco ou N/U para ocultar"></textarea>
-            </label>
-            <label>
-              Roteiro
-              <textarea id="tourModalRoteiro" placeholder="Deixe em branco ou N/U para ocultar"></textarea>
-            </label>
-            <label>
-              Link do local de encontro
-              <input type="url" id="tourModalLink" placeholder="https://..." />
-            </label>
-            <label>
-              Valor por pessoa
-              <input type="number" id="tourModalValue" min="0" step="0.01" placeholder="0.00" />
-            </label>
-            <label>
-              Status
-              <select id="tourModalStatus">
-                <option value="Ativo">Ativo</option>
-                <option value="Pausado">Pausado (reserva indisponível, tour continua visível)</option>
-                <option value="Oculto">Oculto (some da página pública)</option>
-              </select>
-            </label>
-            <label>
-              Modalidade
-              <select id="tourModalModalidade">
-                <option value="free">Aberto (Free)</option>
-                <option value="privado">Privado</option>
-                <option value="transfer">Transfer</option>
-              </select>
-            </label>
-            <label>
-              Reserva ("Reservar agora")
-              <select id="tourModalCanalReserva">
-                <option value="web">Site (abre o formulário de reserva)</option>
-                <option value="whatsapp">WhatsApp (redireciona com mensagem pronta)</option>
-              </select>
-            </label>
+
             <fieldset>
               <legend>Horários por dia da semana</legend>
               <p class="tour-horarios-hint">Adicione os horários em que o tour funciona em cada dia. Dias sem nenhum horário ficam indisponíveis para reserva naquele dia da semana; ao escolher a data, o cliente só vê os horários do dia correspondente.</p>
               <div id="tourModalHorariosPorDia" class="tour-horarios-dias"></div>
             </fieldset>
+
             <fieldset>
               <legend>Imagens</legend>
               <div id="tourModalGallery" class="tour-gallery"></div>
@@ -939,13 +1008,16 @@
               </div>
               <div id="tourModalImagePreview" class="tour-gallery tour-gallery-preview-pending"></div>
             </fieldset>
+
             <fieldset class="tour-avaliacoes-fieldset">
               <legend>Avaliações dos clientes</legend>
               <div id="tourModalComments" class="tour-comments-admin-list"></div>
             </fieldset>
+
             <div class="modal-actions">
               <button type="button" id="tourModalPause" class="btn-book" style="background:#f59e0b; color:#fff;">Pausar</button>
               <button type="button" id="tourModalDelete" class="btn-book btn-danger">Excluir</button>
+              <span class="modal-actions-spacer"></span>
               <button type="button" id="tourModalCancel" class="btn-book">Cancelar</button>
               <button type="button" id="tourModalSave" class="btn-book">Salvar</button>
             </div>
@@ -1181,9 +1253,9 @@
     </div>
 
     <script src="../js/Translation.js?v=2"></script>
-    <script src="../js/Riodejaneiro.js?v=53"></script>
+    <script src="../js/Riodejaneiro.js?v=61"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=82"></script>
+    <script src="../js/Gerenciamento.js?v=90"></script>
 </body>
 </html>
 

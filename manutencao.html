@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Site em manutenção</title>
+    <link rel="icon" type="image/png" href="imagem/assets/Logo.png?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Montserrat', sans-serif;
+            background:
+                radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,0.08), transparent 60%),
+                radial-gradient(900px 500px at 20% 80%, rgba(255,255,255,0.06), transparent 55%),
+                radial-gradient(800px 600px at 100% 100%, rgba(255,255,255,0.22), transparent 60%),
+                linear-gradient(120deg, rgba(2, 61, 49, 0.884) 0%, rgba(20, 139, 123, 0.774) 55%, rgba(12, 160, 150, 0.788) 100%);
+            color: #fff;
+        }
+        header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 1rem 1.25rem;
+        }
+        .lang-selector { position: relative; }
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .lang-list {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 6px);
+            list-style: none;
+            margin: 0;
+            padding: 0.35rem;
+            background: #fff;
+            color: #123049;
+            border-radius: 10px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+            min-width: 160px;
+            z-index: 10;
+        }
+        .lang-list.open { display: block; }
+        .lang-list li {
+            padding: 0.5rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .lang-list li:hover { background: #f1f5f9; }
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+        .maintenance-card {
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        .maintenance-icon { font-size: 2.2rem; margin-bottom: 1rem; opacity: 0.85; }
+        .maintenance-card h1 { margin: 0 0 0.75rem; font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 800; }
+        .maintenance-card p { margin: 0 0 1.25rem; font-size: 0.95rem; line-height: 1.6; opacity: 0.92; }
+        .maintenance-contact { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+        .maintenance-contact a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1.1rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #123049;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .maintenance-contact a:hover { background: #fff; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="lang-selector" id="langSelector">
+            <button class="lang-btn" type="button" id="langBtn">
+                <span id="langBtnLabel">Português</span>
+            </button>
+            <ul class="lang-list" id="langList">
+                <li data-lang="pt">Português</li>
+                <li data-lang="en">English</li>
+                <li data-lang="fr">Français</li>
+                <li data-lang="es">Español</li>
+                <li data-lang="it">Italiano</li>
+                <li data-lang="zh">中文(普通话)</li>
+            </ul>
+        </div>
+    </header>
+    <main>
+        <div class="maintenance-card">
+            <i class="fa fa-screwdriver-wrench maintenance-icon" aria-hidden="true"></i>
+            <h1 id="maintenanceTitle">Site em manutenção</h1>
+            <p id="maintenanceBody">Pedimos desculpas pelo transtorno. Estamos com o site temporariamente indisponível e voltaremos em breve. Qualquer dúvida, fale com a nossa equipe:</p>
+            <div class="maintenance-contact">
+                <a id="maintenanceContactEmail" href="mailto:contato@exksvol.com"><i class="fa fa-envelope"></i> contato@exksvol.com</a>
+                <a id="maintenanceContactWhatsapp" href="https://wa.me/5521970018590" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            </div>
+        </div>
+    </main>
+    <script>
+        (function () {
+            var API_BASE_URL = 'https://api-tour.exksvol.com';
+
+            var STRINGS = {
+                pt: { title: 'Site em manutenção', body: 'Pedimos desculpas pelo transtorno. Estamos com o site temporariamente indisponível e voltaremos em breve. Qualquer dúvida, fale com a nossa equipe:' },
+                en: { title: 'Site under maintenance', body: 'We apologize for the inconvenience. Our site is temporarily unavailable and will be back soon. For any questions, contact our team:' },
+                fr: { title: 'Site en maintenance', body: 'Nous nous excusons pour la gêne occasionnée. Notre site est temporairement indisponible et sera bientôt de retour. Pour toute question, contactez notre équipe :' },
+                es: { title: 'Sitio en mantenimiento', body: 'Pedimos disculpas por las molestias. Nuestro sitio está temporalmente no disponible y volverá pronto. Para cualquier duda, contacta a nuestro equipo:' },
+                it: { title: 'Sito in manutenzione', body: 'Ci scusiamo per il disagio. Il nostro sito è temporaneamente non disponibile e tornerà presto online. Per qualsiasi dubbio, contatta il nostro team:' },
+                zh: { title: '网站维护中', body: '给您带来的不便，我们深表歉意。网站暂时无法访问，我们会尽快恢复。如有任何疑问，请联系我们：' }
+            };
+            var LANG_LABELS = { pt: 'Português', en: 'English', fr: 'Français', es: 'Español', it: 'Italiano', zh: '中文(普通话)' };
+
+            var titleEl = document.getElementById('maintenanceTitle');
+            var bodyEl = document.getElementById('maintenanceBody');
+            var langBtnLabel = document.getElementById('langBtnLabel');
+
+            var applyLang = function (lang) {
+                var strings = STRINGS[lang] ? STRINGS[lang] : STRINGS.pt;
+                var finalLang = STRINGS[lang] ? lang : 'pt';
+                titleEl.textContent = strings.title;
+                bodyEl.textContent = strings.body;
+                langBtnLabel.textContent = LANG_LABELS[finalLang];
+                document.documentElement.lang = finalLang;
+                try { localStorage.setItem('preferredLanguage', finalLang); } catch (e) {}
+            };
+
+            var savedLang;
+            try { savedLang = localStorage.getItem('preferredLanguage'); } catch (e) {}
+            var browserLang = (navigator.language || 'pt').slice(0, 2);
+            applyLang(savedLang && STRINGS[savedLang] ? savedLang : (STRINGS[browserLang] ? browserLang : 'pt'));
+
+            var btn = document.getElementById('langBtn');
+            var list = document.getElementById('langList');
+            var wrapper = document.getElementById('langSelector');
+            btn.addEventListener('click', function () { wrapper.classList.toggle('open'); list.classList.toggle('open'); });
+            list.addEventListener('click', function (e) {
+                var item = e.target.closest('li');
+                if (!item) return;
+                applyLang(item.getAttribute('data-lang'));
+                list.classList.remove('open');
+            });
+            document.addEventListener('click', function (e) {
+                if (!wrapper.contains(e.target)) list.classList.remove('open');
+            });
+
+            // Contato configurado no admin (Contato por Cidade > Página Inicial),
+            // com fallback pros links fixos já no HTML se a busca falhar.
+            fetch(API_BASE_URL + '/get_cidade_contato')
+                .then(function (res) { return res.json(); })
+                .then(function (lista) {
+                    var contato = Array.isArray(lista) ? lista.filter(function (c) { return c.cidade === 'Inicio'; })[0] : null;
+                    if (!contato) return;
+                    var emailLink = document.getElementById('maintenanceContactEmail');
+                    var waLink = document.getElementById('maintenanceContactWhatsapp');
+                    if (emailLink && contato.email) {
+                        emailLink.href = 'mailto:' + contato.email;
+                        emailLink.lastChild.textContent = ' ' + contato.email;
+                    }
+                    if (waLink && contato.telefone) waLink.href = 'https://wa.me/' + contato.telefone;
+                })
+                .catch(function () {});
+        })();
+    </script>
+</body>
+</html>

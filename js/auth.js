@@ -648,6 +648,20 @@
         });
 
         document.body.appendChild(overlay);
+
+        // Chamado pelo link do e-mail de recuperação (?auth=reset&email=&code=):
+        // abre direto na tela de redefinir senha, com e-mail e código já
+        // preenchidos e verificados — só falta o usuário digitar a nova senha.
+        return {
+            openForReset: async (emailFromLink, codeFromLink) => {
+                overlay.classList.add('open');
+                document.body.classList.add('modal-open');
+                showResetView(emailFromLink);
+                fillResetCodeInputs(codeFromLink);
+                await maybeVerifyResetCode();
+                overlay.querySelector('#resetNewPassword')?.focus();
+            }
+        };
     };
 
     // ─── Modal de cadastro ───────────────────────────────────────────────
@@ -1167,12 +1181,37 @@
         }
 
         document.body.appendChild(overlay);
+
+        // Chamado pelo link do e-mail de confirmação (?auth=confirm&email=&code=):
+        // abre direto no passo do código, já preenchido e verificado. Nome/
+        // senha do passo 1 não vêm por aqui (nunca saem do navegador antes do
+        // cadastro terminar) — só ajudam quem já preencheu o passo 1 nessa
+        // mesma aba e só precisava buscar o código no e-mail.
+        return {
+            openForConfirm: async (emailFromLink, codeFromLink) => {
+                overlay.classList.add('open');
+                document.body.classList.add('modal-open');
+                pendingRegisterEmail = emailFromLink;
+                showStep(2);
+                fillCodeInputs(codeFromLink);
+                try {
+                    const verify = await verifyConfirmationCodeApi(pendingRegisterEmail, codeFromLink);
+                    isCodeVerified = !!(verify.ok && verify.payload.success);
+                    setCodeInputsState(isCodeVerified ? 'valid' : 'invalid');
+                } catch (_e) {
+                    isCodeVerified = false;
+                    setCodeInputsState('invalid');
+                }
+                updateSubmitButtonState();
+            }
+        };
     };
 
     // ─── Ligação dos gatilhos (botão LOGIN + "Cadastrar" dentro do modal) ──
 
     const initLoginModal = () => {
-        createLoginModal();
+        const loginModalApi = createLoginModal();
+        window.__loginModalApi = loginModalApi;
         document.querySelectorAll('[data-profile-action="login"]').forEach((trigger) => {
             trigger.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -1246,7 +1285,8 @@
     };
 
     const initRegisterModal = () => {
-        createRegisterModal();
+        const registerModalApi = createRegisterModal();
+        window.__registerModalApi = registerModalApi;
         document.querySelectorAll('[data-profile-action="register"]').forEach((trigger) => {
             trigger.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -1261,9 +1301,35 @@
         });
     };
 
+    // Lê ?auth=confirm|reset&email=&code= (vem do botão do e-mail de código)
+    // e já abre o modal certo com tudo preenchido. Os parâmetros somem da
+    // barra de endereço logo em seguida — o código não deve ficar visível
+    // no histórico do navegador depois de usado.
+    const handleAuthDeepLink = () => {
+        const params = new URLSearchParams(window.location.search);
+        const auth = params.get('auth');
+        const email = params.get('email');
+        const code = params.get('code');
+        if (!auth || !email || !code) return;
+
+        if (auth === 'reset') {
+            window.__loginModalApi?.openForReset(email, code);
+        } else if (auth === 'confirm') {
+            window.__registerModalApi?.openForConfirm(email, code);
+        }
+
+        params.delete('auth');
+        params.delete('email');
+        params.delete('code');
+        const rest = params.toString();
+        const cleanUrl = window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         initProfileMenu();
         initLoginModal();
         initRegisterModal();
+        handleAuthDeepLink();
     });
 })();

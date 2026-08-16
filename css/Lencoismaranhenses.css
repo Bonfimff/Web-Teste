@@ -1322,6 +1322,79 @@ body {
     color: #2c3e50;
 }
 
+/* Inclui/Roteiro: parágrafos, listas com ✓/✕/* e negrito digitados no
+   admin. Clamp aqui é só visual (max-height), diferente do corte por
+   caractere usado no texto puro acima, porque agora o conteúdo é HTML. */
+.rio-tour-detail-rich-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+.rio-tour-detail-richbody {
+    flex: 1 1 100%;
+    max-height: 4.6em;
+    overflow: hidden;
+    margin-top: 0.2rem;
+}
+
+.rio-tour-detail-rich-item.rio-detail-expanded .rio-tour-detail-richbody {
+    max-height: none;
+}
+
+.rio-tour-detail-paragraph {
+    margin: 0 0 0.4em;
+}
+
+.rio-tour-detail-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.rio-tour-detail-list {
+    list-style: none;
+    margin: 0 0 0.4em;
+    padding: 0;
+    border-bottom: none !important;
+}
+
+.rio-tour-detail-list:last-child {
+    margin-bottom: 0;
+}
+
+.rio-tour-detail-list li {
+    border-bottom: none !important;
+    padding: 0.1rem 0 0.1rem 1.35em;
+    position: relative;
+}
+
+.rio-tour-list-check::before,
+.rio-tour-list-cross::before,
+.rio-tour-list-dot::before {
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+}
+
+.rio-tour-list-check::before {
+    content: '✓';
+    color: #1da194;
+}
+
+.rio-tour-list-cross::before {
+    content: '✕';
+    color: #c0392b;
+}
+
+.rio-tour-list-dot::before {
+    content: '•';
+    color: #c9a96e;
+}
+
+.rio-tour-detail-toggle-rich {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
 /* ===================================================== */
 /* AÇÕES DO TOUR (mapa + reservar)                       */
 /* ===================================================== */
