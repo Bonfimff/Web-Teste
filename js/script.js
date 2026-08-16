@@ -294,10 +294,11 @@ console.log('Layout da imagem de referência carregado.');
 	};
 
 	const loadPaginaSecao = async () => {
+		// api.exksvol.com não existe (NXDOMAIN) — era só um request garantidamente
+		// falho a cada carregamento. O fallback real é o backend local.
 		const endpoints = [
 			"https://api-tour.exksvol.com/get_pagina_secao?pagina=Principal",
-			"http://127.0.0.1:5000/get_pagina_secao?pagina=Principal",
-			"https://api.exksvol.com/get_pagina_secao?pagina=Principal"
+			"http://127.0.0.1:5000/get_pagina_secao?pagina=Principal"
 		];
 		for (const endpoint of endpoints) {
 			try {

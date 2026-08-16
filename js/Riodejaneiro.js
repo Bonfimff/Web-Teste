@@ -16,6 +16,10 @@
     // deixando os itens do menu mobile ("Principal", "Minhas Reservas" etc.)
     // com comportamento quebrado/inconsistente.
     const isGerenciamentoPage = () => document.body.classList.contains('gerenciamento-page');
+    // Exposta em window: o arquivo tem uma segunda IIFE (a partir da linha
+    // ~1469, com initHamburgerMenu) que também precisa dessa checagem e não
+    // compartilha este escopo.
+    window.isGerenciamentoPage = isGerenciamentoPage;
 
     const ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT = window.ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT !== false;
     window.ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT = ALLOW_PUBLIC_NAV_ITEMS_WHEN_LOGGED_OUT;
@@ -1773,7 +1777,7 @@
     window.syncMobileProfileUserView = syncMobileProfileUserView;
 
     const initMobileMenuContent = () => {
-        if (isGerenciamentoPage()) return;
+        if (window.isGerenciamentoPage()) return;
         const container = getMobileMenuContainer();
         const nav = document.querySelector('nav');
         const langList = document.querySelector('#langList');
@@ -1860,7 +1864,7 @@
     };
 
     const initHamburgerMenu = () => {
-        if (isGerenciamentoPage()) return;
+        if (window.isGerenciamentoPage()) return;
         const burger = document.querySelector('.hamburger');
         const nav = document.querySelector('nav');
         if (!burger || !nav) return;

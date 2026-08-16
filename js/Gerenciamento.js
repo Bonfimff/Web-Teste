@@ -2530,15 +2530,15 @@ const renderTourManagementTable = (tours) => {
         <button type="button" class="tour-order-btn" data-order-dir="1" ${isLastOfCity ? 'disabled' : ''} aria-label="Mover para baixo">▼</button>
       </td>
       <td data-label="Posição">${sameCityIndex + 1}</td>
-      <td data-label="Tour">${tour.name || '-'}</td>
-      <td data-label="Cidade">${tour.cidade || '-'}</td>
-      <td data-label="Idiomas">${tour.languages || '-'}</td>
-      <td data-label="Encontro">${tour.meeting || '-'}</td>
-      <td data-label="Identificação">${tour.identification || '-'}</td>
+      <td data-label="Tour" class="tour-cell-truncate" title="${escapeHtml(tour.name || '-')}">${tour.name || '-'}</td>
+      <td data-label="Cidade" class="tour-cell-truncate" title="${escapeHtml(tour.cidade || '-')}">${tour.cidade || '-'}</td>
+      <td data-label="Idiomas" class="tour-cell-truncate" title="${escapeHtml(tour.languages || '-')}">${tour.languages || '-'}</td>
+      <td data-label="Encontro" class="tour-cell-truncate" title="${escapeHtml(tour.meeting || '-')}">${tour.meeting || '-'}</td>
+      <td data-label="Identificação" class="tour-cell-truncate" title="${escapeHtml(tour.identification || '-')}">${tour.identification || '-'}</td>
       <td data-label="Link">${linkHtml}</td>
       <td data-label="Valor">${formatTourValueBRL(tour.value)}</td>
-      <td data-label="Modalidade">${modalidadeLabel}</td>
-      <td data-label="Status">${tour.status || 'Ativo'}</td>
+      <td data-label="Modalidade" class="tour-cell-truncate" title="${escapeHtml(modalidadeLabel)}">${modalidadeLabel}</td>
+      <td data-label="Status" class="tour-cell-truncate" title="${escapeHtml(tour.status || 'Ativo')}">${tour.status || 'Ativo'}</td>
     `;
 
     row.querySelectorAll('.tour-order-btn').forEach(btn => {
@@ -3503,7 +3503,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   admin: {
     manageReservas: true,
     manageContas: true,
-    managePerfis: false,
+    managePerfis: true,
     manageSelfEdit: true,
     manageOtherEdit: true,
     manageConsultas: true,
@@ -4473,7 +4473,7 @@ const salvarNiveisDeAcesso = async () => {
 const resetarNiveisDeAcesso = async () => {
   const defaultPermissions = {
     cliente_user: { manageReservas: false, manageContas: false, managePerfis: false },
-    admin: { manageReservas: true, manageContas: true, managePerfis: false },
+    admin: { manageReservas: true, manageContas: true, managePerfis: true },
     super_admin: { manageReservas: true, manageContas: true, managePerfis: true }
   };
 

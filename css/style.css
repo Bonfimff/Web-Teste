@@ -1777,3 +1777,457 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
 .my-reservations-actions button.btn-cancel-reservation:hover {
     background: #c0392b;
 }
+
+/* ===================================================== */
+/* TELA DE INICIO — layout de referencia                 */
+/* ===================================================== */
+/* Tudo escopado em #inicio (o .main-container da home). As paginas de
+   cidade carregam este mesmo arquivo e nao podem ser afetadas. */
+
+/* Fundo verde da referencia. A home ja zera a foto de fundo
+   (body::before / .main-container::after) por um <style> inline no
+   index.html; aqui fica so o degrade. */
+#inicio {
+    background:
+        radial-gradient(120% 70% at 50% 0%, rgba(3, 40, 35, 0.92) 0%, rgba(3, 40, 35, 0) 62%),
+        radial-gradient(90% 60% at 85% 45%, rgba(31, 168, 138, 0.38) 0%, rgba(31, 168, 138, 0) 60%),
+        linear-gradient(165deg, #0a4a40 0%, #10695a 46%, #17836d 100%);
+    background-blend-mode: normal;
+}
+
+/* O degrade acima ja da o contraste; o veu com blur deixava tudo leitoso. */
+#inicio::before {
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+/* O ::after do container carregava a foto de fundo (a home ja a zera por um
+   <style> inline). A onda do rodape nao mora aqui: ela e o ::before da
+   faixa creme .social-icons, mais abaixo, para acompanhar a faixa. */
+#inicio::after {
+    content: none;
+}
+
+/* ---------- Cabecalho ---------- */
+#inicio > header {
+    background: rgba(4, 40, 34, 0.55);
+    border-bottom: 1px solid rgba(206, 168, 82, 0.18);
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+}
+
+/* Pilula de idioma: formato arredondado nos dois tamanhos. As cores mudam —
+   creme no desktop, escura no mobile (media query no fim do bloco), como nas
+   duas imagens de referencia. */
+#inicio .lang-btn {
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+}
+
+/* Seta do seletor: nao existe no HTML, entra como pseudo-elemento.
+   O inline-block cria um bloco proprio e nao herda o sublinhado do botao. */
+#inicio .lang-btn::after {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 4px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+}
+
+/* ---------- Titulo ---------- */
+/* nowrap: "Free Walking Tour" fica sempre numa linha so. O corpo e o
+   espacamento sao dados em vw para a linha inteira acompanhar a largura da
+   tela sem estourar — o titulo e curto em todos os idiomas ("Free Walking
+   Tour" em 5 deles, "徒步旅行团" em chines), entao nao ha risco de overflow. */
+#inicio .hero-title {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 800;
+    white-space: nowrap;
+    letter-spacing: clamp(1px, 0.5vw, 8px);
+    line-height: 1.12;
+    background: linear-gradient(180deg, #f4dfa0 0%, #cea852 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
+    animation: heroIntro 0.9s ease-out forwards;
+    margin-bottom: 0.6rem;
+}
+
+/* ---------- "Tour by Foot" com filetes dourados ---------- */
+/* No desktop o hero é alinhado à esquerda; a centralização entra só no
+   mobile (media query no fim deste bloco), junto com a do subtítulo. */
+#inicio .hero-brandline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 0 1.1rem;
+}
+
+#inicio .hero-brandline::before,
+#inicio .hero-brandline::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: rgba(206, 168, 82, 0.75);
+}
+
+#inicio .hero-brandline span {
+    flex: 0 0 auto;
+    font-size: clamp(0.72rem, 2.2vw, 0.95rem);
+    font-weight: 600;
+    letter-spacing: clamp(2px, 1vw, 5px);
+    text-transform: uppercase;
+    color: #f3ede0;
+    white-space: nowrap;
+}
+
+/* ---------- Subtitulo ---------- */
+#inicio .hero-text .subtitle {
+    border-left: none;
+    padding-left: 0;
+    max-width: 620px;
+    color: #f1f6f3;
+    opacity: 1;
+    line-height: 1.55;
+}
+
+/* ---------- "Escolha a cidade:" + filete dourado ---------- */
+#inicio .city-title {
+    align-self: center;
+    text-align: center;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* O filete dourado sob "Escolha a cidade:" so existe na referencia mobile;
+   no desktop o titulo aparece sozinho (ver media query no fim do bloco). */
+
+/* ---------- Cards de cidade ---------- */
+/* Na referencia a foto ocupa o card inteiro e o nome fica sobreposto no
+   rodape, sobre um degrade escuro — antes a foto era um retangulo menor
+   dentro de uma caixa dourada, com o nome abaixo dela. */
+#inicio .city-card {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3.6;
+    background: #0a4a40;
+    animation: none;
+    border: 2px solid #cea852;
+    border-radius: 18px;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
+}
+
+#inicio .city-thumb {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    aspect-ratio: auto;
+    margin: 0;
+    border-radius: 16px;
+}
+
+#inicio .city-name {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 1.9rem 0.7rem 0.65rem;
+    text-align: left;
+    color: #ffffff;
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+    border-radius: 0 0 16px 16px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.68) 62%, rgba(0, 0, 0, 0.82) 100%);
+}
+
+/* ---------- Rodape creme com as redes sociais ---------- */
+/* A faixa creme e a propria .social-icons (movida no index.html para fora do
+   .hero-text, que e limitado a 760px, para poder sangrar de ponta a ponta).
+   A onda dourada e o ::before dela, encostado no topo (bottom:100%). */
+#inicio .social-icons {
+    position: relative;
+    margin-top: clamp(70px, 11vw, 130px);
+    padding: 1.5rem 1rem 1.8rem;
+    background: #f7f2e7;
+    justify-content: center;
+    gap: 1.1rem;
+}
+
+#inicio .social-icons::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: clamp(70px, 11vw, 130px);
+    pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 130' preserveAspectRatio='none'%3E%3Cpath d='M0,70 C260,116 520,14 780,44 C1010,70 1240,112 1440,74 L1440,130 L0,130 Z' fill='%23f7f2e7'/%3E%3Cpath d='M0,56 C260,102 520,0 780,30 C1010,56 1240,98 1440,60' fill='none' stroke='%23cea852' stroke-width='4'/%3E%3C/svg%3E") bottom center / 100% 100% no-repeat;
+}
+
+/* Sobre o creme, os icones brancos sumiriam: viram verde sobre dourado claro. */
+#inicio .social-icons a {
+    color: #0d5548;
+    background: rgba(206, 168, 82, 0.16);
+    border: 1px solid rgba(206, 168, 82, 0.65);
+}
+
+#inicio .social-icons a:hover {
+    background: #0d5548;
+    border-color: #0d5548;
+    color: #f7f2e7;
+}
+
+/* Pin dourado antes do nome (Font Awesome ja carregado no index.html). */
+#inicio .city-name::before {
+    content: "\f3c5";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    flex: 0 0 auto;
+    color: #cea852;
+    font-size: 1.05em;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- Ajustes so no mobile ---------- */
+@media (max-width: 900px) {
+    /* A regra generica prende a home em 100dvh com rolagem interna para
+       caber tudo numa tela. Com os cards grandes da referencia isso
+       espremeria as fotos; aqui a pagina volta a rolar normalmente. */
+    #inicio {
+        height: auto;
+        min-height: 100dvh;
+        overflow-y: visible;
+    }
+
+    #inicio .hero-text {
+        height: auto;
+        overflow-y: visible;
+        gap: 0;
+    }
+
+    /* Hamburguer na esquerda, pilula de idioma centralizada e conta na
+       direita — o idioma fica no meio como na referencia. */
+    #inicio > header {
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    #inicio .lang-selector {
+        order: 1;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Pilula escura com o rotulo sublinhado, como na referencia mobile. */
+    #inicio .lang-btn {
+        background: rgba(3, 32, 27, 0.72);
+        border: 1px solid rgba(206, 168, 82, 0.45);
+        color: #ffffff;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        text-decoration-thickness: 1px;
+    }
+
+    #inicio .lang-btn:hover {
+        background: rgba(3, 32, 27, 0.9);
+        color: #ffffff;
+    }
+
+    /* Com nowrap o corpo precisa acompanhar a largura da tela: em vw a linha
+       inteira encolhe junto e nunca estoura. O valor foi ajustado medindo a
+       largura real do texto renderizado em 375px. */
+    #inicio .hero-title {
+        font-size: 7.4vw;
+        letter-spacing: clamp(1px, 0.5vw, 4px);
+    }
+
+    #inicio .hero-brandline {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #inicio .hero-text .subtitle {
+        font-size: clamp(0.95rem, 4vw, 1.1rem);
+        margin-bottom: 1.6rem;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    }
+
+    #inicio .city-title {
+        font-size: clamp(1.05rem, 4.6vw, 1.35rem);
+        margin: 0.4rem 0 1.1rem;
+    }
+
+    #inicio .city-title::after {
+        content: "";
+        display: block;
+        width: 74px;
+        height: 3px;
+        border-radius: 3px;
+        margin: 0.55rem auto 0;
+        background: #cea852;
+    }
+
+    #inicio .city-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+    }
+
+    #inicio .city-name {
+        font-size: clamp(0.8rem, 3.4vw, 0.95rem);
+        padding: 1.7rem 0.6rem 0.6rem;
+    }
+
+}
+
+/* ---------- Tela grande: imagem de referencia desktop ---------- */
+@media (min-width: 901px) {
+    /* Verde mais fundo e fechado que o do mobile, com vinheta nos cantos. */
+    #inicio {
+        background:
+            radial-gradient(75% 55% at 62% 42%, rgba(24, 122, 100, 0.5) 0%, rgba(24, 122, 100, 0) 70%),
+            radial-gradient(100% 90% at 50% 50%, rgba(0, 0, 0, 0) 45%, rgba(0, 20, 15, 0.45) 100%),
+            linear-gradient(150deg, #05372c 0%, #0a4638 55%, #06382d 100%);
+    }
+
+    /* Barra quase preta, como na referencia (no mobile ela e translucida). */
+    #inicio > header {
+        background: #042a22;
+        border-bottom: none;
+        padding-top: 0.85rem;
+        padding-bottom: 0.85rem;
+    }
+
+    /* Pilula creme com texto escuro (a versao escura e so do mobile). */
+    #inicio .lang-btn {
+        background: #f5f0e6;
+        border: 1px solid rgba(206, 168, 82, 0.55);
+        color: #3f3524;
+        text-decoration: none;
+    }
+
+    #inicio .lang-btn:hover {
+        background: #ffffff;
+        color: #3f3524;
+    }
+
+    #inicio nav a {
+        color: #f3ede0;
+    }
+
+    /* Busca: pilula creme mais larga e clara, com o botao verde na ponta. */
+    #inicio .search-bar {
+        background: #f5f0e6;
+        min-width: 270px;
+        height: 46px;
+    }
+
+    #inicio .search-bar button {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        background: #0d5548;
+    }
+
+    /* Conta: medalhao circular escuro com aro dourado, no lugar do icone solto. */
+    #inicio .profile-btn {
+        background: #063228;
+        border: 2px solid #cea852;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    #inicio .profile-btn i {
+        color: #cea852;
+        font-size: 1.35rem;
+    }
+
+    /* Titulo grande ocupando a coluna da esquerda. Continua em uma linha so
+       (pedido anterior) — na referencia ele quebra em duas, mas o corpo aqui
+       foi calculado para preencher a mesma largura sem quebrar. */
+    #inicio .hero-title {
+        font-size: clamp(2.6rem, 4.4vw, 3.5rem);
+        letter-spacing: clamp(2px, 0.42vw, 6px);
+    }
+
+    /* Filetes mais curtos que o titulo, como na referencia. */
+    #inicio .hero-brandline {
+        max-width: 440px;
+        margin-bottom: 1.6rem;
+    }
+
+    #inicio .hero-text .subtitle {
+        font-size: 1rem;
+        line-height: 1.65;
+        margin-bottom: 1.8rem;
+    }
+
+    #inicio .city-title {
+        margin-bottom: 1rem;
+    }
+
+    /* Aro dourado nas capsulas de video (eram brancas translucidas). */
+    #inicio .capsule {
+        border: 2px solid rgba(206, 168, 82, 0.75);
+        box-shadow: 0 25px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Menos respiro no fim do main: no desktop os icones assumem o papel que
+       esse espaco tinha, entao ele fica mais enxuto para abrir espaco para a
+       onda sem precisar de rolagem. */
+    #inicio main {
+        padding-bottom: 0.6rem;
+    }
+
+    /* No desktop os icones ficam numa faixa creme solida, logo abaixo dos
+       cards/capsulas — a fileira precisa estar sempre inteira dentro da
+       parte clara, nunca tocando a borda ondulada. Por isso a onda vira uma
+       tira decorativa SEPARADA acima da faixa (no ::before), em vez de ficar
+       atras dos proprios icones: sobre uma curva, a altura da parte creme
+       varia ponto a ponto e o icone podia acabar espetando pra fora dela. */
+    #inicio .social-icons {
+        position: relative;
+        background: #f7f2e7;
+        margin-top: 0.5rem;
+        padding: 0.85rem 1rem 1rem;
+        gap: 1.1rem;
+    }
+
+    #inicio .social-icons::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 100%;
+        height: 30px;
+        pointer-events: none;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 30' preserveAspectRatio='none'%3E%3Cpath d='M0,16 C260,27 520,3 780,10 C1010,16 1240,26 1440,17 L1440,30 L0,30 Z' fill='%23f7f2e7'/%3E%3Cpath d='M0,13 C260,24 520,0 780,7 C1010,13 1240,23 1440,14' fill='none' stroke='%23cea852' stroke-width='2'/%3E%3C/svg%3E") bottom center / 100% 100% no-repeat;
+    }
+
+    /* Sobre o creme, os icones escuros translucidos (herdados do mobile)
+       sumiriam: viram verde sobre dourado claro, como no rodape creme. */
+    #inicio .social-icons a {
+        color: #0d5548;
+        background: rgba(206, 168, 82, 0.16);
+        border: 1px solid rgba(206, 168, 82, 0.65);
+    }
+
+    #inicio .social-icons a:hover {
+        background: #0d5548;
+        border-color: #0d5548;
+        color: #f7f2e7;
+    }
+}

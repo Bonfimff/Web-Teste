@@ -1,4 +1,4 @@
-<!-- version 1.0 -->
+﻿<!-- version 1.0 -->
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=59">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=60">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -106,7 +106,7 @@
                     <label style="display:flex; flex-direction:column; font-size:0.85rem;">
                         Cidade
                         <select id="filterCity" style="padding:0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.15);">
-                            <option value="">Geral (todas as cidades)</option>
+                            <option value="">Todas as cidades</option>
                             <option value="Rio de Janeiro">Rio de Janeiro</option>
                             <option value="Lencois">Lençóis Maranhenses</option>
                             <option value="Sao Luis">São Luís do Maranhão</option>
@@ -621,17 +621,17 @@
             </div>
 
             <div id="pageManagementToursSection" style="overflow-x:auto; margin-bottom: 1.25rem;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.5rem;">
-                    <h3 style="margin:0; font-size:1rem;">Tours da Página</h3>
-                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        <button type="button" id="tourBulkDownloadButton" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Baixar JSON</button>
-                        <button type="button" id="tourBulkImportButton" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Importar JSON</button>
-                        <input type="file" id="tourBulkImportInput" accept="application/json,.json" hidden />
-                        <button type="button" id="tourAddButton" class="btn-book">+ Adicionar Tour</button>
-                    </div>
-                </div>
                 <div id="tourBulkImportStatus" class="tour-bulk-import-status" style="display:none;"></div>
                 <div style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:0.9rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.9rem;">
+                        <h3 style="margin:0; font-size:1rem;">Tours da Página</h3>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <button type="button" id="tourBulkDownloadButton" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Baixar JSON</button>
+                            <button type="button" id="tourBulkImportButton" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Importar JSON</button>
+                            <input type="file" id="tourBulkImportInput" accept="application/json,.json" hidden />
+                            <button type="button" id="tourAddButton" class="btn-book">+ Adicionar Tour</button>
+                        </div>
+                    </div>
                     <div class="filtro-reservas-grid">
                         <label>Cidade
                             <select id="filterTourManagementCidade">
@@ -777,7 +777,7 @@
                   </label>
                   <label>
                       Origem da reserva
-                      <input type="text" id="modalOrigem" placeholder="Ex: WhatsApp direto, Indicação, GetYourGuide..." />
+                      <input type="text" id="modalOrigem" placeholder="Ex:Site de Origem..." />
                   </label>
                   <div class="modal-actions">
                       <button type="button" id="modalDelete" class="btn-book btn-danger">Excluir</button>
@@ -1252,7 +1252,7 @@
         </div>
     </div>
 
-    <script src="../js/Translation.js?v=2"></script>
+    <script src="../js/Translation.js?v=3"></script>
     <script src="../js/Riodejaneiro.js?v=61"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
     <script src="../js/Gerenciamento.js?v=90"></script>

@@ -41,10 +41,34 @@
     // custom_painel.jpg etc.), então o navegador pode servir uma cópia antiga do
     // cache mesmo depois de um novo upload. Adicionar um parâmetro de cache-busting
     // aqui garante que a imagem mais recente do servidor sempre seja buscada.
+    //
+    // O valor do "cb" precisa ser ESTÁVEL por sessão de navegação, não um
+    // Date.now() novo a cada chamada: js/preload-paineis.js (carregado na
+    // página inicial) pré-carrega essa mesma imagem para evitar demora ao
+    // entrar na página da cidade, mas só existe ganho se as duas páginas
+    // pedirem exatamente a mesma URL — com timestamp sempre diferente a
+    // cada load, o preload buscava uma URL que a página da cidade nunca
+    // reutilizava, e o cache do navegador nunca batia. sessionStorage faz
+    // as duas páginas (mesma aba) concordarem no mesmo valor; ele muda de
+    // novo numa sessão/aba nova, então uploads novos do admin ainda
+    // aparecem em pouco tempo, sem precisar barrar o cache a cada load.
+    const CACHE_BUST_STORAGE_KEY = 'cidadeVisualCacheBust';
+    const getCacheBustValue = () => {
+        try {
+            let valor = sessionStorage.getItem(CACHE_BUST_STORAGE_KEY);
+            if (!valor) {
+                valor = String(Date.now());
+                sessionStorage.setItem(CACHE_BUST_STORAGE_KEY, valor);
+            }
+            return valor;
+        } catch (_e) {
+            return String(Date.now());
+        }
+    };
     const bustCache = (url) => {
         if (!url) return url;
         const separador = url.includes('?') ? '&' : '?';
-        return `${url}${separador}cb=${Date.now()}`;
+        return `${url}${separador}cb=${getCacheBustValue()}`;
     };
 
     const backgroundValue = (bloco) => {
