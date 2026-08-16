@@ -1511,11 +1511,12 @@ const renderFinanceiro = (dados) => {
         <td data-label="Descrição" class="finance-cell-desc">${escapeHtml(l.descricao)}</td>
         <td data-label="Origem">${l.origem === 'auto_tour' ? '<span class="finance-badge-auto">Auto</span>' : 'Manual'}</td>
         <td data-label="Cidade">${escapeHtml(formatFinanceCidade(l.cidade))}</td>
-        <td data-label="Valor" class="finance-cell-valor">${formatBRL(l.valor)}</td>
+        <td data-label="Valor Bruto" class="finance-cell-valor">${l.valor_bruto != null ? formatBRL(l.valor_bruto) : '—'}</td>
+        <td data-label="Valor Líquido" class="finance-cell-valor">${formatBRL(l.valor)}</td>
         <td data-label="Ações">${renderAcoes(l)}</td>
       </tr>
     `),
-    6,
+    7,
     'Nenhuma entrada neste mês.'
   );
 
@@ -1735,7 +1736,29 @@ const editarLancamentoFinanceiro = async (id) => {
   const novaDescricao = prompt('Descrição:', lancamento.descricao);
   if (novaDescricao === null) return;
 
-  const novoValorRaw = prompt('Valor (R$):', String(lancamento.valor).replace('.', ','));
+  // Bruto só existe pra entradas — retirada/despesa continuam com um valor só.
+  let novoValorBruto;
+  if (lancamento.tipo === 'entrada') {
+    const novoValorBrutoRaw = prompt(
+      'Valor Bruto (R$) — deixe em branco pra não informar:',
+      lancamento.valor_bruto != null ? String(lancamento.valor_bruto).replace('.', ',') : ''
+    );
+    if (novoValorBrutoRaw === null) return;
+    if (novoValorBrutoRaw.trim() !== '') {
+      novoValorBruto = Number(String(novoValorBrutoRaw).replace(',', '.'));
+      if (!novoValorBruto || novoValorBruto <= 0) {
+        alert('Valor bruto inválido.');
+        return;
+      }
+    } else {
+      novoValorBruto = '';
+    }
+  }
+
+  const novoValorRaw = prompt(
+    lancamento.tipo === 'entrada' ? 'Valor Líquido (R$):' : 'Valor (R$):',
+    String(lancamento.valor).replace('.', ',')
+  );
   if (novoValorRaw === null) return;
   const novoValor = Number(String(novoValorRaw).replace(',', '.'));
   if (!novoValor || novoValor <= 0) {
@@ -1753,10 +1776,12 @@ const editarLancamentoFinanceiro = async (id) => {
 
   const adminEmail = localStorage.getItem('userEmail') || '';
   try {
+    const payload = { admin_email: adminEmail, id, descricao: novaDescricao.trim(), valor: novoValor, cidade: novaCidade };
+    if (lancamento.tipo === 'entrada') payload.valor_bruto = novoValorBruto;
     const response = await fetchWithApiFallback('/update_financeiro_lancamento', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admin_email: adminEmail, id, descricao: novaDescricao.trim(), valor: novoValor, cidade: novaCidade })
+      body: JSON.stringify(payload)
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) {
@@ -1798,12 +1823,18 @@ const excluirLancamentoFinanceiro = async (id, parcelado) => {
 const adicionarLancamentoFinanceiro = async (tipo, campos) => {
   const descricao = document.getElementById(campos.desc)?.value?.trim();
   const valor = Number(document.getElementById(campos.valor)?.value);
+  const valorBrutoInput = campos.valorBruto ? document.getElementById(campos.valorBruto) : null;
+  const valorBrutoRaw = valorBrutoInput?.value?.trim() || '';
   const dataLancamento = document.getElementById(campos.data)?.value;
   const cidade = getFinanceCity();
   const parcelas = campos.parcelas ? Number(document.getElementById(campos.parcelas)?.value) || 1 : 1;
 
   if (!descricao || !valor || valor <= 0 || !dataLancamento) {
     alert('Preencha descrição, valor e data.');
+    return;
+  }
+  if (valorBrutoInput && valorBrutoRaw !== '' && (!Number(valorBrutoRaw) || Number(valorBrutoRaw) <= 0)) {
+    alert('Valor bruto inválido.');
     return;
   }
   if (!cidade) {
@@ -1821,6 +1852,7 @@ const adicionarLancamentoFinanceiro = async (tipo, campos) => {
         tipo,
         descricao,
         valor,
+        valor_bruto: valorBrutoRaw,
         data: dataLancamento,
         cidade,
         parcelas
@@ -1834,6 +1866,7 @@ const adicionarLancamentoFinanceiro = async (tipo, campos) => {
 
     document.getElementById(campos.desc).value = '';
     document.getElementById(campos.valor).value = '';
+    if (valorBrutoInput) valorBrutoInput.value = '';
     if (campos.parcelas) document.getElementById(campos.parcelas).value = '1';
     carregarFinanceiro();
   } catch (error) {
@@ -1880,25 +1913,30 @@ const downloadFinanceiroCsv = () => {
   const origemEntrada = (l) => (l.origem === 'auto_tour' ? 'Automática (tour)' : 'Manual');
   const origemDespesa = (l) => (l.origem === 'fixa' ? 'Despesa fixa' : (l.parcela_total ? `Parcela ${l.parcela_num}/${l.parcela_total}` : 'Única'));
 
-  const adicionarTabelaLancamentos = (titulo, tipo, colunaOrigem, origemFn) => {
+  const adicionarTabelaLancamentos = (titulo, tipo, colunaOrigem, origemFn, comValorBruto) => {
     const itens = lancamentos.filter((l) => l.tipo === tipo);
-    linhas.push('', csvRow([titulo]), csvRow(['Data', 'Descrição', colunaOrigem, 'Cidade', 'Valor']));
+    const cabecalho = comValorBruto
+      ? ['Data', 'Descrição', colunaOrigem, 'Cidade', 'Valor Bruto', 'Valor Líquido']
+      : ['Data', 'Descrição', colunaOrigem, 'Cidade', 'Valor'];
+    linhas.push('', csvRow([titulo]), csvRow(cabecalho));
     if (!itens.length) {
       linhas.push(csvRow(['(nenhum lançamento no período)']));
       return;
     }
     itens.forEach((l) => {
-      linhas.push(csvRow([
+      const linha = [
         formatDataBR(l.data),
         l.descricao,
         origemFn(l),
-        formatFinanceCidade(l.cidade),
-        formatBRL(l.valor)
-      ]));
+        formatFinanceCidade(l.cidade)
+      ];
+      if (comValorBruto) linha.push(l.valor_bruto != null ? formatBRL(l.valor_bruto) : '');
+      linha.push(formatBRL(l.valor));
+      linhas.push(csvRow(linha));
     });
   };
 
-  adicionarTabelaLancamentos('Entradas', 'entrada', 'Origem', origemEntrada);
+  adicionarTabelaLancamentos('Entradas', 'entrada', 'Origem', origemEntrada, true);
   adicionarTabelaLancamentos('Retiradas', 'retirada', 'Origem', () => 'Manual');
   adicionarTabelaLancamentos('Despesas', 'despesa', 'Origem/Parcela', origemDespesa);
 
@@ -1954,7 +1992,7 @@ const initFinanceControls = () => {
 
   document.getElementById('financeFormEntrada')?.addEventListener('submit', (event) => {
     event.preventDefault();
-    adicionarLancamentoFinanceiro('entrada', { desc: 'financeEntradaDesc', valor: 'financeEntradaValor', data: 'financeEntradaData' });
+    adicionarLancamentoFinanceiro('entrada', { desc: 'financeEntradaDesc', valor: 'financeEntradaValor', valorBruto: 'financeEntradaValorBruto', data: 'financeEntradaData' });
   });
   document.getElementById('financeFormRetirada')?.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -5515,6 +5553,34 @@ const initReservationManagement = () => {
   if (addReservationBtn) {
     addReservationBtn.addEventListener('click', () => {
       openAddModal();
+    });
+  }
+
+  const syncReservasBtn = document.getElementById('syncReservasBtn');
+  if (syncReservasBtn) {
+    syncReservasBtn.addEventListener('click', async () => {
+      const adminEmail = localStorage.getItem('userEmail') || '';
+      syncReservasBtn.disabled = true;
+      const textoOriginal = syncReservasBtn.textContent;
+      syncReservasBtn.textContent = 'Solicitando...';
+      try {
+        const response = await fetchWithApiFallback('/reserva_sync/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: adminEmail })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success) {
+          showReservationAlert('Verificação de novas reservas solicitada. Pode levar alguns instantes.', 'success');
+        } else {
+          showReservationAlert('Não foi possível solicitar a verificação: ' + (result.message || 'erro desconhecido'), 'error');
+        }
+      } catch (error) {
+        showReservationAlert('Não foi possível conectar ao servidor. ' + (error.message || ''), 'error');
+      } finally {
+        syncReservasBtn.disabled = false;
+        syncReservasBtn.textContent = textoOriginal;
+      }
     });
   }
 

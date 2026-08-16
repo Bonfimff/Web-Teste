@@ -1000,6 +1000,15 @@ body {
     max-height: none;
 }
 
+/* Parágrafo puro (sem lista): o corte agora é feito no próprio texto pelo
+   JS, igual ao texto simples — o max-height daqui atrapalharia a medição
+   (o scrollHeight já viria pré-cortado em 3 linhas mesmo com o texto real
+   menor) e é desativado por essa classe (ver wireTourDetailToggles). */
+.rio-tour-detail-richbody.rio-tour-detail-richbody-textcut {
+    max-height: none;
+    overflow: visible;
+}
+
 .rio-tour-detail-paragraph {
     margin: 0 0 0.4em;
 }

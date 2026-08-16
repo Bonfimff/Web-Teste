@@ -2538,6 +2538,118 @@
         it: { periodo: 'Periodo', idiomas: 'Lingue', duracao: 'Durata', diasSemana: 'Giorni della settimana', saida: 'Partenza', encontro: 'Incontro', pontoEmbarque: 'Punto di imbarco', pontoDesembarque: 'Punto di sbarco', grupo: 'Gruppo', identificacao: 'Identificazione', inclui: 'Include', roteiro: 'Itinerario', horarios: 'Orari disponibili', valor: 'Prezzo', estado: 'Stato' },
         zh: { periodo: '时期', idiomas: '语言', duracao: '时长', diasSemana: '星期几', saida: '出发地', encontro: '集合', pontoEmbarque: '上车点', pontoDesembarque: '下车点', grupo: '团体', identificacao: '识别', inclui: '包含', roteiro: '行程', horarios: '可预订时间', valor: '价格', estado: '状态' }
     };
+    // "Dias da semana" é um valor DERIVADO (quais dias têm horário
+    // cadastrado), não texto livre — em vez de depender do admin preencher a
+    // tradução manualmente em 6 idiomas (como duracao/inclui/roteiro), o
+    // texto é remontado aqui a partir de tour.horarios_por_dia, no idioma
+    // atual, sempre automático. Mesma lógica de agrupamento (dias seguidos
+    // viram intervalo "Segunda a Sexta") de formatDiasSemanaFromHorarios em
+    // Gerenciamento.js — só os rótulos/conectores mudam por idioma.
+    const DIAS_SEMANA_ORDEM = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+    const DIAS_SEMANA_I18N = {
+        pt: { dom: 'Domingo', seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta', sex: 'Sexta', sab: 'Sábado', all: 'Todos os dias', range: ' a ', within: ' e ', join: ', ', last: ' e ' },
+        en: { dom: 'Sunday', seg: 'Monday', ter: 'Tuesday', qua: 'Wednesday', qui: 'Thursday', sex: 'Friday', sab: 'Saturday', all: 'Every day', range: ' to ', within: ' and ', join: ', ', last: ' and ' },
+        fr: { dom: 'Dimanche', seg: 'Lundi', ter: 'Mardi', qua: 'Mercredi', qui: 'Jeudi', sex: 'Vendredi', sab: 'Samedi', all: 'Tous les jours', range: ' à ', within: ' et ', join: ', ', last: ' et ' },
+        es: { dom: 'Domingo', seg: 'Lunes', ter: 'Martes', qua: 'Miércoles', qui: 'Jueves', sex: 'Viernes', sab: 'Sábado', all: 'Todos los días', range: ' a ', within: ' y ', join: ', ', last: ' y ' },
+        it: { dom: 'Domenica', seg: 'Lunedì', ter: 'Martedì', qua: 'Mercoledì', qui: 'Giovedì', sex: 'Venerdì', sab: 'Sabato', all: 'Tutti i giorni', range: ' a ', within: ' e ', join: ', ', last: ' e ' },
+        zh: { dom: '周日', seg: '周一', ter: '周二', qua: '周三', qui: '周四', sex: '周五', sab: '周六', all: '每天', range: '至', within: '和', join: '、', last: '和' }
+    };
+    const formatDiasSemanaPorIdioma = (tour, lang) => {
+        const dic = DIAS_SEMANA_I18N[lang] || DIAS_SEMANA_I18N.pt;
+        let porDia = null;
+        try {
+            porDia = tour?.horarios_por_dia ? JSON.parse(tour.horarios_por_dia) : null;
+        } catch { porDia = null; }
+        // Sem horarios_por_dia (tour antigo, nunca migrado): não há como
+        // derivar por idioma — cai no texto salvo (em português) como último recurso.
+        if (!porDia || typeof porDia !== 'object') {
+            return tour?.dias_semana || tour?.diasSemana || '';
+        }
+        const ativos = DIAS_SEMANA_ORDEM.filter((key) => Array.isArray(porDia[key]) && porDia[key].length > 0);
+        if (!ativos.length) return '';
+        if (ativos.length === 7) return dic.all;
+
+        const grupos = [];
+        let atual = [ativos[0]];
+        for (let i = 1; i < ativos.length; i += 1) {
+            const idxAnterior = DIAS_SEMANA_ORDEM.indexOf(atual[atual.length - 1]);
+            const idxAtual = DIAS_SEMANA_ORDEM.indexOf(ativos[i]);
+            if (idxAtual === idxAnterior + 1) {
+                atual.push(ativos[i]);
+            } else {
+                grupos.push(atual);
+                atual = [ativos[i]];
+            }
+        }
+        grupos.push(atual);
+
+        const partes = grupos.map((grupo) => {
+            if (grupo.length >= 3) return `${dic[grupo[0]]}${dic.range}${dic[grupo[grupo.length - 1]]}`;
+            return grupo.map((key) => dic[key]).join(dic.within);
+        });
+
+        if (partes.length === 1) return partes[0];
+        return `${partes.slice(0, -1).join(dic.join)}${dic.last}${partes[partes.length - 1]}`;
+    };
+    // "Duração" é texto livre digitado pelo admin, mas na prática usa um
+    // vocabulário curto e previsível ("3 a 5 dias", "todos os dias", "2
+    // horas"...) — em vez de exigir que o admin digite a tradução manual
+    // pros 5 idiomas (aba de tradução do tour), troca-se automaticamente
+    // essas palavras/frases conhecidas pelo equivalente no idioma atual.
+    // Números e horários ("2h15", "8:00 - 14:00") não têm nenhuma palavra
+    // nessa lista, então atravessam sem alteração. Se o admin preencheu a
+    // tradução manual daquele idioma mesmo assim, ela sempre tem prioridade
+    // (ver uso abaixo, em buildTourDetailsHtml).
+    const escapeRegExpTerm = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const DURACAO_TERM_TRANSLATIONS = {
+        en: {
+            'todos os dias': 'every day', 'aproximadamente': 'approximately', 'cerca de': 'about',
+            'meio-dia': 'noon', 'meia-noite': 'midnight',
+            'minutos': 'minutes', 'minuto': 'minute', 'semanas': 'weeks', 'semana': 'week',
+            'manhã': 'morning', 'tarde': 'afternoon', 'noite': 'night', 'horas': 'hours', 'meses': 'months',
+            'anos': 'years', 'hora': 'hour', 'dias': 'days', 'ano': 'year', 'dia': 'day', 'mês': 'month', 'a': 'to'
+        },
+        fr: {
+            'todos os dias': 'tous les jours', 'aproximadamente': 'environ', 'cerca de': 'environ',
+            'meio-dia': 'midi', 'meia-noite': 'minuit',
+            'minutos': 'minutes', 'minuto': 'minute', 'semanas': 'semaines', 'semana': 'semaine',
+            'manhã': 'matin', 'tarde': 'après-midi', 'noite': 'soir', 'horas': 'heures', 'meses': 'mois',
+            'anos': 'ans', 'hora': 'heure', 'dias': 'jours', 'ano': 'an', 'dia': 'jour', 'mês': 'mois', 'a': 'à'
+        },
+        es: {
+            'todos os dias': 'todos los días', 'aproximadamente': 'aproximadamente', 'cerca de': 'alrededor de',
+            'meio-dia': 'mediodía', 'meia-noite': 'medianoche',
+            'minutos': 'minutos', 'minuto': 'minuto', 'semanas': 'semanas', 'semana': 'semana',
+            'manhã': 'mañana', 'tarde': 'tarde', 'noite': 'noche', 'horas': 'horas', 'meses': 'meses',
+            'anos': 'años', 'hora': 'hora', 'dias': 'días', 'ano': 'año', 'dia': 'día', 'mês': 'mes'
+        },
+        it: {
+            'todos os dias': 'tutti i giorni', 'aproximadamente': 'circa', 'cerca de': 'circa',
+            'meio-dia': 'mezzogiorno', 'meia-noite': 'mezzanotte',
+            'minutos': 'minuti', 'minuto': 'minuto', 'semanas': 'settimane', 'semana': 'settimana',
+            'manhã': 'mattina', 'tarde': 'pomeriggio', 'noite': 'sera', 'horas': 'ore', 'meses': 'mesi',
+            'anos': 'anni', 'hora': 'ora', 'dias': 'giorni', 'ano': 'anno', 'dia': 'giorno', 'mês': 'mese'
+        },
+        zh: {
+            'todos os dias': '每天', 'aproximadamente': '大约', 'cerca de': '大约',
+            'meio-dia': '中午', 'meia-noite': '午夜',
+            'minutos': '分钟', 'minuto': '分钟', 'semanas': '周', 'semana': '周',
+            'manhã': '上午', 'tarde': '下午', 'noite': '晚上', 'horas': '小时', 'meses': '月',
+            'anos': '年', 'hora': '小时', 'dias': '天', 'ano': '年', 'dia': '天', 'mês': '月', 'a': '至'
+        }
+    };
+    const translateDuracaoAuto = (raw, lang) => {
+        const dic = DURACAO_TERM_TRANSLATIONS[lang];
+        if (!dic || !raw) return raw || '';
+        let out = raw;
+        // Frases/palavras mais longas primeiro, senão "todos os dias" nunca
+        // seria alcançada (o termo "dias" sozinho já teria consumido a frase).
+        Object.keys(dic).sort((a, b) => b.length - a.length).forEach((termo) => {
+            const re = new RegExp(`(?<![a-zA-ZÀ-ÿ])${escapeRegExpTerm(termo)}(?![a-zA-ZÀ-ÿ])`, 'gi');
+            out = out.replace(re, dic[termo]);
+        });
+        return out;
+    };
     // Textos do botão "Ler mais/Ler menos" usado quando um campo do tour
     // (ex.: Inclui, Roteiro) é longo o bastante pra estourar o clamp de 3
     // linhas do card — ver .rio-tour-detail-line no CSS.
@@ -2637,10 +2749,15 @@
                 };
             });
 
-            // Inclui/Roteiro viram HTML (parágrafos/listas), então não dá
-            // pra cortar caractere a caractere como o texto puro acima —
-            // aqui o clamp é visual (max-height) e o botão só alterna a
-            // classe que libera a altura total.
+            // Inclui/Roteiro viram HTML (parágrafos/listas), então o corte
+            // caractere a caractere do texto puro acima não serve direto.
+            // Mas quando o campo é só parágrafo(s) — sem lista com marcador —
+            // dá pra fazer o mesmo corte "…" + botão colado no fim da 3ª
+            // linha andando pela árvore de nós de texto (em vez de fatiar a
+            // string HTML crua, que quebraria tags no meio). Listas com
+            // marcador (✓/✕/•) continuam no clamp visual (max-height): cortar
+            // um item de lista no meio da palavra ficaria pior que só
+            // esconder o item inteiro.
             container.querySelectorAll('.rio-tour-detail-rich-item').forEach((itemEl) => {
                 const bodyEl = itemEl.querySelector('.rio-tour-detail-richbody');
                 const toggle = itemEl.querySelector('.rio-tour-detail-toggle-rich');
@@ -2650,12 +2767,130 @@
                 toggle.classList.remove('rio-detail-visible');
                 toggle.textContent = toggle.dataset.more;
 
-                if (bodyEl.scrollHeight <= bodyEl.clientHeight + 1) {
-                    return; // conteúdo já cabe no clamp, sem botão
+                const hasList = !!bodyEl.querySelector('ul');
+                if (hasList) {
+                    bodyEl.classList.remove('rio-tour-detail-richbody-textcut');
+                    if (bodyEl.scrollHeight <= bodyEl.clientHeight + 1) {
+                        return; // conteúdo já cabe no clamp, sem botão
+                    }
+                    toggle.classList.add('rio-detail-visible');
+                    toggle.onclick = () => {
+                        const expanded = itemEl.classList.toggle('rio-detail-expanded');
+                        toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
+                    };
+                    return;
                 }
+
+                // Só parágrafo(s): mede sem o clamp de CSS (senão o
+                // scrollHeight já viria cortado em 3 linhas mesmo quando o
+                // texto real tem só 2, e a busca binária nunca acharia o
+                // ponto certo) — a classe abaixo desativa o max-height do
+                // CSS e deixa CLAMP_LINES aqui ser a única fonte de verdade.
+                bodyEl.classList.add('rio-tour-detail-richbody-textcut');
+                if (bodyEl.dataset.fullHtml === undefined) {
+                    bodyEl.dataset.fullHtml = bodyEl.innerHTML;
+                }
+                const fullHtml = bodyEl.dataset.fullHtml;
+                bodyEl.innerHTML = fullHtml;
+
+                const lineHeight = parseFloat(getComputedStyle(bodyEl).lineHeight) || 22.5;
+                const maxHeight = lineHeight * CLAMP_LINES + 1;
+                if (bodyEl.scrollHeight <= maxHeight) {
+                    return; // texto completo já cabe, sem truncar nem mostrar o botão
+                }
+
+                // Precisa ficar visível ANTES da busca binária (não só no
+                // final): o botão só ocupa espaço na linha quando não está
+                // "display:none", e a busca precisa medir a altura JÁ COM
+                // esse espaço contado — senão o texto cabe "sem o botão"
+                // durante toda a busca e o botão, ao aparecer só no fim,
+                // empurra a última linha pra uma 4ª linha por fora do clamp.
                 toggle.classList.add('rio-detail-visible');
+
+                const countVisibleChars = (root) => {
+                    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+                    let total = 0;
+                    let node;
+                    while ((node = walker.nextNode())) total += node.textContent.length;
+                    return total;
+                };
+                const totalChars = countVisibleChars(bodyEl);
+
+                // Reconstrói o HTML completo, corta o n-ésimo caractere
+                // visível (percorrendo os text nodes em ordem) e remove tudo
+                // que vem depois — devolve o elemento onde o corte aconteceu,
+                // pra "…" e o botão entrarem bem ali, mesmo dentro de <p>
+                // aninhado, igual o pedido de ficar "colado" no fim do texto.
+                const buildTruncated = (n) => {
+                    bodyEl.innerHTML = fullHtml;
+                    const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT);
+                    let remaining = n;
+                    let cutNode = null;
+                    const nodes = [];
+                    let node;
+                    while ((node = walker.nextNode())) nodes.push(node);
+                    for (let i = 0; i < nodes.length; i += 1) {
+                        const textNode = nodes[i];
+                        const len = textNode.textContent.length;
+                        if (remaining >= len) {
+                            remaining -= len;
+                            continue;
+                        }
+                        textNode.textContent = textNode.textContent.slice(0, remaining).trimEnd();
+                        cutNode = textNode;
+                        // Sobe da textNode até bodyEl removendo os irmãos-depois em CADA
+                        // nível (não só no primeiro) — ex.: quando o corte cai no 1º
+                        // parágrafo de vários (Inclui com "Não Inclui:" embaixo, um <p>
+                        // por linha), tem que remover TODOS os <p> seguintes, não só os
+                        // irmãos dentro do próprio <p> cortado (que normalmente não tem
+                        // nenhum, já que cada parágrafo é só um textNode). A remoção
+                        // precisa rodar mesmo quando "el" já virou bodyEl nesta mesma
+                        // volta — por isso é feita ANTES de checar se deve parar.
+                        let el = textNode.parentNode;
+                        let sibling = textNode.nextSibling;
+                        while (el) {
+                            while (sibling) {
+                                const next = sibling.nextSibling;
+                                sibling.remove();
+                                sibling = next;
+                            }
+                            if (el === bodyEl) break;
+                            sibling = el.nextSibling;
+                            el = el.parentNode;
+                        }
+                        break;
+                    }
+                    return cutNode ? cutNode.parentNode : bodyEl;
+                };
+                const applyTruncated = (n) => {
+                    const cutContainer = buildTruncated(n);
+                    cutContainer.appendChild(document.createTextNode('…'));
+                    cutContainer.appendChild(toggle);
+                    return cutContainer;
+                };
+
+                let lo = 0;
+                let hi = totalChars;
+                let best = 0;
+                while (lo <= hi) {
+                    const mid = (lo + hi) >> 1;
+                    applyTruncated(mid);
+                    if (bodyEl.scrollHeight <= maxHeight) {
+                        best = mid;
+                        lo = mid + 1;
+                    } else {
+                        hi = mid - 1;
+                    }
+                }
+                applyTruncated(best);
                 toggle.onclick = () => {
                     const expanded = itemEl.classList.toggle('rio-detail-expanded');
+                    if (expanded) {
+                        bodyEl.innerHTML = fullHtml;
+                        bodyEl.appendChild(toggle);
+                    } else {
+                        applyTruncated(best);
+                    }
                     toggle.textContent = expanded ? toggle.dataset.less : toggle.dataset.more;
                 };
             });
@@ -2800,8 +3035,13 @@
         const rawValues = {
             periodo: translatedTourField(tour, 'periodo', tour.periodo, lang),
             idiomas: translateLanguageNames(tour.idiomas || tour.languages || '', lang),
-            duracao: translatedTourField(tour, 'duracao', tour.duracao, lang),
-            diasSemana: tour.dias_semana || tour.diasSemana,
+            duracao: (() => {
+                if (lang === 'pt') return tour.duracao || '';
+                const manual = tour?.traducoes?.[lang]?.duracao;
+                if (manual) return manual;
+                return translateDuracaoAuto(tour.duracao || '', lang);
+            })(),
+            diasSemana: formatDiasSemanaPorIdioma(tour, lang),
             saida: translatedTourField(tour, 'saida', tour.saida, lang),
             encontro: translatedTourField(tour, 'encontro', tour.encontro || tour.meeting, lang),
             pontoEmbarque: translatedTourField(tour, 'pontoEmbarque', tour.pontoEmbarque || tour.ponto_embarque, lang),
@@ -2919,7 +3159,8 @@
         reserveLink.target = '_blank';
         reserveLink.rel = 'noopener';
         reserveLink.className = 'btn-book rio-btn-reserve';
-        reserveLink.textContent = actionLabels.reserve;
+        const reserveIsWhatsApp = (tour.canal_reserva || tour.canalReserva || 'web').toLowerCase() === 'whatsapp';
+        reserveLink.innerHTML = reserveIsWhatsApp ? `<i class="fab fa-whatsapp"></i> ${actionLabels.reserve}` : actionLabels.reserve;
 
         actionsDiv.appendChild(mapLink);
         actionsDiv.appendChild(reserveLink);

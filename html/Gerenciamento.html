@@ -138,6 +138,7 @@
                         </select>
                     </label>
                     <button id="addReservation" class="btn-book" style="height:fit-content; border-radius:999px;">Adicionar reserva</button>
+                    <button id="syncReservasBtn" class="btn-book" style="height:fit-content; border-radius:999px; background:#1f6feb;" title="Verifica agora se há reservas novas nas plataformas externas conectadas">Verificar novas reservas</button>
                 </div>
             </div>
 
@@ -316,17 +317,18 @@
                     <p class="finance-hint">Reservas finalizadas de tours pagos entram automaticamente (marcadas como <strong>Auto</strong>, com valor editável). Use o formulário para entradas manuais, como tours free.</p>
                     <form id="financeFormEntrada" class="finance-add-form">
                         <input type="text" id="financeEntradaDesc" placeholder="Descrição." required />
-                        <input type="number" id="financeEntradaValor" min="0.01" step="0.01" placeholder="Valor (R$)" required />
+                        <input type="number" id="financeEntradaValorBruto" min="0.01" step="0.01" placeholder="Valor Bruto (R$)" />
+                        <input type="number" id="financeEntradaValor" min="0.01" step="0.01" placeholder="Valor Líquido (R$)" required />
                         <input type="date" id="financeEntradaData" required />
                         <button type="submit" class="btn-book">Adicionar entrada</button>
                     </form>
                     <div style="overflow-x:auto;">
                         <table class="rio-tour-table finance-table">
                             <thead>
-                                <tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Cidade</th><th>Valor</th><th>Ações</th></tr>
+                                <tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Cidade</th><th>Valor Bruto</th><th>Valor Líquido</th><th>Ações</th></tr>
                             </thead>
                             <tbody id="financeEntradasBody">
-                                <tr><td colspan="6" style="padding:0.75rem;">Nenhuma entrada neste mês.</td></tr>
+                                <tr><td colspan="7" style="padding:0.75rem;">Nenhuma entrada neste mês.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1253,9 +1255,9 @@
     </div>
 
     <script src="../js/Translation.js?v=3"></script>
-    <script src="../js/Riodejaneiro.js?v=61"></script>
+    <script src="../js/Riodejaneiro.js?v=67"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=90"></script>
+    <script src="../js/Gerenciamento.js?v=92"></script>
 </body>
 </html>
 
