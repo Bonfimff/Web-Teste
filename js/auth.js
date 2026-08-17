@@ -1112,13 +1112,27 @@
             if (button) button.disabled = true;
             if (statusEl) statusEl.textContent = strings.register_liberation_requesting || 'Enviando solicitação...';
             try {
+                const nome = [
+                    overlay.querySelector('#registerFirstName')?.value.trim(),
+                    overlay.querySelector('#registerLastName')?.value.trim()
+                ].filter(Boolean).join(' ');
                 const response = await fetch(`${API_BASE_URL}/solicitar_liberacao_cadastro`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: pendingRegisterEmail })
+                    body: JSON.stringify({
+                        email: pendingRegisterEmail,
+                        nome,
+                        celular: overlay.querySelector('#registerPhone')?.value.trim() || '',
+                        pais: overlay.querySelector('#registerCountry')?.value.trim() || ''
+                    })
                 });
                 const result = await response.json().catch(() => ({}));
-                if (statusEl) statusEl.textContent = result.message || (response.ok ? 'Solicitação enviada.' : 'Erro ao solicitar.');
+                if (statusEl) {
+                    statusEl.textContent = response.ok && result?.success
+                        ? (strings.register_liberation_sent || 'Solicitação enviada! Nossa equipe vai analisar e em breve o acesso estará disponível.')
+                        : (result.message || 'Erro ao solicitar.');
+                    statusEl.style.color = response.ok && result?.success ? '#1a7f37' : '#dc3545';
+                }
                 if (result?.liberado) applyLiberadoState(true);
             } catch (error) {
                 if (statusEl) statusEl.textContent = strings.register_liberation_request_fail || 'Não foi possível enviar a solicitação. Tente novamente.';

@@ -468,7 +468,6 @@ const applyAccessControls = (perms) => {
     const map = {
       reservas: 'Reservas',
       contas: 'Contas',
-      cadastro: 'Cadastro',
       gerenciamento: 'Gerenciamento',
       financeiro: 'Financeiro'
     };
@@ -3554,7 +3553,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
     pages: ['Principal', 'Gerenciamento'],
-    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Cadastro', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
+    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   },
   super_admin: {
     manageReservas: true,
@@ -3571,7 +3570,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
     pages: ['Principal', 'Gerenciamento'],
-    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Cadastro', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
+    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   }
 };
 
@@ -4112,12 +4111,10 @@ const carregarAgendamentosDoBanco = async () => {
 const hideAllSections = () => {
   const reservations = document.querySelectorAll('.reservas-section');
   const accounts = document.getElementById('accountsSection');
-  const cadastro = document.getElementById('cadastroSection');
   const pageManagement = document.getElementById('pageManagementSection');
 
   reservations.forEach((el) => { if (el) el.style.display = 'none'; });
   if (accounts) accounts.style.display = 'none';
-  if (cadastro) cadastro.style.display = 'none';
   if (pageManagement) pageManagement.style.display = 'none';
 };
 
@@ -4153,14 +4150,6 @@ const mostrarSecao = (secao) => {
     accounts.style.display = secao === 'contas' ? 'block' : 'none';
   }
 
-  const cadastro = document.getElementById('cadastroSection');
-  if (cadastro) {
-    cadastro.style.display = secao === 'cadastro' ? 'block' : 'none';
-  }
-  if (secao === 'cadastro') {
-    carregarLiberacoesCadastro();
-  }
-
   // #pageManagementSection é o wrapper compartilhado por #financeSection
   // (aba Financeiro) e pelos cards de Contato/Aviso/Textos/Tours (aba
   // Gerenciamento) — precisa ficar visível nas duas abas; os cards
@@ -4191,7 +4180,7 @@ const mostrarSecao = (secao) => {
     });
   }
 
-  if (secao !== 'reservas' && secao !== 'contas' && secao !== 'cadastro' && secao !== 'gerenciamento' && secao !== 'financeiro') {
+  if (secao !== 'reservas' && secao !== 'contas' && secao !== 'gerenciamento' && secao !== 'financeiro') {
     console.warn('Secão desconhecida:', secao);
   }
 
@@ -4207,7 +4196,6 @@ const mostrarSecao = (secao) => {
   const titleMap = {
     reservas: 'Reservas',
     contas: 'Contas',
-    cadastro: 'Cadastro',
     perfis: 'Gerenciamento da página',
     gerenciamento: 'Gerenciamento da página',
     financeiro: 'Financeiro'
@@ -4227,7 +4215,6 @@ const mostrarSecao = (secao) => {
   const sectionToTab = {
     reservas: 'Reservas',
     contas: 'Contas',
-    cadastro: 'Cadastro',
     gerenciamento: 'Gerenciamento',
     financeiro: 'Financeiro'
   };
@@ -4242,8 +4229,6 @@ const mostrarSecao = (secao) => {
       mostrarSecao('reservas');
     } else if (fallbackTab === 'Contas') {
       mostrarSecao('contas');
-    } else if (fallbackTab === 'Cadastro') {
-      mostrarSecao('cadastro');
     } else if (fallbackTab === 'Gerenciamento') {
       mostrarSecao('gerenciamento');
     }
@@ -4953,7 +4938,7 @@ const renderLiberacoesTable = (liberacoes) => {
   tableBody.innerHTML = '';
 
   if (!Array.isArray(liberacoes) || !liberacoes.length) {
-    tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Nenhuma solicitação registrada.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Nenhuma solicitação registrada.</td></tr>';
     return;
   }
 
@@ -4963,6 +4948,9 @@ const renderLiberacoesTable = (liberacoes) => {
     const statusLabel = isPendente ? 'Pendente' : `Aprovado${liberacao.aprovadoPor ? ' por ' + escapeHtml(liberacao.aprovadoPor) : ''}`;
     row.innerHTML = `
       <td data-label="E-mail">${escapeHtml(liberacao.email)}</td>
+      <td data-label="Nome">${escapeHtml(liberacao.nome || '-')}</td>
+      <td data-label="Celular">${escapeHtml(liberacao.celular || '-')}</td>
+      <td data-label="País">${escapeHtml(liberacao.pais || '-')}</td>
       <td data-label="Solicitado em">${formatLiberacaoData(liberacao.solicitadoEm)}</td>
       <td data-label="Status">${statusLabel}</td>
       <td data-label="Ações"></td>
@@ -4998,18 +4986,18 @@ const carregarLiberacoesCadastro = async () => {
   if (!tableBody || !currentUserPermissions?.manageContas) return;
 
   const currentUserEmail = localStorage.getItem('userEmail') || '';
-  tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Carregando...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Carregando...</td></tr>';
 
   try {
     const response = await fetchWithApiFallback(`/get_liberacoes_cadastro?email=${encodeURIComponent(currentUserEmail)}`);
     if (!response.ok) {
-      tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Erro ao carregar solicitações.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Erro ao carregar solicitações.</td></tr>';
       return;
     }
     renderLiberacoesTable(await response.json());
   } catch (error) {
     console.error('Erro ao carregar liberações de cadastro:', error);
-    tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
   }
 };
 
@@ -5269,8 +5257,6 @@ const attachSectionLinks = () => {
 
       if (rawSection === 'contas' || rawSection === 'conta') {
         section = 'contas';
-      } else if (rawSection === 'cadastro') {
-        section = 'cadastro';
       } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
         section = 'gerenciamento';
       } else if (rawSection === 'financeiro') {
@@ -5281,7 +5267,6 @@ const attachSectionLinks = () => {
 
       const requiredTab = section === 'reservas' ? 'Reservas'
         : section === 'contas' ? 'Contas'
-        : section === 'cadastro' ? 'Cadastro'
         : section === 'gerenciamento' ? 'Gerenciamento'
         : section === 'financeiro' ? 'Financeiro'
         : null;
@@ -5296,8 +5281,7 @@ const attachSectionLinks = () => {
         carregarContasDoBanco();
         carregarNiveisDeAcesso();
         carregarPlataformasReserva();
-      } else if (section === 'cadastro') {
-        mostrarSecao('cadastro');
+        carregarLiberacoesCadastro();
       } else if (section === 'gerenciamento') {
         mostrarSecao('gerenciamento');
         carregarAgendamentosDoBanco();
@@ -6807,7 +6791,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let secaoInicial = 'reservas';
     try {
       const salva = localStorage.getItem('gerenciamentoUltimaSecao');
-      const tabPorSecao = { reservas: 'Reservas', contas: 'Contas', cadastro: 'Cadastro', gerenciamento: 'Gerenciamento', financeiro: 'Financeiro' };
+      const tabPorSecao = { reservas: 'Reservas', contas: 'Contas', gerenciamento: 'Gerenciamento', financeiro: 'Financeiro' };
       if (salva && tabPorSecao[salva] && (currentUserPermissions?.tabs || []).includes(tabPorSecao[salva])) {
         secaoInicial = salva;
       }
@@ -6820,6 +6804,7 @@ window.addEventListener('DOMContentLoaded', () => {
       carregarContasDoBanco();
       carregarNiveisDeAcesso();
       carregarPlataformasReserva();
+      carregarLiberacoesCadastro();
     } else if (secaoInicial === 'gerenciamento') {
       carregarAgendamentosDoBanco();
     } else {
@@ -7018,8 +7003,7 @@ window.addEventListener('DOMContentLoaded', () => {
           carregarContasDoBanco();
           carregarNiveisDeAcesso();
           carregarPlataformasReserva();
-        } else if (rawSection === 'cadastro') {
-          mostrarSecao('cadastro');
+          carregarLiberacoesCadastro();
         } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
           mostrarSecao('gerenciamento');
           carregarAgendamentosDoBanco();

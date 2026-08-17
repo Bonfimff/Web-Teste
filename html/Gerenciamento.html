@@ -25,7 +25,6 @@
                 <a href="#" class="nav-link" data-section="gerenciamento">Gerenciamento da página</a>
                 <a href="#" class="nav-link" data-section="financeiro">Financeiro</a>
                 <a href="#" class="nav-link" data-section="contas">Contas</a>
-                <a href="#" class="nav-link" data-section="cadastro">Cadastro</a>
             </nav>
         </div>
 
@@ -177,6 +176,29 @@
                     <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
                 </div>
             </div>
+            <div id="liberacoesCadastroManager" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
+                <strong style="color:#0b3c6d;">Solicitações de Liberação de Cadastro</strong>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0.4rem 0 0.75rem;">Clientes que não receberam o código de confirmação por e-mail e pediram liberação manual do cadastro. Ao aprovar, o e-mail pula a etapa de código na próxima tentativa de cadastro.</p>
+                <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
+                    <table class="rio-tour-table" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>E-mail</th>
+                                <th>Nome</th>
+                                <th>Celular</th>
+                                <th>País</th>
+                                <th>Solicitado em</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liberacoesCadastroBody">
+                            <tr><td colspan="7" style="padding:0.75rem;">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="accounts-tabbar">
                 <button type="button" id="accountsFilterColaboradores" data-filter="colaboradores" class="accounts-tab-btn">Colaboradores</button>
                 <button type="button" id="accountsFilterClientes" data-filter="clientes" class="accounts-tab-btn">Clientes</button>
@@ -255,7 +277,6 @@
                     <label><input type="checkbox" class="tab-perm" data-tab="Gerenciamento" /> Gerenciamento</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Financeiro" /> Financeiro</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Contas" /> Contas</label><br />
-                    <label><input type="checkbox" class="tab-perm" data-tab="Cadastro" /> Cadastro</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Minhas Reservas" /> Minhas Reservas</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Meus Dados" /> Meus Dados</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="SOBRE" /> Sobre</label><br />
@@ -293,28 +314,6 @@
                         </thead>
                         <tbody id="reservaSyncPlataformasBody">
                             <tr><td colspan="5" style="padding:0.75rem;">Carregando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section id="cadastroSection" style="display:none; margin-top: 2rem;">
-            <div id="liberacoesCadastroManager" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem;">
-                <strong style="color:#0b3c6d;">Solicitações de Liberação de Cadastro</strong>
-                <p style="font-size:0.85rem; color:#6b7280; margin:0.4rem 0 0.75rem;">Clientes que não receberam o código de confirmação por e-mail e pediram liberação manual do cadastro. Ao aprovar, o e-mail pula a etapa de código na próxima tentativa de cadastro.</p>
-                <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
-                    <table class="rio-tour-table" style="margin:0;">
-                        <thead>
-                            <tr>
-                                <th>E-mail</th>
-                                <th>Solicitado em</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="liberacoesCadastroBody">
-                            <tr><td colspan="4" style="padding:0.75rem;">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1352,7 +1351,7 @@
     <script src="../js/Translation.js?v=3"></script>
     <script src="../js/Riodejaneiro.js?v=67"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=96"></script>
+    <script src="../js/Gerenciamento.js?v=98"></script>
 </body>
 </html>
 
