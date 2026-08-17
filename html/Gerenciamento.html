@@ -25,6 +25,7 @@
                 <a href="#" class="nav-link" data-section="gerenciamento">Gerenciamento da página</a>
                 <a href="#" class="nav-link" data-section="financeiro">Financeiro</a>
                 <a href="#" class="nav-link" data-section="contas">Contas</a>
+                <a href="#" class="nav-link" data-section="cadastro">Cadastro</a>
             </nav>
         </div>
 
@@ -254,6 +255,7 @@
                     <label><input type="checkbox" class="tab-perm" data-tab="Gerenciamento" /> Gerenciamento</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Financeiro" /> Financeiro</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Contas" /> Contas</label><br />
+                    <label><input type="checkbox" class="tab-perm" data-tab="Cadastro" /> Cadastro</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Minhas Reservas" /> Minhas Reservas</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="Meus Dados" /> Meus Dados</label><br />
                     <label><input type="checkbox" class="tab-perm" data-tab="SOBRE" /> Sobre</label><br />
@@ -269,6 +271,52 @@
 
                 <div style="margin-top:0.75rem;">
                     <button id="saveRolesConfig" class="btn-book" type="button">Salvar níveis</button>
+                </div>
+            </div>
+
+            <div id="reservaSyncPlataformasManager" style="margin-top:1.5rem; background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                    <strong style="color:#0b3c6d;">Plataformas de Reserva</strong>
+                    <button type="button" id="addPlataformaBtn" class="btn-book" style="background:#18b015;color:#fff;">+ Nova Plataforma</button>
+                </div>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0.4rem 0 0.75rem;">Credenciais de login usadas pelo sincronizador de reservas para importar reservas de plataformas externas (GetYourGuide, Airbnb, etc). A senha nunca é exibida depois de salva. Clique em uma linha para editar.</p>
+                <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
+                    <table class="rio-tour-table" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>Identificador</th>
+                                <th>URL</th>
+                                <th>E-mail</th>
+                                <th>Senha</th>
+                                <th>Código de confirmação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservaSyncPlataformasBody">
+                            <tr><td colspan="5" style="padding:0.75rem;">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="cadastroSection" style="display:none; margin-top: 2rem;">
+            <div id="liberacoesCadastroManager" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem;">
+                <strong style="color:#0b3c6d;">Solicitações de Liberação de Cadastro</strong>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0.4rem 0 0.75rem;">Clientes que não receberam o código de confirmação por e-mail e pediram liberação manual do cadastro. Ao aprovar, o e-mail pula a etapa de código na próxima tentativa de cadastro.</p>
+                <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
+                    <table class="rio-tour-table" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>E-mail</th>
+                                <th>Solicitado em</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liberacoesCadastroBody">
+                            <tr><td colspan="4" style="padding:0.75rem;">Carregando...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -802,6 +850,53 @@
         </div>
     </div>
 
+    <div id="platformModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="platformModalTitle" style="z-index:5000;">
+      <div class="modal-content">
+        <h3 id="platformModalTitle">Nova Plataforma de Reserva</h3>
+        <div class="modal-body">
+          <form id="platformForm">
+            <label>
+              Identificador
+              <input type="text" id="platformNome" placeholder="ex: getyourguide" autocomplete="off" />
+              <span style="font-size:0.75rem; color:#6b7280;">Sem espaços — precisa ser igual ao "nome" do conector em reserva_sync.py.</span>
+            </label>
+            <label>
+              URL de login
+              <input type="url" id="platformUrl" placeholder="https://..." />
+            </label>
+            <label>
+              E-mail de login
+              <input type="email" id="platformEmail" />
+            </label>
+            <label>
+              Senha
+              <input type="password" id="platformSenha" placeholder="Deixe em branco para manter a senha atual" autocomplete="new-password" />
+            </label>
+            <label>
+              Código de confirmação
+              <input type="text" id="platformCodigoConfirmacao" placeholder="Se a plataforma exigir código de confirmação no login" />
+            </label>
+            <div class="modal-actions">
+              <button type="button" id="platformDelete" class="btn-book btn-danger">Excluir</button>
+              <button type="button" id="platformCancel" class="btn-book">Cancelar</button>
+              <button type="button" id="platformSave" class="btn-book">Salvar</button>
+            </div>
+            <div id="platformDeleteConfirmation" class="delete-confirmation hidden">
+                <p>Deslize para confirmar a exclusão:</p>
+                <div class="delete-slider">
+                    <input type="range" id="platformDeleteSlider" min="0" max="100" value="0" />
+                    <span id="platformDeleteSliderLabel">Arraste até o final</span>
+                </div>
+              <div class="modal-actions">
+                  <button type="button" id="platformDeleteCancel" class="btn-book">Cancelar</button>
+                  <button type="button" id="platformDeleteConfirm" class="btn-book btn-danger" disabled>Confirmar exclusão</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Confirmação por barra deslizante antes de colocar uma página em manutenção -->
     <div id="maintenanceConfirmOverlay" class="maintenance-confirm-overlay" style="z-index:3000;">
       <div class="login-modal" style="max-width:380px;">
@@ -1257,7 +1352,7 @@
     <script src="../js/Translation.js?v=3"></script>
     <script src="../js/Riodejaneiro.js?v=67"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=92"></script>
+    <script src="../js/Gerenciamento.js?v=95"></script>
 </body>
 </html>
 

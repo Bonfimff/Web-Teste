@@ -741,7 +741,8 @@
                         </div>
                     </div>
                     <div class="register-step register-step--2">
-                        <div class="login-modal__field">
+                        <p class="register-code-spam-hint" style="font-size:0.85rem; color:#374151; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:0.5rem 0.75rem; margin:0 0 0.75rem;">${strings.register_code_spam_hint || 'Enviamos um código de confirmação para o seu e-mail. Não encontrou a mensagem? Verifique também a caixa de Spam/Lixo Eletrônico.'}</p>
+                        <div class="login-modal__field register-code-field">
                             <label>${strings.register_code || 'Código de confirmação'}</label>
                             <div class="register-code-group">
                                 <input id="registerCode1" class="register-code-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" required />
@@ -756,6 +757,11 @@
                         <div class="login-modal__resend">
                             <button type="button" class="register-resend-button" disabled>${strings.register_resend_code || 'Reenviar código'}</button>
                         </div>
+                        <div class="register-liberacao-request" style="margin:0 0 0.75rem;">
+                            <button type="button" class="register-request-liberation-button" style="background:none; border:none; color:#1f6feb; text-decoration:underline; cursor:pointer; font-size:0.85rem; padding:0;">${strings.register_request_liberation || 'Não recebeu o e-mail? Solicitar liberação com o suporte'}</button>
+                            <span class="register-liberacao-status" style="display:block; font-size:0.8rem; margin-top:0.25rem; color:#374151;"></span>
+                        </div>
+                        <div class="register-liberado-hint" style="display:none; font-size:0.85rem; color:#1a7f37; background:#e6f4ea; border:1px solid #a6d8b5; border-radius:8px; padding:0.5rem 0.75rem; margin:0 0 0.75rem;">${strings.register_liberado_hint || 'E-mail liberado pelo suporte — não é necessário confirmar por código. Só falta criar sua senha.'}</div>
                         <div class="login-modal__field login-modal__field--password">
                             <label for="registerPassword">${strings.register_password || 'Senha'}</label>
                             <div class="login-modal__password-wrapper">
@@ -805,10 +811,34 @@
         const resendButton = () => overlay.querySelector('.register-resend-button');
         let pendingRegisterEmail = '';
         let isCodeVerified = false;
+        // true quando o suporte já liberou este e-mail manualmente (ver
+        // /solicitar_liberacao_cadastro) — nesse caso não existe código real
+        // pra digitar, o campo/reenvio ficam escondidos e isCodeVerified é
+        // forçado a true direto, sem chamar /verify_confirmation_code.
+        let isLiberadoFlow = false;
         const submitButton = overlay.querySelector('.login-modal__submit');
 
         const updateSubmitButtonState = () => {
             if (submitButton) submitButton.disabled = !isCodeVerified;
+        };
+
+        const applyLiberadoState = (liberado) => {
+            isLiberadoFlow = liberado;
+            const codeField = overlay.querySelector('.register-code-field');
+            const resendDiv = overlay.querySelector('.login-modal__resend');
+            const liberacaoDiv = overlay.querySelector('.register-liberacao-request');
+            const spamHint = overlay.querySelector('.register-code-spam-hint');
+            const liberadoHint = overlay.querySelector('.register-liberado-hint');
+            if (codeField) codeField.style.display = liberado ? 'none' : '';
+            if (resendDiv) resendDiv.style.display = liberado ? 'none' : '';
+            if (liberacaoDiv) liberacaoDiv.style.display = liberado ? 'none' : '';
+            if (spamHint) spamHint.style.display = liberado ? 'none' : '';
+            if (liberadoHint) liberadoHint.style.display = liberado ? 'block' : 'none';
+            if (liberado) {
+                isCodeVerified = true;
+                stopResendCountdown();
+            }
+            updateSubmitButtonState();
         };
 
         const setNextButtonLoading = (isLoading) => {
@@ -1062,11 +1092,38 @@
                 }
                 pendingRegisterEmail = emailValue;
                 showStep(2);
-                startResendCountdown(60);
+                if (payload?.liberado) {
+                    applyLiberadoState(true);
+                } else {
+                    applyLiberadoState(false);
+                    startResendCountdown(60);
+                }
             } catch (err) {
                 alert(strings.register_code_send_fail || 'Erro ao enviar o código de confirmação.');
             } finally {
                 setNextButtonLoading(false);
+            }
+        });
+
+        overlay.querySelector('.register-request-liberation-button')?.addEventListener('click', async () => {
+            if (!pendingRegisterEmail) return;
+            const statusEl = overlay.querySelector('.register-liberacao-status');
+            const button = overlay.querySelector('.register-request-liberation-button');
+            if (button) button.disabled = true;
+            if (statusEl) statusEl.textContent = strings.register_liberation_requesting || 'Enviando solicitação...';
+            try {
+                const response = await fetch(`${API_BASE_URL}/solicitar_liberacao_cadastro`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: pendingRegisterEmail })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (statusEl) statusEl.textContent = result.message || (response.ok ? 'Solicitação enviada.' : 'Erro ao solicitar.');
+                if (result?.liberado) applyLiberadoState(true);
+            } catch (error) {
+                if (statusEl) statusEl.textContent = strings.register_liberation_request_fail || 'Não foi possível enviar a solicitação. Tente novamente.';
+            } finally {
+                if (button) button.disabled = false;
             }
         });
 
@@ -1095,7 +1152,7 @@
             const password = overlay.querySelector('#registerPassword');
             const confirm = overlay.querySelector('#registerConfirm');
 
-            if (!/^[0-9]{6}$/.test(code)) {
+            if (!isLiberadoFlow && !/^[0-9]{6}$/.test(code)) {
                 alert(strings.register_invalid_code || 'Código inválido.');
                 return;
             }
@@ -1108,7 +1165,7 @@
                 return;
             }
 
-            if (!isCodeVerified) {
+            if (!isLiberadoFlow && !isCodeVerified) {
                 try {
                     const verify = await verifyConfirmationCodeApi(pendingRegisterEmail, code);
                     if (!verify.ok || !verify.payload?.success) {

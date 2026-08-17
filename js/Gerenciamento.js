@@ -3553,7 +3553,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
     pages: ['Principal', 'Gerenciamento'],
-    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
+    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Cadastro', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   },
   super_admin: {
     manageReservas: true,
@@ -3570,7 +3570,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
     pages: ['Principal', 'Gerenciamento'],
-    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
+    tabs: ['Principal', 'Reservas', 'Gerenciamento', 'Financeiro', 'Contas', 'Cadastro', 'Minhas Reservas', 'Meus Dados', 'SOBRE', 'CONTATO', 'AJUDA']
   }
 };
 
@@ -4111,10 +4111,12 @@ const carregarAgendamentosDoBanco = async () => {
 const hideAllSections = () => {
   const reservations = document.querySelectorAll('.reservas-section');
   const accounts = document.getElementById('accountsSection');
+  const cadastro = document.getElementById('cadastroSection');
   const pageManagement = document.getElementById('pageManagementSection');
 
   reservations.forEach((el) => { if (el) el.style.display = 'none'; });
   if (accounts) accounts.style.display = 'none';
+  if (cadastro) cadastro.style.display = 'none';
   if (pageManagement) pageManagement.style.display = 'none';
 };
 
@@ -4150,6 +4152,14 @@ const mostrarSecao = (secao) => {
     accounts.style.display = secao === 'contas' ? 'block' : 'none';
   }
 
+  const cadastro = document.getElementById('cadastroSection');
+  if (cadastro) {
+    cadastro.style.display = secao === 'cadastro' ? 'block' : 'none';
+  }
+  if (secao === 'cadastro') {
+    carregarLiberacoesCadastro();
+  }
+
   // #pageManagementSection é o wrapper compartilhado por #financeSection
   // (aba Financeiro) e pelos cards de Contato/Aviso/Textos/Tours (aba
   // Gerenciamento) — precisa ficar visível nas duas abas; os cards
@@ -4180,7 +4190,7 @@ const mostrarSecao = (secao) => {
     });
   }
 
-  if (secao !== 'reservas' && secao !== 'contas' && secao !== 'gerenciamento' && secao !== 'financeiro') {
+  if (secao !== 'reservas' && secao !== 'contas' && secao !== 'cadastro' && secao !== 'gerenciamento' && secao !== 'financeiro') {
     console.warn('Secão desconhecida:', secao);
   }
 
@@ -4196,6 +4206,7 @@ const mostrarSecao = (secao) => {
   const titleMap = {
     reservas: 'Reservas',
     contas: 'Contas',
+    cadastro: 'Cadastro',
     perfis: 'Gerenciamento da página',
     gerenciamento: 'Gerenciamento da página',
     financeiro: 'Financeiro'
@@ -4215,6 +4226,7 @@ const mostrarSecao = (secao) => {
   const sectionToTab = {
     reservas: 'Reservas',
     contas: 'Contas',
+    cadastro: 'Cadastro',
     gerenciamento: 'Gerenciamento',
     financeiro: 'Financeiro'
   };
@@ -4229,6 +4241,8 @@ const mostrarSecao = (secao) => {
       mostrarSecao('reservas');
     } else if (fallbackTab === 'Contas') {
       mostrarSecao('contas');
+    } else if (fallbackTab === 'Cadastro') {
+      mostrarSecao('cadastro');
     } else if (fallbackTab === 'Gerenciamento') {
       mostrarSecao('gerenciamento');
     }
@@ -4919,6 +4933,331 @@ const setupAccountModalEvents = () => {
   initTourModalJsonButtons();
 };
 
+// ─── Solicitações de Liberação de Cadastro (Gerenciamento > Contas) ──────────
+// Clientes que não recebem o código de confirmação por e-mail (spam, etc.)
+// podem pedir liberação manual (ver register-request-liberation-button em
+// auth.js/Riodejaneiro.js/site-shell.js). Aprovar aqui faz /solicitar_codigo
+// pular o envio de código pra aquele e-mail na próxima tentativa.
+const formatLiberacaoData = (isoString) => {
+  if (!isoString) return '-';
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('pt-BR');
+};
+
+const renderLiberacoesTable = (liberacoes) => {
+  const tableBody = document.getElementById('liberacoesCadastroBody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '';
+
+  if (!Array.isArray(liberacoes) || !liberacoes.length) {
+    tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Nenhuma solicitação registrada.</td></tr>';
+    return;
+  }
+
+  liberacoes.forEach((liberacao) => {
+    const row = document.createElement('tr');
+    const isPendente = liberacao.status === 'pendente';
+    const statusLabel = isPendente ? 'Pendente' : `Aprovado${liberacao.aprovadoPor ? ' por ' + escapeHtml(liberacao.aprovadoPor) : ''}`;
+    row.innerHTML = `
+      <td data-label="E-mail">${escapeHtml(liberacao.email)}</td>
+      <td data-label="Solicitado em">${formatLiberacaoData(liberacao.solicitadoEm)}</td>
+      <td data-label="Status">${statusLabel}</td>
+      <td data-label="Ações"></td>
+    `;
+
+    const acoesCell = row.lastElementChild;
+    if (isPendente) {
+      const approveBtn = document.createElement('button');
+      approveBtn.type = 'button';
+      approveBtn.className = 'btn-book';
+      approveBtn.style.cssText = 'background:#18b015;color:#fff;font-size:0.8rem;padding:0.35rem 0.7rem;margin-right:0.4rem;';
+      approveBtn.textContent = 'Aprovar';
+      approveBtn.addEventListener('click', () => aprovarLiberacaoCadastro(liberacao.id));
+      acoesCell.appendChild(approveBtn);
+
+      const rejectBtn = document.createElement('button');
+      rejectBtn.type = 'button';
+      rejectBtn.className = 'btn-book btn-danger';
+      rejectBtn.style.cssText = 'font-size:0.8rem;padding:0.35rem 0.7rem;';
+      rejectBtn.textContent = 'Recusar';
+      rejectBtn.addEventListener('click', () => recusarLiberacaoCadastro(liberacao.id));
+      acoesCell.appendChild(rejectBtn);
+    } else {
+      acoesCell.textContent = '-';
+    }
+
+    tableBody.appendChild(row);
+  });
+};
+
+const carregarLiberacoesCadastro = async () => {
+  const tableBody = document.getElementById('liberacoesCadastroBody');
+  if (!tableBody || !currentUserPermissions?.manageContas) return;
+
+  const currentUserEmail = localStorage.getItem('userEmail') || '';
+  tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Carregando...</td></tr>';
+
+  try {
+    const response = await fetchWithApiFallback(`/get_liberacoes_cadastro?email=${encodeURIComponent(currentUserEmail)}`);
+    if (!response.ok) {
+      tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Erro ao carregar solicitações.</td></tr>';
+      return;
+    }
+    renderLiberacoesTable(await response.json());
+  } catch (error) {
+    console.error('Erro ao carregar liberações de cadastro:', error);
+    tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+  }
+};
+
+const aprovarLiberacaoCadastro = async (id) => {
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/aprovar_liberacao_cadastro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, admin_email: adminEmail })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert('Erro ao aprovar: ' + (result.message || `status ${response.status}`));
+      return;
+    }
+    carregarLiberacoesCadastro();
+  } catch (error) {
+    alert('Não foi possível conectar ao servidor. ' + (error.message || ''));
+  }
+};
+
+const recusarLiberacaoCadastro = async (id) => {
+  if (!confirm('Recusar (remover) esta solicitação de liberação?')) return;
+  const adminEmail = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback('/recusar_liberacao_cadastro', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, admin_email: adminEmail })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert('Erro ao recusar: ' + (result.message || `status ${response.status}`));
+      return;
+    }
+    carregarLiberacoesCadastro();
+  } catch (error) {
+    alert('Não foi possível conectar ao servidor. ' + (error.message || ''));
+  }
+};
+
+// ─── Plataformas de Reserva (Gerenciamento > Contas) ─────────────────────────
+// Credenciais de login usadas pelo sincronizador de reservas
+// (Python/reserva_sync.py) para importar reservas de plataformas externas.
+// A senha nunca volta do backend em texto puro — get_reserva_sync_plataformas
+// só informa "senhaDefinida" (bool); o campo do modal fica sempre vazio, e
+// só é enviado ao backend quando o admin digita um valor novo.
+let currentPlataformasReserva = [];
+let editingPlataformaId = null;
+
+const renderPlataformasTable = (plataformas) => {
+  const tableBody = document.getElementById('reservaSyncPlataformasBody');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '';
+
+  if (!Array.isArray(plataformas) || !plataformas.length) {
+    tableBody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;">Nenhuma plataforma cadastrada.</td></tr>';
+    return;
+  }
+
+  plataformas.forEach((plataforma) => {
+    const row = document.createElement('tr');
+    row.style.cursor = 'pointer';
+    row.innerHTML = `
+      <td data-label="Identificador">${escapeHtml(plataforma.nome)}</td>
+      <td data-label="URL" class="tour-cell-truncate" title="${escapeHtml(plataforma.url || '-')}">${escapeHtml(plataforma.url || '-')}</td>
+      <td data-label="E-mail">${escapeHtml(plataforma.email || '-')}</td>
+      <td data-label="Senha">${plataforma.senhaDefinida ? '•••••• (definida)' : 'Não definida'}</td>
+      <td data-label="Código de confirmação">${escapeHtml(plataforma.codigoConfirmacao || '-')}</td>
+    `;
+    row.addEventListener('click', () => openPlatformModal(plataforma));
+    tableBody.appendChild(row);
+  });
+};
+
+const carregarPlataformasReserva = async () => {
+  const tableBody = document.getElementById('reservaSyncPlataformasBody');
+  if (!tableBody || !currentUserPermissions?.manageContas) return;
+
+  const currentUserEmail = localStorage.getItem('userEmail') || '';
+  tableBody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;">Carregando...</td></tr>';
+
+  try {
+    const response = await fetchWithApiFallback(`/get_reserva_sync_plataformas?email=${encodeURIComponent(currentUserEmail)}`);
+    if (!response.ok) {
+      tableBody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;">Erro ao carregar plataformas.</td></tr>';
+      return;
+    }
+    currentPlataformasReserva = await response.json();
+    renderPlataformasTable(currentPlataformasReserva);
+  } catch (error) {
+    console.error('Erro ao carregar plataformas de reserva:', error);
+    tableBody.innerHTML = '<tr><td colspan="5" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+  }
+};
+
+const openPlatformModal = (plataforma) => {
+  const modal = document.getElementById('platformModal');
+  const title = document.getElementById('platformModalTitle');
+  const nomeInput = document.getElementById('platformNome');
+  const urlInput = document.getElementById('platformUrl');
+  const emailInput = document.getElementById('platformEmail');
+  const senhaInput = document.getElementById('platformSenha');
+  const codigoInput = document.getElementById('platformCodigoConfirmacao');
+  const deleteBtn = document.getElementById('platformDelete');
+  const deleteConfirmation = document.getElementById('platformDeleteConfirmation');
+  if (!modal) return;
+
+  editingPlataformaId = plataforma?.id || null;
+  title.textContent = plataforma ? 'Editar Plataforma de Reserva' : 'Nova Plataforma de Reserva';
+  nomeInput.value = plataforma?.nome || '';
+  nomeInput.disabled = !!plataforma;
+  urlInput.value = plataforma?.url || '';
+  emailInput.value = plataforma?.email || '';
+  senhaInput.value = '';
+  senhaInput.placeholder = plataforma
+    ? 'Deixe em branco para manter a senha atual'
+    : 'Senha de login';
+  codigoInput.value = plataforma?.codigoConfirmacao || '';
+  deleteBtn.style.display = plataforma ? '' : 'none';
+  if (deleteConfirmation) {
+    deleteConfirmation.classList.add('hidden');
+    deleteConfirmation.style.display = 'none';
+  }
+
+  modal.classList.remove('hidden');
+};
+
+const closePlatformModal = () => {
+  const modal = document.getElementById('platformModal');
+  if (modal) modal.classList.add('hidden');
+  editingPlataformaId = null;
+};
+
+const savePlatformModal = async () => {
+  const nome = document.getElementById('platformNome').value.trim().toLowerCase();
+  const url = document.getElementById('platformUrl').value.trim();
+  const emailLogin = document.getElementById('platformEmail').value.trim();
+  const senha = document.getElementById('platformSenha').value;
+  const codigoConfirmacao = document.getElementById('platformCodigoConfirmacao').value.trim();
+  const adminEmail = localStorage.getItem('userEmail') || '';
+
+  if (!editingPlataformaId && !nome) {
+    alert('Informe um identificador para a plataforma.');
+    return;
+  }
+
+  const isEdit = !!editingPlataformaId;
+  const payload = isEdit
+    ? { id: editingPlataformaId, admin_email: adminEmail, url, emailLogin, codigoConfirmacao }
+    : { admin_email: adminEmail, nome, url, emailLogin, codigoConfirmacao };
+  if (senha) payload.senha = senha;
+
+  try {
+    const response = await fetchWithApiFallback(
+      isEdit ? '/update_reserva_sync_plataforma' : '/add_reserva_sync_plataforma',
+      {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert('Erro ao salvar plataforma: ' + (result.message || `status ${response.status}`));
+      return;
+    }
+    closePlatformModal();
+    carregarPlataformasReserva();
+  } catch (error) {
+    alert('Não foi possível conectar ao servidor. ' + (error.message || ''));
+  }
+};
+
+const deletePlatformModal = async () => {
+  if (!editingPlataformaId) return;
+  const adminEmail = localStorage.getItem('userEmail') || '';
+
+  try {
+    const response = await fetchWithApiFallback('/delete_reserva_sync_plataforma', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editingPlataformaId, admin_email: adminEmail })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      alert('Erro ao excluir plataforma: ' + (result.message || `status ${response.status}`));
+      return;
+    }
+    closePlatformModal();
+    carregarPlataformasReserva();
+  } catch (error) {
+    alert('Não foi possível conectar ao servidor. ' + (error.message || ''));
+  }
+};
+
+const setupPlatformModalEvents = () => {
+  const modal = document.getElementById('platformModal');
+  const addBtn = document.getElementById('addPlataformaBtn');
+  const saveBtn = document.getElementById('platformSave');
+  const cancelBtn = document.getElementById('platformCancel');
+  const deleteBtn = document.getElementById('platformDelete');
+  const deleteConfirmation = document.getElementById('platformDeleteConfirmation');
+  const deleteSlider = document.getElementById('platformDeleteSlider');
+  const deleteSliderLabel = document.getElementById('platformDeleteSliderLabel');
+  const deleteConfirmBtn = document.getElementById('platformDeleteConfirm');
+  const deleteCancelBtn = document.getElementById('platformDeleteCancel');
+  if (!modal) return;
+
+  const showDeleteConfirmation = () => {
+    if (!deleteConfirmation || !deleteConfirmBtn || !deleteSlider) return;
+    deleteConfirmation.classList.remove('hidden');
+    deleteConfirmation.style.display = 'block';
+    deleteSlider.value = '0';
+    deleteSliderLabel.textContent = 'Arraste até o final';
+    deleteConfirmBtn.disabled = true;
+  };
+  const hideDeleteConfirmation = () => {
+    if (!deleteConfirmation) return;
+    deleteConfirmation.classList.add('hidden');
+    deleteConfirmation.style.display = 'none';
+  };
+
+  if (addBtn) addBtn.addEventListener('click', () => openPlatformModal(null));
+  if (saveBtn) saveBtn.addEventListener('click', savePlatformModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closePlatformModal);
+  if (deleteBtn) deleteBtn.addEventListener('click', showDeleteConfirmation);
+  if (deleteSlider) {
+    deleteSlider.addEventListener('input', () => {
+      const value = Number(deleteSlider.value);
+      if (!deleteSliderLabel) return;
+      if (value >= 100) {
+        deleteSliderLabel.textContent = 'Solte para confirmar';
+        if (deleteConfirmBtn) deleteConfirmBtn.disabled = false;
+      } else {
+        deleteSliderLabel.textContent = 'Arraste até o final';
+        if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+      }
+    });
+  }
+  if (deleteConfirmBtn) deleteConfirmBtn.addEventListener('click', deletePlatformModal);
+  if (deleteCancelBtn) deleteCancelBtn.addEventListener('click', hideDeleteConfirmation);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closePlatformModal();
+  });
+};
+
 const attachSectionLinks = () => {
   const sectionLinks = document.querySelectorAll('.gerenciamento-nav .nav-link');
   sectionLinks.forEach((link) => {
@@ -4929,6 +5268,8 @@ const attachSectionLinks = () => {
 
       if (rawSection === 'contas' || rawSection === 'conta') {
         section = 'contas';
+      } else if (rawSection === 'cadastro') {
+        section = 'cadastro';
       } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
         section = 'gerenciamento';
       } else if (rawSection === 'financeiro') {
@@ -4939,6 +5280,7 @@ const attachSectionLinks = () => {
 
       const requiredTab = section === 'reservas' ? 'Reservas'
         : section === 'contas' ? 'Contas'
+        : section === 'cadastro' ? 'Cadastro'
         : section === 'gerenciamento' ? 'Gerenciamento'
         : section === 'financeiro' ? 'Financeiro'
         : null;
@@ -4952,6 +5294,9 @@ const attachSectionLinks = () => {
         mostrarSecao('contas');
         carregarContasDoBanco();
         carregarNiveisDeAcesso();
+        carregarPlataformasReserva();
+      } else if (section === 'cadastro') {
+        mostrarSecao('cadastro');
       } else if (section === 'gerenciamento') {
         mostrarSecao('gerenciamento');
         carregarAgendamentosDoBanco();
@@ -6453,6 +6798,7 @@ window.addEventListener('DOMContentLoaded', () => {
     attachSectionLinks();
     setupAccountModalEvents();
     setupRolesControls();
+    setupPlatformModalEvents();
     initFinanceControls();
 
     // Reabre na última aba visitada (persistida em mostrarSecao), caso ainda
@@ -6460,7 +6806,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let secaoInicial = 'reservas';
     try {
       const salva = localStorage.getItem('gerenciamentoUltimaSecao');
-      const tabPorSecao = { reservas: 'Reservas', contas: 'Contas', gerenciamento: 'Gerenciamento', financeiro: 'Financeiro' };
+      const tabPorSecao = { reservas: 'Reservas', contas: 'Contas', cadastro: 'Cadastro', gerenciamento: 'Gerenciamento', financeiro: 'Financeiro' };
       if (salva && tabPorSecao[salva] && (currentUserPermissions?.tabs || []).includes(tabPorSecao[salva])) {
         secaoInicial = salva;
       }
@@ -6472,6 +6818,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (secaoInicial === 'contas') {
       carregarContasDoBanco();
       carregarNiveisDeAcesso();
+      carregarPlataformasReserva();
     } else if (secaoInicial === 'gerenciamento') {
       carregarAgendamentosDoBanco();
     } else {
@@ -6668,6 +7015,10 @@ window.addEventListener('DOMContentLoaded', () => {
         if (rawSection === 'contas' || rawSection === 'conta') {
           mostrarSecao('contas');
           carregarContasDoBanco();
+          carregarNiveisDeAcesso();
+          carregarPlataformasReserva();
+        } else if (rawSection === 'cadastro') {
+          mostrarSecao('cadastro');
         } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
           mostrarSecao('gerenciamento');
           carregarAgendamentosDoBanco();
