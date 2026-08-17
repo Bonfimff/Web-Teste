@@ -3392,3 +3392,22 @@ header {
     grid-template-columns: 1fr;
   }
 }
+
+/* "Não tem conta? Cadastrar" — verde em todos os modais de entrada. O tom
+   #1a7f37 (e não o verde vivo dos botões) é proposital: o texto é pequeno
+   e precisa de contraste suficiente sobre o fundo claro do modal. */
+.login-modal__switch {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  color: #1a7f37;
+}
+
+.login-modal__switch button {
+  background: none;
+  border: none;
+  color: #1a7f37;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 700;
+}

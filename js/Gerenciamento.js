@@ -69,6 +69,77 @@ const escapeHtml = (value) => String(value ?? '')
 
 let lastImportantActivityTimestamp = localStorage.getItem('lastImportantActivityTimestamp') || null;
 
+// ─── Presença na página de Gerenciamento ─────────────────────────────────────
+// A página manda um "sinal de vida" (/registrar_presenca) de tempos em tempos
+// enquanto está aberta. Quem sinalizou há pouco aparece com bolinha verde;
+// os demais mostram há quanto tempo estiveram aqui pela última vez.
+const PRESENCA_HEARTBEAT_MS = 45000;
+// Folga proposital sobre o intervalo do heartbeat: sem ela, alguém online
+// pareceria offline no instante entre um sinal e o seguinte.
+const PRESENCA_ONLINE_LIMITE_SEGUNDOS = 120;
+
+const formatarTempoDesde = (segundos) => {
+  if (segundos == null) return '—';
+  if (segundos < 60) return 'agora';
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `${minutos}m`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `${horas}h`;
+  const dias = Math.floor(horas / 24);
+  return `${dias}d`;
+};
+
+const estaOnline = (account) => {
+  const segundos = account?.segundosDesdeUltimoVisto;
+  return segundos != null && segundos <= PRESENCA_ONLINE_LIMITE_SEGUNDOS;
+};
+
+// Discreto de propósito: só quem está online ganha um sinal visual (a
+// bolinha verde ao lado do nome). Para os demais não há marca nenhuma na
+// tabela — o "visto há 32m/21h/1d" fica no tooltip do nome, para não poluir
+// a listagem com informação que raramente é o que se está procurando.
+const montarBolinhaPresenca = (account) => (
+  estaOnline(account)
+    ? '<span title="Está na página de Gerenciamento agora" aria-label="Online" '
+      + 'style="display:inline-block; width:8px; height:8px; border-radius:50%; '
+      + 'background:#18b015; margin-left:0.4rem; vertical-align:middle;"></span>'
+    : ''
+);
+
+const tituloPresenca = (account) => {
+  if (estaOnline(account)) return 'Está na página de Gerenciamento agora';
+  const segundos = account?.segundosDesdeUltimoVisto;
+  if (segundos == null) return 'Nunca abriu a página de Gerenciamento';
+  return `Última visualização há ${formatarTempoDesde(segundos)}`;
+};
+
+const enviarPresenca = async () => {
+  const email = localStorage.getItem('userEmail') || '';
+  if (!email) return;
+  try {
+    await fetchWithApiFallback('/registrar_presenca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+  } catch (_error) {
+    // Presença é um detalhe visual: falhar aqui não pode incomodar o usuário.
+  }
+};
+
+let presencaTimer = null;
+const iniciarPresenca = () => {
+  enviarPresenca();
+  if (presencaTimer) clearInterval(presencaTimer);
+  presencaTimer = setInterval(() => {
+    // Aba em segundo plano não conta como "vendo a página".
+    if (!document.hidden) enviarPresenca();
+  }, PRESENCA_HEARTBEAT_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) enviarPresenca();
+  });
+};
+
 const renderAccountsTable = (accounts) => {
   const tableBody = document.getElementById('accountsBody');
   if (!tableBody) return;
@@ -89,7 +160,7 @@ const renderAccountsTable = (accounts) => {
     row.innerHTML = `
       <td data-label="ID">${escapeHtml(account.id)}</td>
       <td data-label="E-mail">${escapeHtml(account.email)}</td>
-      <td data-label="Nome">${escapeHtml(account.nome)}</td>
+      <td data-label="Nome" title="${escapeHtml(tituloPresenca(account))}">${escapeHtml(account.nome)}${montarBolinhaPresenca(account)}</td>
       <td data-label="Sobrenome">${escapeHtml(account.sobrenome)}</td>
       <td data-label="Celular">${escapeHtml(account.celular)}</td>
       <td data-label="Role">${escapeHtml(account.role)}</td>
@@ -4994,11 +5065,105 @@ const carregarLiberacoesCadastro = async () => {
       tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Erro ao carregar solicitações.</td></tr>';
       return;
     }
-    renderLiberacoesTable(await response.json());
+    const dados = await response.json();
+    liberacoesAssinatura = JSON.stringify(dados);
+    renderLiberacoesTable(dados);
   } catch (error) {
     console.error('Erro ao carregar liberações de cadastro:', error);
     tableBody.innerHTML = '<tr><td colspan="7" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
   }
+};
+
+// ─── Atualização automática das tabelas (sem F5) ─────────────────────────────
+// Um único timer verifica periodicamente se chegou reserva nova ou solicitação
+// de liberação nova. Só re-renderiza quando os dados mudaram de fato: assim a
+// tela não "pisca" nem perde a posição de leitura a cada ciclo. Também não
+// atualiza com modal aberto (o admin pode estar editando) nem com a aba do
+// navegador em segundo plano.
+const AUTO_REFRESH_INTERVALO_MS = 20000;
+let autoRefreshTimer = null;
+let reservasAssinatura = null;
+let liberacoesAssinatura = null;
+let contasAssinatura = null;
+
+const secaoEstaVisivel = (id) => {
+  const el = document.getElementById(id);
+  return !!el && el.style.display !== 'none' && el.offsetParent !== null;
+};
+
+const algumModalAberto = () => Array.from(document.querySelectorAll('.modal'))
+  .some((modal) => !modal.classList.contains('hidden'));
+
+const verificarAtualizacoesAutomaticas = async () => {
+  if (document.hidden || algumModalAberto()) return;
+
+  const email = localStorage.getItem('userEmail') || '';
+  if (!email) return;
+
+  if (secaoEstaVisivel('reservationsTableSection') && currentUserPermissions?.manageReservas) {
+    try {
+      const response = await fetchWithApiFallback(`/get_agendamentos?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const assinatura = JSON.stringify(await response.json());
+        // Primeira passagem só registra o estado atual — sem ela, a tabela
+        // seria recarregada uma vez à toa logo depois de abrir a página.
+        if (reservasAssinatura !== null && assinatura !== reservasAssinatura) {
+          carregarAgendamentosDoBanco();
+        }
+        reservasAssinatura = assinatura;
+      }
+    } catch (_error) {
+      // Rede instável: ignora e tenta de novo no próximo ciclo.
+    }
+  }
+
+  if (secaoEstaVisivel('accountsSection') && currentUserPermissions?.manageContas) {
+    try {
+      const response = await fetchWithApiFallback(`/get_acessos?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const dados = await response.json();
+        // A assinatura usa o que é EXIBIDO (bolinha ou "32m"), não os
+        // segundos crus — senão mudaria a cada ciclo e a tabela seria
+        // redesenhada o tempo todo à toa.
+        const assinatura = JSON.stringify(
+          (Array.isArray(dados) ? dados : []).map((a) => [a.id, a.role, a.nome, montarBolinhaPresenca(a)])
+        );
+        if (contasAssinatura !== null && assinatura !== contasAssinatura) {
+          currentAccounts = dados;
+          applyAccountsSearchFilter();
+        }
+        contasAssinatura = assinatura;
+      }
+    } catch (_error) {
+      // idem
+    }
+  }
+
+  if (secaoEstaVisivel('liberacoesCadastroManager') && currentUserPermissions?.manageContas) {
+    try {
+      const response = await fetchWithApiFallback(`/get_liberacoes_cadastro?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const dados = await response.json();
+        const assinatura = JSON.stringify(dados);
+        if (liberacoesAssinatura !== null && assinatura !== liberacoesAssinatura) {
+          renderLiberacoesTable(dados);
+        }
+        liberacoesAssinatura = assinatura;
+      }
+    } catch (_error) {
+      // idem
+    }
+  }
+};
+
+const iniciarAtualizacaoAutomatica = () => {
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(verificarAtualizacoesAutomaticas, AUTO_REFRESH_INTERVALO_MS);
+  // Voltar para a aba do navegador dispara uma checagem na hora, em vez de
+  // esperar o próximo ciclo.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) verificarAtualizacoesAutomaticas();
+  });
 };
 
 const aprovarLiberacaoCadastro = async (id) => {
@@ -6816,6 +6981,9 @@ window.addEventListener('DOMContentLoaded', () => {
       clearInterval(importantInfoRefreshTimer);
     }
     importantInfoRefreshTimer = setInterval(loadImportantInfoFeed, 15000);
+
+    iniciarAtualizacaoAutomatica();
+    iniciarPresenca();
   }
 
   const calculatorButton = document.getElementById('financeFloatingCalc');

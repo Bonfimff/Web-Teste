@@ -2202,6 +2202,7 @@
                         <button type="submit" class="login-modal__submit" data-i18n="login_button">${strings.login_button}</button>
                         <button type="button" class="login-modal__forgot" data-i18n="login_forgot">${strings.login_forgot}</button>
                     </div>
+                    <p class="login-modal__switch"><span data-i18n="register_prompt">${strings.register_prompt || 'Não tem conta?'}</span> <button type="button" data-profile-action="register" data-i18n="register_title">${strings.register_title || 'Cadastrar'}</button></p>
                 </form>
                 <form id="passwordResetForm" class="login-modal__form" style="display:none;">
                     <div class="login-modal__field">
@@ -3138,7 +3139,7 @@
         const resendBtn = overlay.querySelector('.register-resend-button');
         resendBtn?.addEventListener('click', () => {
             if (!pendingRegisterEmail) {
-                alert('E-mail não encontrado. Refaça o passo anterior.');
+                alert(strings.register_email_missing || 'E-mail não encontrado. Refaça o passo anterior.');
                 return;
             }
 
@@ -3153,7 +3154,7 @@
                 })
                 .catch((err) => {
                     console.error('Erro ao reenviar código de confirmação:', err);
-                    alert('Erro ao reenviar código. Tente novamente.');
+                    alert(strings.register_resend_error || 'Erro ao reenviar código. Tente novamente.');
                 });
         });
 
@@ -3179,7 +3180,7 @@
             }
 
             if (!pendingRegisterEmail) {
-                alert('Email não confirmado. Volte ao primeiro passo.');
+                alert(strings.register_email_unconfirmed || 'Email não confirmado. Volte ao primeiro passo.');
                 return;
             }
 
@@ -3195,7 +3196,7 @@
                     updateSubmitButtonState();
                 } catch (err) {
                     console.error('Erro na verificação de código:', err);
-                    alert('Erro ao verificar o código. Tente novamente.');
+                    alert(strings.register_code_verify_error || 'Erro ao verificar o código. Tente novamente.');
                     return;
                 }
             }
@@ -3234,7 +3235,7 @@
                 closeModal();
             } catch (err) {
                 console.error('Erro no cadastro:', err);
-                alert('Erro ao concluir cadastro. Tente novamente.');
+                alert(strings.register_complete_error || 'Erro ao concluir cadastro. Tente novamente.');
             }
         });
 
@@ -3381,7 +3382,7 @@
 
                 if (!email || !password) {
                 
-                    alert('Por favor, preencha email e senha.');
+                    alert(strings.login_fill_all || 'Por favor, preencha email e senha.');
                     return;
                 }
 

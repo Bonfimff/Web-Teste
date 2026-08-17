@@ -1599,16 +1599,20 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
     animation: login-button-spinner 0.8s linear infinite;
 }
 
+/* "Não tem conta? Cadastrar" — verde em todos os modais de entrada. O tom
+   #1a7f37 (e não o verde vivo dos botões) é proposital: o texto é pequeno
+   (0.85rem) e precisa de contraste suficiente sobre o fundo claro do modal. */
 .login-modal__switch {
     text-align: center;
     font-size: 0.85rem;
     margin-top: 0.5rem;
+    color: #1a7f37;
 }
 
 .login-modal__switch button {
     background: none;
     border: none;
-    color: rgba(11, 77, 139, 0.95);
+    color: #1a7f37;
     text-decoration: underline;
     cursor: pointer;
     font-weight: 700;

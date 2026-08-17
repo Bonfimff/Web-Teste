@@ -357,7 +357,7 @@
                         <button type="submit" class="login-modal__submit">${strings.login_button || 'Entrar'}</button>
                         <button type="button" class="login-modal__forgot">${strings.login_forgot || 'Esqueci minha senha'}</button>
                     </div>
-                    <p class="login-modal__switch">${strings.register_prompt || 'Não tem conta?'} <button type="button" data-profile-action="register">${strings.register_title || 'Cadastrar'}</button></p>
+                    <p class="login-modal__switch"><span data-i18n="register_prompt">${strings.register_prompt || 'Não tem conta?'}</span> <button type="button" data-profile-action="register" data-i18n="register_title">${strings.register_title || 'Cadastrar'}</button></p>
                 </form>
                 <form id="passwordResetForm" class="login-modal__form" style="display:none;">
                     <div class="login-modal__field">
@@ -1143,7 +1143,7 @@
 
         overlay.querySelector('.register-resend-button')?.addEventListener('click', () => {
             if (!pendingRegisterEmail) {
-                alert('E-mail não encontrado. Refaça o passo anterior.');
+                alert(strings.register_email_missing || 'E-mail não encontrado. Refaça o passo anterior.');
                 return;
             }
             sendConfirmationCodeApi(pendingRegisterEmail)
@@ -1155,7 +1155,7 @@
                     alert(strings.register_code_sent || 'Código reenviado.');
                     startResendCountdown(60);
                 })
-                .catch(() => alert('Erro ao reenviar código. Tente novamente.'));
+                .catch(() => alert(strings.register_resend_error || 'Erro ao reenviar código. Tente novamente.'));
         });
 
         backBtn?.addEventListener('click', () => showStep(1));
@@ -1175,7 +1175,7 @@
                 return;
             }
             if (!pendingRegisterEmail) {
-                alert('Email não confirmado. Volte ao primeiro passo.');
+                alert(strings.register_email_unconfirmed || 'Email não confirmado. Volte ao primeiro passo.');
                 return;
             }
 
@@ -1190,7 +1190,7 @@
                     setCodeInputsState('valid');
                     updateSubmitButtonState();
                 } catch (err) {
-                    alert('Erro ao verificar o código. Tente novamente.');
+                    alert(strings.register_code_verify_error || 'Erro ao verificar o código. Tente novamente.');
                     return;
                 }
             }
@@ -1218,7 +1218,7 @@
                 alert(result.payload.message || 'Cadastro concluído com sucesso!');
                 closeModal();
             } catch (err) {
-                alert('Erro ao concluir cadastro. Tente novamente.');
+                alert(strings.register_complete_error || 'Erro ao concluir cadastro. Tente novamente.');
             }
         });
 
@@ -1308,7 +1308,7 @@
             const password = document.getElementById('loginPassword')?.value || '';
 
             if (!email || !password) {
-                alert('Por favor, preencha email e senha.');
+                alert(strings.login_fill_all || 'Por favor, preencha email e senha.');
                 return;
             }
 
@@ -1397,10 +1397,40 @@
         window.history.replaceState({}, document.title, cleanUrl);
     };
 
+    // Os modais de entrada/cadastro/recuperação são montados uma única vez, com
+    // o idioma vigente naquele momento — trocar de idioma depois não mexeria em
+    // nada dentro deles (título, rótulos, botões continuariam no idioma antigo).
+    // Aqui eles são descartados e remontados no idioma novo; se algum estiver
+    // aberto na hora, reabre no mesmo lugar para o usuário não perder o passo.
+    const recriarModaisNoIdiomaAtual = () => {
+        const loginAberto = document.querySelector('.login-modal-overlay')?.classList.contains('open');
+        const cadastroAberto = document.querySelector('.register-modal-overlay')?.classList.contains('open');
+
+        document.querySelector('.login-modal-overlay')?.remove();
+        document.querySelector('.register-modal-overlay')?.remove();
+
+        // Só o DOM dos modais é recriado — os gatilhos ("Entrar"/"Cadastrar"
+        // do menu de perfil) continuam com os listeners originais, que
+        // procuram o overlay a cada clique e por isso já acham o novo.
+        // Rebindar aqui empilharia um listener extra a cada troca de idioma.
+        window.__loginModalApi = createLoginModal();
+        window.__registerModalApi = createRegisterModal();
+
+        if (loginAberto) {
+            document.querySelector('.login-modal-overlay')?.classList.add('open');
+            document.body.classList.add('modal-open');
+        }
+        if (cadastroAberto) {
+            document.querySelector('.register-modal-overlay')?.classList.add('open');
+            document.body.classList.add('modal-open');
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         initProfileMenu();
         initLoginModal();
         initRegisterModal();
         handleAuthDeepLink();
+        document.addEventListener('app:language-changed', recriarModaisNoIdiomaAtual);
     });
 })();
