@@ -120,7 +120,7 @@ const enviarPresenca = async () => {
     await fetchWithApiFallback('/registrar_presenca', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, pagina: 'Gerenciamento' })
     });
   } catch (_error) {
     // Presença é um detalhe visual: falhar aqui não pode incomodar o usuário.
@@ -151,7 +151,7 @@ const renderAccountsTable = (accounts) => {
     const emptyMessage = query
       ? `Nenhuma conta encontrada para "${escapeHtml(query)}".`
       : 'Nenhuma conta encontrada.';
-    tableBody.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">${emptyMessage}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="10" style="padding:0.75rem;">${emptyMessage}</td></tr>`;
     return;
   }
 
@@ -166,6 +166,8 @@ const renderAccountsTable = (accounts) => {
       <td data-label="Role">${escapeHtml(account.role)}</td>
       <td data-label="País">${escapeHtml(account.pais_origem)}</td>
       <td data-label="Gênero">${escapeHtml(account.genero)}</td>
+      <td data-label="Última página">${escapeHtml(account.ultimaPagina || '-')}</td>
+      <td data-label="Último acesso" title="${escapeHtml(tituloPresenca(account))}">${estaOnline(account) ? 'Online agora' : formatarTempoDesde(account.segundosDesdeUltimoVisto)}</td>
     `;
 
     const canEditOthers = !!currentUserPermissions?.manageOtherEdit;
@@ -4423,7 +4425,7 @@ const carregarContasDoBanco = async () => {
   currentUserPermissions = currentUserPermissions || currentRolesConfig[role] || DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.cliente_user;
 
   if (!currentUserPermissions.manageContas) {
-    tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Sem permissão para visualizar tabela de acessos.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" style="padding:0.75rem;">Sem permissão para visualizar tabela de acessos.</td></tr>';
     const rolesManager = document.getElementById('rolesManager');
     if (rolesManager) rolesManager.style.display = 'none';
     return;
@@ -4436,26 +4438,26 @@ const carregarContasDoBanco = async () => {
     return;
   }
 
-  tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Carregando contas...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="10" style="padding:0.75rem;">Carregando contas...</td></tr>';
 
   try {
     const response = await fetchWithApiFallback(`/get_acessos?email=${encodeURIComponent(currentUserEmail)}`);
 
     if (response.status === 403) {
-      tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Acesso negado — somente admin/super_admin.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="10" style="padding:0.75rem;">Acesso negado — somente admin/super_admin.</td></tr>';
       return;
     }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       console.error('Erro ao buscar acessos', response.status, response.statusText, errorText);
-      tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Erro ao carregar contas.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="10" style="padding:0.75rem;">Erro ao carregar contas.</td></tr>';
       return;
     }
 
     const accounts = await response.json();
     if (!Array.isArray(accounts) || !accounts.length) {
-      tableBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;">Nenhuma conta encontrada.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="10" style="padding:0.75rem;">Nenhuma conta encontrada.</td></tr>';
       return;
     }
 
@@ -4490,7 +4492,7 @@ const carregarContasDoBanco = async () => {
     }
   } catch (error) {
     console.error('Erro ao carregar contas:', error);
-    tableBody.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;">Erro de conexão: ${error.message || error}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="10" style="padding:0.75rem;">Erro de conexão: ${error.message || error}</td></tr>`;
   }
 };
 
@@ -5126,7 +5128,7 @@ const verificarAtualizacoesAutomaticas = async () => {
         // segundos crus — senão mudaria a cada ciclo e a tabela seria
         // redesenhada o tempo todo à toa.
         const assinatura = JSON.stringify(
-          (Array.isArray(dados) ? dados : []).map((a) => [a.id, a.role, a.nome, montarBolinhaPresenca(a)])
+          (Array.isArray(dados) ? dados : []).map((a) => [a.id, a.role, a.nome, montarBolinhaPresenca(a), a.ultimaPagina, formatarTempoDesde(a.segundosDesdeUltimoVisto)])
         );
         if (contasAssinatura !== null && assinatura !== contasAssinatura) {
           currentAccounts = dados;
