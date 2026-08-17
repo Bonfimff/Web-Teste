@@ -468,6 +468,7 @@ const applyAccessControls = (perms) => {
     const map = {
       reservas: 'Reservas',
       contas: 'Contas',
+      cadastro: 'Cadastro',
       gerenciamento: 'Gerenciamento',
       financeiro: 'Financeiro'
     };
