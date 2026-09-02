@@ -1142,9 +1142,16 @@ const renderTourGallery = (imagens) => {
     return;
   }
 
+  // O backend sempre renomeia os arquivos para img1.ext, img2.ext... (ver
+  // _renumber_tour_folder_images em app.py) — o NOME é reaproveitado mesmo
+  // quando o CONTEÚDO muda de posição. Sem cache-busting o navegador
+  // reexibe a miniatura antiga que tinha em cache pra aquele nome, dando a
+  // impressão de que mover/excluir/enviar não fez efeito (ou afetou a
+  // imagem errada) quando na verdade o servidor já está correto.
+  const cacheBust = Date.now();
   gallery.innerHTML = urls.map((url, idx) => `
     <div class="tour-gallery-item">
-      <img src="${url}" alt="Imagem do tour" loading="lazy" />
+      <img src="${url}?_=${cacheBust}" alt="Imagem do tour" loading="lazy" />
       <button type="button" class="tour-gallery-remove" data-image-url="${url}" aria-label="Remover imagem">&times;</button>
       <button type="button" class="tour-gallery-move tour-gallery-move-left" data-image-url="${url}" data-move-dir="-1" ${idx === 0 ? 'disabled' : ''} aria-label="Mover imagem para a esquerda">&lsaquo;</button>
       <button type="button" class="tour-gallery-move tour-gallery-move-right" data-image-url="${url}" data-move-dir="1" ${idx === urls.length - 1 ? 'disabled' : ''} aria-label="Mover imagem para a direita">&rsaquo;</button>
