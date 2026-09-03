@@ -5124,12 +5124,37 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
             calendarViewDate = reservationDate?.value ? new Date(`${reservationDate.value}T00:00:00`) : new Date();
             calendarPopover = document.createElement('div');
             calendarPopover.className = 'res-calendar-popover';
-            document.body.appendChild(calendarPopover);
-            const rect = calendarDisplay.getBoundingClientRect();
             calendarPopover.style.position = 'fixed';
-            calendarPopover.style.top = `${rect.bottom + 6}px`;
-            calendarPopover.style.left = `${rect.left}px`;
+            document.body.appendChild(calendarPopover);
+            // Preenche o conteúdo ANTES de posicionar, pra medir o tamanho real
+            // (largura fixa de 260px, altura varia com o mês) — precisa disso
+            // pra decidir se cabe do jeito padrão (colado embaixo do campo, à
+            // esquerda dele) ou se precisa encolher/inverter de lado.
             renderCalendarPopover();
+
+            const rect = calendarDisplay.getBoundingClientRect();
+            const margin = 8;
+            const popW = calendarPopover.offsetWidth;
+            const popH = calendarPopover.offsetHeight;
+
+            // Em telas estreitas o campo de data fica na coluna direita do
+            // formulário (perto da borda do celular); abrir o calendário
+            // "colado à esquerda do campo" com 260px de largura vazava pra
+            // fora da tela (ver bug reportado). Agora clampa dentro da
+            // viewport, com uma margem de 8px de cada lado.
+            let left = Math.min(rect.left, window.innerWidth - popW - margin);
+            left = Math.max(left, margin);
+
+            let top = rect.bottom + 6;
+            if (top + popH > window.innerHeight - margin) {
+                // Não cabe embaixo do campo (ex.: campo perto do rodapé da
+                // tela) — abre pra cima dele em vez de cortar embaixo.
+                top = rect.top - popH - 6;
+                if (top < margin) top = margin; // último recurso: cola no topo
+            }
+
+            calendarPopover.style.top = `${top}px`;
+            calendarPopover.style.left = `${left}px`;
             setTimeout(() => document.addEventListener('click', handleCalendarOutsideClick, true), 0);
         };
 

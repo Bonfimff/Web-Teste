@@ -1521,19 +1521,21 @@ body {
     font-weight: 700;
 }
 
+/* Coração: branco quando ainda não favoritado, vermelho quando já é
+   favorito — o fundo da pílula continua o mesmo círculo escuro desfocado
+   nos dois estados (não vira sólido vermelho), só o glifo do coração muda,
+   pedido explícito. */
 .rio-tour-fav i {
-    transition: transform 0.25s ease;
+    color: #ffffff;
+    transition: color 0.2s ease, transform 0.25s ease;
 }
 
 .rio-tour-fav:hover {
     background: rgba(0, 0, 0, 0.65);
-    color: #ff6b81;
 }
 
-.rio-tour-fav.is-fav {
-    background: #c0392b;
-    border-color: rgba(255, 255, 255, 0.5);
-    color: #ffffff;
+.rio-tour-fav.is-fav i {
+    color: #e63950;
 }
 
 .rio-tour-fav.just-faved i {
