@@ -242,7 +242,6 @@ const setAccountsFilterTab = (tab) => {
     carregarAuditoria();
   } else if (tab === 'atividade_clientes') {
     carregarAtividadeClientes();
-    carregarToursMaisClicados();
   }
 };
 const IMPORTANT_INFO_DISMISSED_KEY = 'importantInfoDismissedItems';
@@ -3969,6 +3968,7 @@ const carregarAgendamentosDoBanco = async () => {
   }
 
   applyReservasRestrictions();
+  carregarToursMaisClicados();
 
   // filtros aplicados na própria tabela de backend
   const filterFrom = document.getElementById('filterFrom');
@@ -5343,9 +5343,13 @@ const renderToursMaisClicados = (ranking) => {
   `).join('');
 };
 
+// Mora na aba Reservas (não em Ações dos Clientes) — quem gerencia reservas
+// já tem motivo de sobra pra ver isso, sem precisar da permissão de
+// auditoria (viewAuditoria segue sendo aceita também, pra super_admin que
+// não tenha manageReservas continuar enxergando).
 const carregarToursMaisClicados = async () => {
   const tableBody = document.getElementById('toursMaisClicadosBody');
-  if (!tableBody || !currentUserPermissions?.viewAuditoria) return;
+  if (!tableBody || !(currentUserPermissions?.manageReservas || currentUserPermissions?.viewAuditoria)) return;
 
   const email = localStorage.getItem('userEmail') || '';
   try {
@@ -5367,7 +5371,7 @@ const setupAtividadeClientesFilterEvents = () => {
   const filtroCliente = document.getElementById('atividadeClientesFiltroCliente');
   const filtroTipo = document.getElementById('atividadeClientesFiltroTipo');
 
-  if (refreshBtn) refreshBtn.addEventListener('click', () => { carregarAtividadeClientes(); carregarToursMaisClicados(); });
+  if (refreshBtn) refreshBtn.addEventListener('click', carregarAtividadeClientes);
   if (filtroTipo) filtroTipo.addEventListener('change', carregarAtividadeClientes);
   if (filtroCliente) {
     let timer = null;
@@ -5485,7 +5489,6 @@ const verificarAtualizacoesAutomaticas = async () => {
         const assinatura = JSON.stringify((result.registros || []).map((r) => r.id));
         if (atividadeClientesAssinatura !== null && assinatura !== atividadeClientesAssinatura) {
           carregarAtividadeClientes();
-          carregarToursMaisClicados();
         }
         atividadeClientesAssinatura = assinatura;
       }
@@ -5788,7 +5791,6 @@ const attachSectionLinks = () => {
         carregarLiberacoesCadastro();
         carregarAuditoria();
         carregarAtividadeClientes();
-        carregarToursMaisClicados();
       } else if (section === 'gerenciamento') {
         mostrarSecao('gerenciamento');
         carregarAgendamentosDoBanco();
@@ -7316,7 +7318,6 @@ window.addEventListener('DOMContentLoaded', () => {
       carregarLiberacoesCadastro();
       carregarAuditoria();
       carregarAtividadeClientes();
-      carregarToursMaisClicados();
     } else if (secaoInicial === 'gerenciamento') {
       carregarAgendamentosDoBanco();
     } else {
@@ -7521,7 +7522,6 @@ window.addEventListener('DOMContentLoaded', () => {
           carregarLiberacoesCadastro();
           carregarAuditoria();
           carregarAtividadeClientes();
-          carregarToursMaisClicados();
         } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
           mostrarSecao('gerenciamento');
           carregarAgendamentosDoBanco();

@@ -88,6 +88,24 @@
                         <div id="nextTourDetails" class="next-tour-details-panel" style="margin-top:0.5rem; font-size:0.85rem; color:#374151;"></div>
                     </div>
                 </div>
+
+                <div style="margin-top:1rem;">
+                    <strong style="font-size:0.9rem; color:#1f2937;">Tours mais clicados</strong>
+                    <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem; margin-top:0.4rem;">
+                        <table class="rio-tour-table" style="margin:0; background:rgba(255,255,255,0.9);">
+                            <thead>
+                                <tr>
+                                    <th>Tour</th>
+                                    <th>Visualizações</th>
+                                    <th>Cliques em Reservar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="toursMaisClicadosBody">
+                                <tr><td colspan="3" style="padding:0.75rem;">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -308,24 +326,6 @@
                     Login, cadastro, pedido de liberação, reservas e cliques em tour de clientes (não colaboradores).
                     Os registros são apagados automaticamente depois de <span id="atividadeClientesRetencaoDias">90</span> dias.
                 </p>
-
-                <div style="margin-bottom:1rem;">
-                    <strong style="font-size:0.9rem; color:#1f2937;">Tours mais clicados</strong>
-                    <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem; margin-top:0.4rem;">
-                        <table class="rio-tour-table" style="margin:0;">
-                            <thead>
-                                <tr>
-                                    <th>Tour</th>
-                                    <th>Visualizações</th>
-                                    <th>Cliques em Reservar</th>
-                                </tr>
-                            </thead>
-                            <tbody id="toursMaisClicadosBody">
-                                <tr><td colspan="3" style="padding:0.75rem;">Carregando...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
 
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
                     <input type="text" id="atividadeClientesFiltroCliente" placeholder="Filtrar por e-mail do cliente" style="flex:1 1 220px; padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;" />
@@ -1483,7 +1483,7 @@
     <script src="../js/Translation.js?v=3"></script>
     <script src="../js/Riodejaneiro.js?v=67"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=105"></script>
+    <script src="../js/Gerenciamento.js?v=106"></script>
 </body>
 </html>
 
