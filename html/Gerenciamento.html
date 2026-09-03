@@ -251,6 +251,7 @@
                     <label><input type="checkbox" id="roleCheckPageContent" /> Gerenciar conteúdo da página (tours, aviso, contato, textos)</label><br />
                     <label><input type="checkbox" id="roleCheckComentarios" /> Moderar avaliações de clientes</label><br />
                     <label><input type="checkbox" id="roleCheckFinanceiro" /> Gerenciar financeiro</label><br />
+                    <label><input type="checkbox" id="roleCheckAuditoria" /> Ver auditoria (registro de ações de colaboradores)</label><br />
                 </div>
 
                 <div id="reservasRestricoes" style="margin-top:1rem; color:#1f2937;">
@@ -316,6 +317,127 @@
                         </thead>
                         <tbody id="reservaSyncPlataformasBody">
                             <tr><td colspan="5" style="padding:0.75rem;">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Só aparece pra quem tem a permissão "Ver auditoria" (Gerenciamento
+                 de Níveis de Acesso) — a princípio, só super_admin. -->
+            <div id="auditoriaManager" style="display:none; margin-top:1.5rem; background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                    <strong style="color:#0b3c6d;">Auditoria</strong>
+                    <button type="button" id="refreshAuditoriaBtn" class="btn-book">Atualizar</button>
+                </div>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0.4rem 0 0.75rem;">
+                    Registro de ações de colaboradores (criação, alteração e exclusão) em contas, tours, financeiro, permissões e outras áreas do painel.
+                    Os registros são apagados automaticamente depois de <span id="auditoriaRetencaoDias">90</span> dias.
+                </p>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                    <input type="text" id="auditoriaFiltroAtor" placeholder="Filtrar por e-mail do responsável" style="flex:1 1 220px; padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;" />
+                    <select id="auditoriaFiltroEntidade" style="padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;">
+                        <option value="">Todas as áreas</option>
+                        <option value="conta">Contas</option>
+                        <option value="nivel_acesso">Níveis de acesso</option>
+                        <option value="tour">Tours</option>
+                        <option value="tour_imagem">Imagens de tour</option>
+                        <option value="tour_ordem">Ordem dos tours</option>
+                        <option value="reserva">Reservas</option>
+                        <option value="liberacao_cadastro">Liberação de cadastro</option>
+                        <option value="comentario">Comentários</option>
+                        <option value="despesa_fixa">Despesas fixas</option>
+                        <option value="financeiro_lancamento">Financeiro</option>
+                        <option value="plataforma_reserva">Plataformas de reserva</option>
+                        <option value="whatsapp_contato">Contatos do WhatsApp</option>
+                        <option value="cidade_contato">Contato da cidade</option>
+                        <option value="cidade_visual">Identidade visual da cidade</option>
+                        <option value="cidade_aviso">Aviso da cidade</option>
+                        <option value="cidade_award">Card de premiação</option>
+                        <option value="pagina_secao">Textos da página (sobre/contato/ajuda)</option>
+                        <option value="site_config">Configuração do site</option>
+                    </select>
+                    <select id="auditoriaFiltroAcao" style="padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;">
+                        <option value="">Toda ação</option>
+                        <option value="criar">Criar</option>
+                        <option value="atualizar">Atualizar</option>
+                        <option value="excluir">Excluir</option>
+                    </select>
+                </div>
+                <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
+                    <table class="rio-tour-table" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>Quando</th>
+                                <th>Responsável</th>
+                                <th>Ação</th>
+                                <th>Área</th>
+                                <th>Registro</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditoriaBody">
+                            <tr><td colspan="6" style="padding:0.75rem;">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mesma permissão da Auditoria (viewAuditoria) — os dois blocos
+                 ficam sempre visíveis/ocultos juntos. -->
+            <div id="atividadeClientesManager" style="display:none; margin-top:1.5rem; background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                    <strong style="color:#0b3c6d;">Ações dos Clientes</strong>
+                    <button type="button" id="refreshAtividadeClientesBtn" class="btn-book">Atualizar</button>
+                </div>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0.4rem 0 0.75rem;">
+                    Login, cadastro, pedido de liberação, reservas e cliques em tour de clientes (não colaboradores).
+                    Os registros são apagados automaticamente depois de <span id="atividadeClientesRetencaoDias">90</span> dias.
+                </p>
+
+                <div style="margin-bottom:1rem;">
+                    <strong style="font-size:0.9rem; color:#1f2937;">Tours mais clicados</strong>
+                    <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem; margin-top:0.4rem;">
+                        <table class="rio-tour-table" style="margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Tour</th>
+                                    <th>Visualizações</th>
+                                    <th>Cliques em Reservar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="toursMaisClicadosBody">
+                                <tr><td colspan="3" style="padding:0.75rem;">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                    <input type="text" id="atividadeClientesFiltroCliente" placeholder="Filtrar por e-mail do cliente" style="flex:1 1 220px; padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;" />
+                    <select id="atividadeClientesFiltroTipo" style="padding:0.5rem; border:1px solid #ccc; border-radius:0.5rem;">
+                        <option value="">Toda ação</option>
+                        <option value="login">Login</option>
+                        <option value="cadastro">Cadastro</option>
+                        <option value="liberacao_solicitar">Pediu liberação</option>
+                        <option value="reserva_criar">Criou reserva</option>
+                        <option value="reserva_atualizar">Alterou reserva</option>
+                        <option value="reserva_cancelar">Cancelou reserva</option>
+                        <option value="tour_visualizar">Viu detalhes do tour</option>
+                        <option value="tour_reservar_clique">Clicou em Reservar</option>
+                    </select>
+                </div>
+                <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
+                    <table class="rio-tour-table" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>Quando</th>
+                                <th>Cliente</th>
+                                <th>Ação</th>
+                                <th>Tour / Cidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="atividadeClientesBody">
+                            <tr><td colspan="4" style="padding:0.75rem;">Carregando...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1353,7 +1475,7 @@
     <script src="../js/Translation.js?v=3"></script>
     <script src="../js/Riodejaneiro.js?v=67"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=101"></script>
+    <script src="../js/Gerenciamento.js?v=104"></script>
 </body>
 </html>
 

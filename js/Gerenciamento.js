@@ -603,6 +603,16 @@ const applyAccessControls = (perms) => {
     document.querySelectorAll('.role-management-panel, #rolePermissionsSection, #rolesManager').forEach(el => { if (el) el.style.display = 'none'; });
   }
 
+  // Auditoria e Ações dos Clientes: mesma permissão (a princípio, só super_admin).
+  const auditoriaManager = document.getElementById('auditoriaManager');
+  if (auditoriaManager) {
+    auditoriaManager.style.display = perms.viewAuditoria ? '' : 'none';
+  }
+  const atividadeClientesManager = document.getElementById('atividadeClientesManager');
+  if (atividadeClientesManager) {
+    atividadeClientesManager.style.display = perms.viewAuditoria ? '' : 'none';
+  }
+
   // Controle de edição
   if (!perms.manageSelfEdit) {
     document.querySelectorAll('.btn-edit-self').forEach(el => { if (el) el.style.display = 'none'; });
@@ -3629,6 +3639,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     managePageContent: true,
     manageComentarios: true,
     manageFinanceiro: true,
+    viewAuditoria: false,
     financeiroCidades: TODAS_AS_CIDADES,
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
@@ -3646,6 +3657,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     managePageContent: true,
     manageComentarios: true,
     manageFinanceiro: true,
+    viewAuditoria: true,
     financeiroCidades: TODAS_AS_CIDADES,
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
@@ -3760,6 +3772,7 @@ const selectRole = (role) => {
   const roleCheckComentarios = document.getElementById('roleCheckComentarios');
   const roleCheckFinanceiro = document.getElementById('roleCheckFinanceiro');
   const roleCheckFinanceiroSomenteView = document.getElementById('roleCheckFinanceiroSomenteView');
+  const roleCheckAuditoria = document.getElementById('roleCheckAuditoria');
 
   if (roleCheckReservas) roleCheckReservas.checked = perms.manageReservas;
   if (roleCheckContas) roleCheckContas.checked = perms.manageContas;
@@ -3772,6 +3785,7 @@ const selectRole = (role) => {
   if (roleCheckComentarios) roleCheckComentarios.checked = !!perms.manageComentarios;
   if (roleCheckFinanceiro) roleCheckFinanceiro.checked = !!perms.manageFinanceiro;
   if (roleCheckFinanceiroSomenteView) roleCheckFinanceiroSomenteView.checked = !!perms.financeiroSomenteVisualizar;
+  if (roleCheckAuditoria) roleCheckAuditoria.checked = !!perms.viewAuditoria;
 
   Array.from(document.querySelectorAll('.finance-city-perm')).forEach((el) => {
     el.checked = (perms.financeiroCidades || []).includes(el.dataset.cidade);
@@ -3806,6 +3820,7 @@ const updateSelectedRoleConfig = () => {
   const manageComentarios = !!document.getElementById('roleCheckComentarios')?.checked;
   const manageFinanceiro = !!document.getElementById('roleCheckFinanceiro')?.checked;
   const financeiroSomenteVisualizar = !!document.getElementById('roleCheckFinanceiroSomenteView')?.checked;
+  const viewAuditoria = !!document.getElementById('roleCheckAuditoria')?.checked;
 
   const pageChecks = Array.from(document.querySelectorAll('.page-perm'));
   const tabChecks = Array.from(document.querySelectorAll('.tab-perm'));
@@ -3828,6 +3843,7 @@ const updateSelectedRoleConfig = () => {
     managePageContent,
     manageComentarios,
     manageFinanceiro,
+    viewAuditoria,
     financeiroCidades,
     financeiroSomenteVisualizar,
     reservasCidades,
@@ -3848,7 +3864,8 @@ const setupRoleCheckboxHandlers = () => {
     'roleCheckPageContent',
     'roleCheckComentarios',
     'roleCheckFinanceiro',
-    'roleCheckFinanceiroSomenteView'
+    'roleCheckFinanceiroSomenteView',
+    'roleCheckAuditoria'
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -5083,6 +5100,239 @@ const carregarLiberacoesCadastro = async () => {
   }
 };
 
+// ─── Auditoria (Contas > Auditoria) ──────────────────────────────────────────
+// Só visível pra quem tem a permissão "viewAuditoria" (ver applyAccessControls
+// e Gerenciamento de Níveis de Acesso) — a princípio, só super_admin.
+
+const AUDITORIA_ACAO_LABEL = { criar: 'Criou', atualizar: 'Alterou', excluir: 'Excluiu' };
+const AUDITORIA_ENTIDADE_LABEL = {
+  conta: 'Conta', nivel_acesso: 'Nível de acesso', tour: 'Tour',
+  tour_imagem: 'Imagem de tour', tour_ordem: 'Ordem dos tours', reserva: 'Reserva',
+  liberacao_cadastro: 'Liberação de cadastro', comentario: 'Comentário',
+  despesa_fixa: 'Despesa fixa', financeiro_lancamento: 'Financeiro',
+  plataforma_reserva: 'Plataforma de reserva', whatsapp_contato: 'Contato do WhatsApp',
+  cidade_contato: 'Contato da cidade', cidade_visual: 'Identidade visual da cidade',
+  cidade_aviso: 'Aviso da cidade', cidade_award: 'Card de premiação',
+  pagina_secao: 'Textos da página', site_config: 'Configuração do site'
+};
+
+// Monta um resumo legível do campo "detalhes" de um registro — ou
+// {campo: [antes, depois]} (alteração) ou {dados: {...}} (criação/exclusão).
+const montarResumoAuditoria = (detalhes) => {
+  if (!detalhes || typeof detalhes !== 'object') return '—';
+  if ('dados' in detalhes) {
+    const n = Object.keys(detalhes.dados || {}).length;
+    return `${n} campo(s) registrado(s)`;
+  }
+  const campos = Object.keys(detalhes);
+  if (!campos.length) return '—';
+  return campos.slice(0, 3).map((campo) => {
+    const [antes, depois] = detalhes[campo];
+    return `${campo}: "${antes ?? '—'}" → "${depois ?? '—'}"`;
+  }).join('; ') + (campos.length > 3 ? ` (+${campos.length - 3})` : '');
+};
+
+const renderAuditoriaTable = (registros) => {
+  const tableBody = document.getElementById('auditoriaBody');
+  if (!tableBody) return;
+
+  const lista = Array.isArray(registros) ? registros : [];
+  if (!lista.length) {
+    tableBody.innerHTML = '<tr><td colspan="6" style="padding:0.75rem;">Nenhum registro de auditoria encontrado.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = lista.map((registro) => {
+    const quando = registro.criadoEm ? new Date(registro.criadoEm).toLocaleString('pt-BR') : '—';
+    const acaoLabel = AUDITORIA_ACAO_LABEL[registro.acao] || registro.acao || '—';
+    const entidadeLabel = AUDITORIA_ENTIDADE_LABEL[registro.entidade] || registro.entidade || '—';
+    const detalhesJson = registro.detalhes ? JSON.stringify(registro.detalhes, null, 2) : '';
+    return `
+      <tr>
+        <td data-label="Quando">${escapeHtml(quando)}</td>
+        <td data-label="Responsável" title="${escapeHtml(registro.atorEmail)}">${escapeHtml(registro.atorNome)}</td>
+        <td data-label="Ação">${escapeHtml(acaoLabel)}</td>
+        <td data-label="Área">${escapeHtml(entidadeLabel)}</td>
+        <td data-label="Registro">${escapeHtml(registro.entidadeDescricao || registro.entidadeId || '—')}</td>
+        <td data-label="Detalhes">
+          ${detalhesJson
+            ? `<details><summary>${escapeHtml(montarResumoAuditoria(registro.detalhes))}</summary><pre style="white-space:pre-wrap; font-size:0.78rem; max-width:360px;">${escapeHtml(detalhesJson)}</pre></details>`
+            : '—'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+const setupAuditoriaFilterEvents = () => {
+  const refreshBtn = document.getElementById('refreshAuditoriaBtn');
+  const filtroAtor = document.getElementById('auditoriaFiltroAtor');
+  const filtroEntidade = document.getElementById('auditoriaFiltroEntidade');
+  const filtroAcao = document.getElementById('auditoriaFiltroAcao');
+
+  if (refreshBtn) refreshBtn.addEventListener('click', carregarAuditoria);
+  if (filtroEntidade) filtroEntidade.addEventListener('change', carregarAuditoria);
+  if (filtroAcao) filtroAcao.addEventListener('change', carregarAuditoria);
+  if (filtroAtor) {
+    // Debounce simples: evita um fetch a cada tecla digitada no e-mail.
+    let timer = null;
+    filtroAtor.addEventListener('input', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(carregarAuditoria, 400);
+    });
+  }
+};
+
+const carregarAuditoria = async () => {
+  const tableBody = document.getElementById('auditoriaBody');
+  if (!tableBody || !currentUserPermissions?.viewAuditoria) return;
+
+  const email = localStorage.getItem('userEmail') || '';
+  tableBody.innerHTML = '<tr><td colspan="6" style="padding:0.75rem;">Carregando...</td></tr>';
+
+  const params = new URLSearchParams({ email });
+  const ator = (document.getElementById('auditoriaFiltroAtor')?.value || '').trim();
+  const entidade = document.getElementById('auditoriaFiltroEntidade')?.value || '';
+  const acao = document.getElementById('auditoriaFiltroAcao')?.value || '';
+  if (ator) params.set('ator', ator);
+  if (entidade) params.set('entidade', entidade);
+  if (acao) params.set('acao', acao);
+
+  try {
+    const response = await fetchWithApiFallback(`/get_auditoria?${params.toString()}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      tableBody.innerHTML = `<tr><td colspan="6" style="padding:0.75rem;">${escapeHtml(result.message || 'Erro ao carregar auditoria.')}</td></tr>`;
+      return;
+    }
+    const retencaoEl = document.getElementById('auditoriaRetencaoDias');
+    if (retencaoEl && result.retencaoDias) retencaoEl.textContent = result.retencaoDias;
+    renderAuditoriaTable(result.registros);
+  } catch (error) {
+    console.error('Erro ao carregar auditoria:', error);
+    tableBody.innerHTML = '<tr><td colspan="6" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+  }
+};
+
+// ─── Ações dos Clientes (Contas > Ações dos Clientes) ────────────────────────
+// Mesma permissão da Auditoria (viewAuditoria) — mas é sobre clientes, não
+// colaboradores: login, cadastro, pedido de liberação, reservas e cliques em
+// tour (ver detalhes / botão Reservar), que alimentam "Tours mais clicados".
+
+const ATIVIDADE_CLIENTE_TIPO_LABEL = {
+  login: 'Login', cadastro: 'Cadastro', liberacao_solicitar: 'Pediu liberação',
+  reserva_criar: 'Criou reserva', reserva_atualizar: 'Alterou reserva', reserva_cancelar: 'Cancelou reserva',
+  tour_visualizar: 'Viu detalhes do tour', tour_reservar_clique: 'Clicou em Reservar'
+};
+
+const renderAtividadeClientesTable = (registros) => {
+  const tableBody = document.getElementById('atividadeClientesBody');
+  if (!tableBody) return;
+
+  const lista = Array.isArray(registros) ? registros : [];
+  if (!lista.length) {
+    tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Nenhuma ação de cliente encontrada.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = lista.map((registro) => {
+    const quando = registro.criadoEm ? new Date(registro.criadoEm).toLocaleString('pt-BR') : '—';
+    const acaoLabel = ATIVIDADE_CLIENTE_TIPO_LABEL[registro.tipoAcao] || registro.tipoAcao || '—';
+    const tourCidade = [registro.tourNome, registro.cidade].filter(Boolean).join(' — ') || '—';
+    return `
+      <tr>
+        <td data-label="Quando">${escapeHtml(quando)}</td>
+        <td data-label="Cliente" title="${escapeHtml(registro.clienteEmail)}">${escapeHtml(registro.clienteNome)}</td>
+        <td data-label="Ação">${escapeHtml(acaoLabel)}</td>
+        <td data-label="Tour / Cidade">${escapeHtml(tourCidade)}</td>
+      </tr>
+    `;
+  }).join('');
+};
+
+const carregarAtividadeClientes = async () => {
+  const tableBody = document.getElementById('atividadeClientesBody');
+  if (!tableBody || !currentUserPermissions?.viewAuditoria) return;
+
+  const email = localStorage.getItem('userEmail') || '';
+  tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Carregando...</td></tr>';
+
+  const params = new URLSearchParams({ email });
+  const cliente = (document.getElementById('atividadeClientesFiltroCliente')?.value || '').trim();
+  const tipoAcao = document.getElementById('atividadeClientesFiltroTipo')?.value || '';
+  if (cliente) params.set('cliente', cliente);
+  if (tipoAcao) params.set('tipoAcao', tipoAcao);
+
+  try {
+    const response = await fetchWithApiFallback(`/get_atividade_clientes?${params.toString()}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      tableBody.innerHTML = `<tr><td colspan="4" style="padding:0.75rem;">${escapeHtml(result.message || 'Erro ao carregar ações de clientes.')}</td></tr>`;
+      return;
+    }
+    const retencaoEl = document.getElementById('atividadeClientesRetencaoDias');
+    if (retencaoEl && result.retencaoDias) retencaoEl.textContent = result.retencaoDias;
+    renderAtividadeClientesTable(result.registros);
+  } catch (error) {
+    console.error('Erro ao carregar ações de clientes:', error);
+    tableBody.innerHTML = '<tr><td colspan="4" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+  }
+};
+
+const renderToursMaisClicados = (ranking) => {
+  const tableBody = document.getElementById('toursMaisClicadosBody');
+  if (!tableBody) return;
+
+  const lista = Array.isArray(ranking) ? ranking : [];
+  if (!lista.length) {
+    tableBody.innerHTML = '<tr><td colspan="3" style="padding:0.75rem;">Nenhum clique registrado ainda.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = lista.map((item) => `
+    <tr>
+      <td data-label="Tour">${escapeHtml(item.tour)}</td>
+      <td data-label="Visualizações">${escapeHtml(item.visualizacoes)}</td>
+      <td data-label="Cliques em Reservar">${escapeHtml(item.cliquesReservar)}</td>
+    </tr>
+  `).join('');
+};
+
+const carregarToursMaisClicados = async () => {
+  const tableBody = document.getElementById('toursMaisClicadosBody');
+  if (!tableBody || !currentUserPermissions?.viewAuditoria) return;
+
+  const email = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback(`/get_tours_mais_clicados?email=${encodeURIComponent(email)}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      tableBody.innerHTML = `<tr><td colspan="3" style="padding:0.75rem;">${escapeHtml(result.message || 'Erro ao carregar.')}</td></tr>`;
+      return;
+    }
+    renderToursMaisClicados(result.ranking);
+  } catch (error) {
+    console.error('Erro ao carregar tours mais clicados:', error);
+    tableBody.innerHTML = '<tr><td colspan="3" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+  }
+};
+
+const setupAtividadeClientesFilterEvents = () => {
+  const refreshBtn = document.getElementById('refreshAtividadeClientesBtn');
+  const filtroCliente = document.getElementById('atividadeClientesFiltroCliente');
+  const filtroTipo = document.getElementById('atividadeClientesFiltroTipo');
+
+  if (refreshBtn) refreshBtn.addEventListener('click', () => { carregarAtividadeClientes(); carregarToursMaisClicados(); });
+  if (filtroTipo) filtroTipo.addEventListener('change', carregarAtividadeClientes);
+  if (filtroCliente) {
+    let timer = null;
+    filtroCliente.addEventListener('input', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(carregarAtividadeClientes, 400);
+    });
+  }
+};
+
 // ─── Atualização automática das tabelas (sem F5) ─────────────────────────────
 // Um único timer verifica periodicamente se chegou reserva nova ou solicitação
 // de liberação nova. Só re-renderiza quando os dados mudaram de fato: assim a
@@ -5094,6 +5344,8 @@ let autoRefreshTimer = null;
 let reservasAssinatura = null;
 let liberacoesAssinatura = null;
 let contasAssinatura = null;
+let auditoriaAssinatura = null;
+let atividadeClientesAssinatura = null;
 
 const secaoEstaVisivel = (id) => {
   const el = document.getElementById(id);
@@ -5158,6 +5410,39 @@ const verificarAtualizacoesAutomaticas = async () => {
           renderLiberacoesTable(dados);
         }
         liberacoesAssinatura = assinatura;
+      }
+    } catch (_error) {
+      // idem
+    }
+  }
+
+  if (secaoEstaVisivel('auditoriaManager') && currentUserPermissions?.viewAuditoria) {
+    try {
+      const response = await fetchWithApiFallback(`/get_auditoria?email=${encodeURIComponent(email)}&limite=50`);
+      if (response.ok) {
+        const result = await response.json().catch(() => ({}));
+        const assinatura = JSON.stringify((result.registros || []).map((r) => r.id));
+        if (auditoriaAssinatura !== null && assinatura !== auditoriaAssinatura) {
+          carregarAuditoria();
+        }
+        auditoriaAssinatura = assinatura;
+      }
+    } catch (_error) {
+      // idem
+    }
+  }
+
+  if (secaoEstaVisivel('atividadeClientesManager') && currentUserPermissions?.viewAuditoria) {
+    try {
+      const response = await fetchWithApiFallback(`/get_atividade_clientes?email=${encodeURIComponent(email)}&limite=50`);
+      if (response.ok) {
+        const result = await response.json().catch(() => ({}));
+        const assinatura = JSON.stringify((result.registros || []).map((r) => r.id));
+        if (atividadeClientesAssinatura !== null && assinatura !== atividadeClientesAssinatura) {
+          carregarAtividadeClientes();
+          carregarToursMaisClicados();
+        }
+        atividadeClientesAssinatura = assinatura;
       }
     } catch (_error) {
       // idem
@@ -5456,6 +5741,9 @@ const attachSectionLinks = () => {
         carregarNiveisDeAcesso();
         carregarPlataformasReserva();
         carregarLiberacoesCadastro();
+        carregarAuditoria();
+        carregarAtividadeClientes();
+        carregarToursMaisClicados();
       } else if (section === 'gerenciamento') {
         mostrarSecao('gerenciamento');
         carregarAgendamentosDoBanco();
@@ -6958,6 +7246,8 @@ window.addEventListener('DOMContentLoaded', () => {
     setupAccountModalEvents();
     setupRolesControls();
     setupPlatformModalEvents();
+    setupAuditoriaFilterEvents();
+    setupAtividadeClientesFilterEvents();
     initFinanceControls();
 
     // Reabre na última aba visitada (persistida em mostrarSecao), caso ainda
@@ -6979,6 +7269,9 @@ window.addEventListener('DOMContentLoaded', () => {
       carregarNiveisDeAcesso();
       carregarPlataformasReserva();
       carregarLiberacoesCadastro();
+      carregarAuditoria();
+      carregarAtividadeClientes();
+      carregarToursMaisClicados();
     } else if (secaoInicial === 'gerenciamento') {
       carregarAgendamentosDoBanco();
     } else {
@@ -7181,6 +7474,9 @@ window.addEventListener('DOMContentLoaded', () => {
           carregarNiveisDeAcesso();
           carregarPlataformasReserva();
           carregarLiberacoesCadastro();
+          carregarAuditoria();
+          carregarAtividadeClientes();
+          carregarToursMaisClicados();
         } else if (rawSection === 'gerenciamento' || rawSection === 'perfis' || rawSection === 'gerenciamento da página') {
           mostrarSecao('gerenciamento');
           carregarAgendamentosDoBanco();
