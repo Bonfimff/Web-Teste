@@ -2132,6 +2132,35 @@ const initFinanceControls = () => {
   });
 };
 
+// URL pública (GitHub Pages) que leva direto a um tour específico, sem
+// mostrar o aviso importante nem o card de premiação da cidade — ver
+// tratamento do parâmetro ?tour= em Riodejaneiro.js/site-shell.js. Gerada só
+// a partir do id do tour + página da cidade; não é salva em lugar nenhum.
+const TOUR_DIRECT_URL_BASE = 'https://bonfimff.github.io/Web-Teste';
+const TOUR_DIRECT_URL_PAGINA_POR_CIDADE = {
+  'Rio de Janeiro': 'html/Riodejaneiro.html',
+  'Salvador': 'html/Salvador.html',
+  'Sao Luis': 'html/Saolu%C3%ADsdomaranhao.html',
+  'Lencois': 'html/Lencoismaranhenses.html',
+};
+
+const montarTourDirectUrl = (tourId, cidade) => {
+  const pagina = TOUR_DIRECT_URL_PAGINA_POR_CIDADE[cidade];
+  if (!tourId || !pagina) return '';
+  return `${TOUR_DIRECT_URL_BASE}/${pagina}?tour=${tourId}`;
+};
+
+const atualizarTourModalDirectUrl = () => {
+  const input = document.getElementById('tourModalDirectUrl');
+  if (!input) return;
+  const cidade = document.getElementById('tourModalCidade')?.value || '';
+  const url = montarTourDirectUrl(currentlyEditingTourId, cidade);
+  input.value = url;
+  input.placeholder = currentlyEditingTourId
+    ? 'Selecione a cidade do tour para gerar o link'
+    : 'Salve o tour para gerar o link';
+};
+
 const openTourEditModal = (tourData) => {
   const modal = document.getElementById('tourEditModal');
   if (!modal) return;
@@ -2147,6 +2176,7 @@ const openTourEditModal = (tourData) => {
   document.getElementById('tourModalId').textContent = tourData.id || (isCreatingNewTour ? 'Novo tour' : '--');
   document.getElementById('tourModalName').value = tourData.name || '';
   document.getElementById('tourModalCidade').value = tourData.cidade || '';
+  atualizarTourModalDirectUrl();
   document.getElementById('tourModalPastaImagens').value = tourData.pastaImagens || tourData.pasta_imagens || '';
   setTourModalLanguages(tourData.languages || tourData.idiomas || '');
   document.getElementById('tourModalMeeting').value = tourData.meeting || tourData.encontro || '';
@@ -4551,6 +4581,7 @@ const carregarContasDoBanco = async () => {
 
     // Atualiza gráfico de países com base no cadastro de contas
     updateCountryPie(accounts);
+    carregarToursMaisClicadosBarChart();
 
     // Apenas quem pode gerenciar perfis deve visualizar/editar níveis de acesso.
     if (currentUserPermissions.managePerfis) {
@@ -5048,6 +5079,22 @@ const setupAccountModalEvents = () => {
   };
   document.getElementById('tourModalCidade')?.addEventListener('change', refreshGallery);
   document.getElementById('tourModalPastaImagens')?.addEventListener('change', refreshGallery);
+  document.getElementById('tourModalCidade')?.addEventListener('change', atualizarTourModalDirectUrl);
+
+  document.getElementById('tourModalCopyDirectUrl')?.addEventListener('click', async () => {
+    const input = document.getElementById('tourModalDirectUrl');
+    if (!input?.value) {
+      alert('Salve o tour e selecione a cidade antes de copiar o link.');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(input.value);
+      alert('Link copiado!');
+    } catch (error) {
+      input.select();
+      alert('Não foi possível copiar automaticamente — o link já está selecionado, use Ctrl+C.');
+    }
+  });
 
   const tourModalImageInput = document.getElementById('tourModalImageInput');
   if (tourModalImageInput) {
@@ -5324,6 +5371,12 @@ const carregarAtividadeClientes = async () => {
   }
 };
 
+const TOURS_MAIS_CLICADOS_VISIVEIS = 3;
+
+// Só os 3 primeiros (já vêm ordenados por total de cliques) ficam sempre à
+// vista; o resto entra recolhido atrás de "Ver mais N" — a tabela tende a
+// crescer junto com o catálogo de tours, e listar tudo sempre aberto
+// competia demais com o resto da aba Reservas.
 const renderToursMaisClicados = (ranking) => {
   const tableBody = document.getElementById('toursMaisClicadosBody');
   if (!tableBody) return;
@@ -5334,13 +5387,39 @@ const renderToursMaisClicados = (ranking) => {
     return;
   }
 
-  tableBody.innerHTML = lista.map((item) => `
-    <tr>
+  const celulas = (item) => `
       <td data-label="Tour">${escapeHtml(item.tour)}</td>
       <td data-label="Visualizações">${escapeHtml(item.visualizacoes)}</td>
       <td data-label="Cliques em Reservar">${escapeHtml(item.cliquesReservar)}</td>
-    </tr>
-  `).join('');
+  `;
+
+  const visiveis = lista.slice(0, TOURS_MAIS_CLICADOS_VISIVEIS);
+  const restantes = lista.slice(TOURS_MAIS_CLICADOS_VISIVEIS);
+
+  let html = visiveis.map((item) => `<tr>${celulas(item)}</tr>`).join('');
+  if (restantes.length) {
+    const rotuloVerMais = `Ver mais ${restantes.length} tour${restantes.length > 1 ? 's' : ''} ▾`;
+    html += `
+      <tr class="tours-mais-clicados-toggle-row">
+        <td colspan="3" style="padding:0.5rem 0.75rem;">
+          <button type="button" id="toursMaisClicadosToggle" class="tours-mais-clicados-toggle">${rotuloVerMais}</button>
+        </td>
+      </tr>
+    ` + restantes.map((item) => `<tr class="tours-mais-clicados-extra hidden">${celulas(item)}</tr>`).join('');
+  }
+  tableBody.innerHTML = html;
+
+  const toggleBtn = document.getElementById('toursMaisClicadosToggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const extras = tableBody.querySelectorAll('.tours-mais-clicados-extra');
+      const abrir = extras[0]?.classList.contains('hidden');
+      extras.forEach((tr) => tr.classList.toggle('hidden', !abrir));
+      toggleBtn.textContent = abrir
+        ? 'Ver menos ▴'
+        : `Ver mais ${restantes.length} tour${restantes.length > 1 ? 's' : ''} ▾`;
+    });
+  }
 };
 
 // Mora na aba Reservas (não em Ações dos Clientes) — quem gerencia reservas
@@ -5363,6 +5442,54 @@ const carregarToursMaisClicados = async () => {
   } catch (error) {
     console.error('Erro ao carregar tours mais clicados:', error);
     tableBody.innerHTML = '<tr><td colspan="3" style="padding:0.75rem;">Não foi possível conectar ao servidor.</td></tr>';
+  }
+};
+
+// Gráfico de colunas com o top 5 (Contas) — mesma fonte de dados da tabela
+// completa em Reservas, só que resumida e em formato visual. Barra em CSS
+// puro (altura em %, sem lib de gráfico) — só 5 colunas, não precisa de mais.
+const renderToursMaisClicadosBarChart = (ranking) => {
+  const container = document.getElementById('toursMaisClicadosBarChart');
+  if (!container) return;
+
+  const lista = (Array.isArray(ranking) ? ranking : []).slice(0, 5);
+  if (!lista.length) {
+    container.innerHTML = '<span style="color:#6b7280; font-size:0.85rem;">Nenhum clique registrado ainda.</span>';
+    return;
+  }
+
+  const maxTotal = Math.max(...lista.map((item) => (item.visualizacoes || 0) + (item.cliquesReservar || 0)), 1);
+
+  container.innerHTML = lista.map((item) => {
+    const total = (item.visualizacoes || 0) + (item.cliquesReservar || 0);
+    const alturaPct = Math.max((total / maxTotal) * 100, 4); // barra mínima visível mesmo com total baixo
+    return `
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:0.3rem; min-width:0;">
+        <strong style="font-size:0.85rem; color:#1f2937;">${escapeHtml(total)}</strong>
+        <div title="${escapeHtml(item.tour)}: ${escapeHtml(item.visualizacoes)} visualizações, ${escapeHtml(item.cliquesReservar)} cliques em reservar"
+             style="width:100%; max-width:48px; height:${alturaPct}px; max-height:110px; background:linear-gradient(180deg, #1da194, #0b3c6d); border-radius:6px 6px 0 0;"></div>
+        <span style="font-size:0.72rem; color:#4b5563; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;" title="${escapeHtml(item.tour)}">${escapeHtml(item.tour)}</span>
+      </div>
+    `;
+  }).join('');
+};
+
+const carregarToursMaisClicadosBarChart = async () => {
+  const container = document.getElementById('toursMaisClicadosBarChart');
+  if (!container || !currentUserPermissions?.manageContas) return;
+
+  const email = localStorage.getItem('userEmail') || '';
+  try {
+    const response = await fetchWithApiFallback(`/get_tours_mais_clicados?email=${encodeURIComponent(email)}&limite=5`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      container.innerHTML = `<span style="color:#6b7280; font-size:0.85rem;">${escapeHtml(result.message || 'Erro ao carregar.')}</span>`;
+      return;
+    }
+    renderToursMaisClicadosBarChart(result.ranking);
+  } catch (error) {
+    console.error('Erro ao carregar gráfico de tours mais clicados:', error);
+    container.innerHTML = '<span style="color:#6b7280; font-size:0.85rem;">Não foi possível conectar ao servidor.</span>';
   }
 };
 

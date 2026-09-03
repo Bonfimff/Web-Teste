@@ -1448,6 +1448,43 @@ body {
     order: 1;
 }
 
+/* Botão de compartilhar (link direto ?tour=<id>, gerado em Gerenciamento >
+   Editar Tour) — ícone redondo discreto, ao lado do "Reservar Agora". */
+.rio-link-share {
+    order: 2;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(29, 161, 148, 0.35);
+    background: rgba(255, 255, 255, 0.75);
+    color: #1da194;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.rio-link-share:hover {
+    background: #1da194;
+    color: #ffffff;
+}
+
+/* Destaque temporário no card ao chegar por um link direto (?tour=<id>) —
+   some sozinho depois de alguns segundos (ver scrollToDirectLinkTourIfNeeded
+   em site-shell.js). */
+.rio-tour-card--highlight {
+    animation: rioTourCardHighlight 2.4s ease;
+}
+
+@keyframes rioTourCardHighlight {
+    0%, 100% { box-shadow: none; }
+    15%, 65% { box-shadow: 0 0 0 4px rgba(29, 161, 148, 0.55); }
+}
+
 .rio-btn-reserve {
     padding: 0.45rem 0.9rem;
     min-width: 120px;

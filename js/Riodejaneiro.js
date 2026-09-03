@@ -1,5 +1,13 @@
 
-// version 1.0 
+// version 1.0
+// Link direto pra um tour (?tour=<id>, gerado em Gerenciamento > Editar
+// Tour > "Copiar link"): quando presente, o aviso "Informações Importantes"
+// e o card de premiação não aparecem — o cliente veio direto ver aquele
+// tour, não a cidade inteira. Lido uma vez aqui, em vez de em cada IIFE
+// (o arquivo tem duas sem escopo compartilhado), porque tanto
+// applyCidadeAviso/initAwardToast quanto a rolagem até o card precisam dele.
+window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tour') || null;
+
 (() => {
     const pageTranslations = window.pageTranslations || {};
 
@@ -404,6 +412,52 @@
         return matchers.tourByFolder.get(cardFolder) || matchers.tourByName.get(cardNameKey) || null;
     };
 
+    // URL que leva direto a este tour (mesma página, só com ?tour=<id>) —
+    // Gerenciamento > Editar Tour gera a mesma URL a partir do id + cidade;
+    // aqui é mais simples, já estamos na página certa.
+    const buildTourShareUrl = (tourId) => {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        url.searchParams.set('tour', tourId);
+        return url.toString();
+    };
+
+    // Ícone de compartilhar em cada card — some se já existir (cards são
+    // re-processados a cada troca de idioma) pra não duplicar.
+    const ensureShareButton = (card, tour) => {
+        if (!tour || tour.id == null) return;
+        const actionsDiv = card.querySelector('.rio-tour-actions');
+        if (!actionsDiv || actionsDiv.querySelector('.rio-link-share')) return;
+
+        const shareBtn = document.createElement('button');
+        shareBtn.type = 'button';
+        shareBtn.className = 'rio-link-share';
+        shareBtn.setAttribute('aria-label', 'Compartilhar este tour');
+        shareBtn.innerHTML = '<i class="fa fa-share-alt" aria-hidden="true"></i>';
+        shareBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const url = buildTourShareUrl(tour.id);
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: tour.nome_tour || tour.name || '', url });
+                    return;
+                }
+            } catch (error) {
+                return; // usuário cancelou o share nativo — não é erro, não avisa nada.
+            }
+            try {
+                await navigator.clipboard.writeText(url);
+                if (typeof showGlobalNotification === 'function') {
+                    showGlobalNotification('Link do tour copiado!', 'success');
+                }
+            } catch (error) {
+                console.warn('Falha ao copiar link do tour:', error);
+            }
+        });
+        actionsDiv.appendChild(shareBtn);
+    };
+
     const carregarToursDoBanco = async () => {
         const endpoints = [
             '/get_tours_pagina',
@@ -456,8 +510,12 @@
                 const tour = matchRioTourForCard(card, matchers);
                 if (!tour) return;
 
-                if (tour.id != null) matchedTourIds.add(tour.id);
+                if (tour.id != null) {
+                    matchedTourIds.add(tour.id);
+                    card.dataset.tourId = tour.id;
+                }
                 applyTourVisibility(card, tour);
+                ensureShareButton(card, tour);
 
                 const parentEntries = cardsByParent.get(card.parentElement) || [];
                 parentEntries.push({ card, ordem: tour.ordem ?? index, originalIndex: index });
@@ -1131,6 +1189,7 @@
         const actionLabels = TOUR_ACTION_LABELS[lang] || TOUR_ACTION_LABELS.pt;
         const card = document.createElement('article');
         card.className = 'rio-tour-card';
+        if (tour.id != null) card.dataset.tourId = tour.id;
 
         const imagesDiv = document.createElement('div');
         imagesDiv.className = 'rio-tour-images';
@@ -1177,6 +1236,7 @@
         card.appendChild(infoDiv);
 
         window.__bindRioReserveButton?.(reserveLink);
+        ensureShareButton(card, tour);
 
         return card;
     };
@@ -1497,6 +1557,9 @@
     // escondido) — window.__showAwardCard é chamado pelos handlers do aviso
     // mais abaixo, não por um timer cego.
     const initAwardToast = async () => {
+        // Link direto pra um tour: nunca monta o toast nem define
+        // window.__showAwardCard — qualquer chamada a ela vira no-op sozinha.
+        if (window.__tourDirectLinkId) return;
         const toast = document.getElementById('awardToast');
         if (!toast) return;
 
@@ -5280,11 +5343,26 @@
             setTimeout(() => window.__showAwardCard?.(), 700);
         }
 
+        // Link direto pra um tour (?tour=<id>): rola até o card assim que ele
+        // existir no DOM — os cards só ganham data-tour-id depois que
+        // carregarToursDoBanco() casa cada um com seu registro do banco (ver
+        // matchRioTourForCard/createRioTourCardElement), por isso isso só
+        // roda DEPOIS daquela chamada, não no load da página.
+        const scrollToDirectLinkTourIfNeeded = () => {
+            if (!window.__tourDirectLinkId) return;
+            const card = document.querySelector(`.rio-tour-card[data-tour-id="${window.__tourDirectLinkId}"]`);
+            if (!card) return;
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('rio-tour-card--highlight');
+            setTimeout(() => card.classList.remove('rio-tour-card--highlight'), 2600);
+        };
+
         const initializePageContent = async () => {
             try {
                 await window.carregarToursDoBanco();
                 openReviewFromUrlIfNeeded();
                 checkPendingTourReviewPrompt();
+                scrollToDirectLinkTourIfNeeded();
             } catch {
                 if (typeof syncToursFromIndex === 'function') {
                     syncToursFromIndex();
@@ -5378,6 +5456,14 @@
     const applyCidadeAviso = (aviso) => {
         const noticeEl = document.querySelector('.rio-notice');
         if (!noticeEl || !aviso) return;
+
+        // Link direto pra um tour: some com o aviso e nem tenta acionar o
+        // card de premiação (initAwardToast já nem define essa função nesse
+        // caso, mas o early return aqui deixa a intenção clara).
+        if (window.__tourDirectLinkId) {
+            noticeEl.style.display = 'none';
+            return;
+        }
 
         if (aviso.ativo === false) {
             noticeEl.style.display = 'none';

@@ -960,6 +960,26 @@ body {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
 }
 
+/* "Tours mais clicados" (Reservas): só os 3 primeiros ficam sempre à vista,
+   o resto fica atrás do botão "Ver mais". */
+tr.tours-mais-clicados-extra.hidden {
+  display: none;
+}
+
+.tours-mais-clicados-toggle {
+  background: none;
+  border: none;
+  color: #1da194;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tours-mais-clicados-toggle:hover {
+  text-decoration: underline;
+}
+
 .rio-tour-table th,
 .rio-tour-table td {
   padding: 1rem;

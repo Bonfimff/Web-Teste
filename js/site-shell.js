@@ -2,13 +2,20 @@
 // Site shell (header, mobile menu, login/register, footer card, notifications).
 // Generic logic shared by pages that use the "rio-page" layout pattern. Extracted from
 // js/Riodejaneiro.js, minus the Rio-only tour database rendering and reservation-form intercept.
+// Link direto pra um tour (?tour=<id>, gerado em Gerenciamento > Editar
+// Tour > "Copiar link"): quando presente, o aviso "Informações Importantes"
+// e o card de premiação não aparecem — o cliente veio direto ver aquele
+// tour, não a cidade inteira.
+window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tour') || null;
+
 (() => {
     // Esconde o aviso "Informações Importantes" antes do primeiro paint se o
     // usuário já marcou "não mostrar novamente" nesta página nessa sessão de
-    // navegador — evita o overlay reaparecer a cada carregamento. Chave por
-    // pathname porque cada cidade tem seu próprio texto de aviso.
+    // navegador (ou se chegou por um link direto de tour, ver acima) — evita
+    // o overlay reaparecer a cada carregamento. Chave por pathname porque
+    // cada cidade tem seu próprio texto de aviso.
     const NOTICE_DISMISS_KEY = `rioNoticeDismissed:${window.location.pathname}`;
-    if (localStorage.getItem(NOTICE_DISMISS_KEY) === '1') {
+    if (window.__tourDirectLinkId || localStorage.getItem(NOTICE_DISMISS_KEY) === '1') {
         const notice = document.querySelector('.rio-notice');
         if (notice) notice.style.display = 'none';
     }
@@ -307,6 +314,10 @@
     // página) — por isso a exibição em si não roda mais num setTimeout cego; ela é
     // dependendurada de window.__showAwardCard, chamado nos handlers do aviso lá embaixo.
     const initAwardNotification = async () => {
+        // Link direto pra um tour: nunca monta nem o toast nem o modal, e
+        // window.__showAwardCard nunca é definida — qualquer chamada a ela
+        // (inclusive pelos handlers do aviso) vira no-op sozinha.
+        if (window.__tourDirectLinkId) return;
         const toast = document.getElementById('awardToast');
         const modal = !toast ? document.getElementById('awardModal') : null;
         if (!toast && !modal) return;
@@ -3195,10 +3206,68 @@
     // no HTML estático da página: monta um card do zero e insere na grid certa
     // (grid[0] = tours gratuitos, última grid = pagos — mesma convenção das
     // divs .rio-tours-grid já existentes em #tours).
+    // URL que leva direto a este tour (mesma página, só com ?tour=<id>) —
+    // Gerenciamento > Editar Tour gera a mesma URL a partir do id + cidade.
+    const buildTourShareUrl = (tourId) => {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        url.searchParams.set('tour', tourId);
+        return url.toString();
+    };
+
+    // Ícone de compartilhar em cada card — some se já existir (cards são
+    // re-processados a cada troca de idioma) pra não duplicar.
+    const ensureShareButton = (card, tour) => {
+        if (!tour || tour.id == null) return;
+        const actionsDiv = card.querySelector('.rio-tour-actions');
+        if (!actionsDiv || actionsDiv.querySelector('.rio-link-share')) return;
+
+        const shareBtn = document.createElement('button');
+        shareBtn.type = 'button';
+        shareBtn.className = 'rio-link-share';
+        shareBtn.setAttribute('aria-label', 'Compartilhar este tour');
+        shareBtn.innerHTML = '<i class="fa fa-share-alt" aria-hidden="true"></i>';
+        shareBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const url = buildTourShareUrl(tour.id);
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: tour.name || '', url });
+                    return;
+                }
+            } catch (error) {
+                return; // usuário cancelou o share nativo — não é erro, não avisa nada.
+            }
+            try {
+                await navigator.clipboard.writeText(url);
+                if (typeof showGlobalNotification === 'function') {
+                    showGlobalNotification('Link do tour copiado!', 'success');
+                }
+            } catch (error) {
+                console.warn('Falha ao copiar link do tour:', error);
+            }
+        });
+        actionsDiv.appendChild(shareBtn);
+    };
+
+    // Link direto pra um tour (?tour=<id>): rola até o card assim que ele
+    // existir no DOM — só depois de fetchToursFromBackend() casar cada card
+    // com seu registro do banco (dataset.tourId é preenchido ali mesmo).
+    const scrollToDirectLinkTourIfNeeded = () => {
+        if (!window.__tourDirectLinkId) return;
+        const card = document.querySelector(`.rio-tour-card[data-tour-id="${window.__tourDirectLinkId}"]`);
+        if (!card) return;
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('rio-tour-card--highlight');
+        setTimeout(() => card.classList.remove('rio-tour-card--highlight'), 2600);
+    };
+
     const createSiteShellTourCardElement = (tour, lang) => {
         const actionLabels = TOUR_ACTION_LABELS[lang] || TOUR_ACTION_LABELS.pt;
         const card = document.createElement('article');
         card.className = 'rio-tour-card';
+        if (tour.id != null) card.dataset.tourId = tour.id;
 
         const imagesDiv = document.createElement('div');
         imagesDiv.className = 'rio-tour-images';
@@ -3245,6 +3314,7 @@
         card.appendChild(infoDiv);
 
         window.__bindSiteShellReserveButton?.(reserveLink);
+        ensureShareButton(card, tour);
 
         return card;
     };
@@ -3388,8 +3458,12 @@
                     const matchedTour = tours.find(t => normalizeTourKey(t.name) === normalizeTourKey(cardName));
                     if (!matchedTour) return;
 
-                    if (matchedTour.id) matchedTourIds.add(String(matchedTour.id));
+                    if (matchedTour.id) {
+                        matchedTourIds.add(String(matchedTour.id));
+                        card.dataset.tourId = matchedTour.id;
+                    }
                     applyTourVisibility(card, matchedTour);
+                    ensureShareButton(card, matchedTour);
 
                     const currentLang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
                     const detailsEl = card.querySelector('.rio-tour-details');
@@ -5054,7 +5128,7 @@
             syncToursFromIndex();
         }
         // Puxa os tours mantidos pela página de Gerenciamento (links, status e valores atualizados)
-        fetchToursFromBackend();
+        fetchToursFromBackend().then(scrollToDirectLinkTourIfNeeded);
         loadCidadeContato();
         loadCidadeAviso();
         // Texto padrão do cartão de informações (antes de SOBRE/CONTATO/AJUDA
@@ -5142,6 +5216,13 @@
     const applyCidadeAviso = (aviso) => {
         const noticeEl = document.querySelector('.rio-notice');
         if (!noticeEl || !aviso) return;
+
+        // Link direto pra um tour: some com o aviso, sem acionar o card de
+        // premiação (initAwardNotification já nem define essa função aqui).
+        if (window.__tourDirectLinkId) {
+            noticeEl.style.display = 'none';
+            return;
+        }
 
         if (aviso.ativo === false) {
             noticeEl.style.display = 'none';

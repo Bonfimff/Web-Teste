@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=61">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=62">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -192,6 +192,13 @@
                 <div id="countryChartContainer" style="margin-top:0.5rem; color:#374151; display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
                     <div id="countryPie" style="width:150px; height:150px; border-radius:50%; background: conic-gradient(#e53e3e 0deg 0deg, #3182ce 0deg 0deg, #38a169 0deg 0deg, #dd6b20 0deg 0deg);"></div>
                     <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
+                </div>
+
+                <div style="margin-top:1.25rem;">
+                    <strong style="font-size:0.9rem; color:#1f2937;">Top 5 tours mais clicados</strong>
+                    <div id="toursMaisClicadosBarChart" style="margin-top:0.6rem; display:flex; align-items:flex-end; gap:1rem; min-height:160px; padding:0.5rem 0.25rem 0;">
+                        <span style="color:#6b7280; font-size:0.85rem;">Carregando...</span>
+                    </div>
                 </div>
             </div>
             <div id="liberacoesCadastroManager" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
@@ -1054,6 +1061,14 @@
             <fieldset>
               <legend>Dados básicos</legend>
               <p class="tour-modal-id"><strong>ID:</strong> <span id="tourModalId">--</span></p>
+              <div style="margin:0.5rem 0 0.75rem;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#374151; margin-bottom:0.3rem;">URL de redirecionamento direto</label>
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="tourModalDirectUrl" readonly placeholder="Salve o tour para gerar o link" style="flex:1; min-width:220px; background:#f3f4f6; color:#374151;" />
+                  <button type="button" id="tourModalCopyDirectUrl" class="btn-book" style="white-space:nowrap; background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Copiar link</button>
+                </div>
+                <p style="font-size:0.78rem; color:#6b7280; margin:0.3rem 0 0;">Gerado automaticamente — leva direto a este tour, sem mostrar os avisos importantes nem o card de premiação da cidade.</p>
+              </div>
               <div class="tour-modal-json-toolbar">
                 <button type="button" id="tourModalDownloadJson" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Baixar JSON deste tour</button>
                 <button type="button" id="tourModalImportJson" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Importar JSON para este tour</button>
@@ -1481,9 +1496,9 @@
     </div>
 
     <script src="../js/Translation.js?v=3"></script>
-    <script src="../js/Riodejaneiro.js?v=67"></script>
+    <script src="../js/Riodejaneiro.js?v=72"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=106"></script>
+    <script src="../js/Gerenciamento.js?v=107"></script>
 </body>
 </html>
 
