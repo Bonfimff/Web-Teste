@@ -2791,19 +2791,20 @@ header {
   --res-text: #1f2937;
   --res-text-muted: #6b7280;
 
-  width: min(90vw, 520px);
-  max-height: min(90vh, 680px);
+  /* Tudo dimensionado pra caber inteiro sem rolagem (nem vertical, nem
+     horizontal) em qualquer aparelho — inclusive celular deitado, a tela
+     mais baixa que existe na prática. Por isso os tamanhos abaixo usam
+     clamp() amarrado à altura da tela (dvh) em vez de rem fixo: o modal
+     encolhe sozinho conforme a tela fica mais baixa, sem precisar de uma
+     media query por breakpoint. dvh (não vh) porque no mobile a barra de
+     endereço do navegador some/aparece e muda a altura real disponível. */
+  width: min(92vw, 520px);
+  max-height: min(96dvh, 640px);
   background: #ffffff;
   border-radius: 16px;
-  padding: 1.4rem 1.4rem 1.2rem;
+  padding: clamp(0.5rem, 3dvh, 1.4rem) clamp(0.9rem, 4vw, 1.4rem);
   box-shadow: 0 12px 40px rgba(0,0,0,0.28);
   overflow: hidden;
-  /* Layout em coluna com o form como único item flexível: em telas
-     grandes 90vh pode passar de 640px, e o form tentava crescer pra
-     acompanhar (calc(90vh - 120px)) em vez de respeitar o teto real do
-     modal — o excesso ficava cortado pelo overflow:hidden do modal sem
-     nunca acionar o próprio scroll do form. min-height:0 é o que permite
-     o form encolher abaixo do seu conteúdo e realmente rolar. */
   display: flex;
   flex-direction: column;
 }
@@ -2811,21 +2812,21 @@ header {
 .res-modal-header {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
+  gap: 0.6rem;
+  margin-bottom: clamp(0.25rem, 1.6dvh, 0.9rem);
 }
 
 .res-modal-icon {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: clamp(26px, 6dvh, 36px);
+  height: clamp(26px, 6dvh, 36px);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 9px;
   background: var(--res-accent-light);
   color: var(--res-accent);
-  font-size: 1.05rem;
+  font-size: clamp(0.8rem, 2.6dvh, 1rem);
 }
 
 .res-modal-heading {
@@ -2833,23 +2834,29 @@ header {
 }
 
 .reservation-modal h2 {
-  margin: 0 0 0.2rem;
-  font-size: 1.2rem;
+  margin: 0 0 0.1rem;
+  font-size: clamp(0.86rem, 3.2dvh, 1.15rem);
   font-weight: 700;
   color: var(--res-text);
+  line-height: 1.15;
 }
 
 .res-modal-subtitle {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: clamp(0.6rem, 2dvh, 0.8rem);
   color: var(--res-text-muted);
+  line-height: 1.2;
 }
 
 .reservation-modal form {
   display: grid;
-  gap: 0.9rem;
+  gap: clamp(0.22rem, 1.4dvh, 0.7rem);
   flex: 1;
   min-height: 0;
+  /* Fica como rede de segurança, não como plano: com os tamanhos acima o
+     conteúdo deve sempre caber sem precisar rolar. Se algum aparelho real
+     ainda assim não couber, é melhor um scroll discreto aqui do que
+     conteúdo cortado ou vazando pra fora do modal. */
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -2863,24 +2870,34 @@ header {
   border-radius: 999px;
 }
 
-/* Duas colunas pra Nome+Data e Hora+Quantidade — no mobile cai pra uma
-   coluna só (ver media query mais abaixo) porque não há espaço horizontal
-   pros dois campos lado a lado com o teclado nativo aberto. */
+/* Nome+Data e Hora+Quantidade (e agora Idioma+Celular) sempre lado a lado,
+   em QUALQUER tamanho de tela, inclusive celular — pedido explícito: menos
+   linhas empilhadas = menos altura total, o que também ajuda a nunca
+   precisar rolar. */
 .res-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.9rem;
+  gap: clamp(0.5rem, 3vw, 0.9rem);
 }
 
 .res-field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: clamp(0.08rem, 0.6dvh, 0.3rem);
   min-width: 0;
 }
 
+/* [hidden] sozinho (regra do navegador) empata em especificidade com
+   .res-field e o navegador prioriza a folha de estilo da página — sem esta
+   regra explícita, o campo "Hora" continuava ocupando espaço (e ficava
+   visível) mesmo com o atributo hidden, porque .res-field { display:flex }
+   vencia. */
+.res-field[hidden] {
+  display: none;
+}
+
 .reservation-modal label {
-  font-size: 0.82rem;
+  font-size: clamp(0.62rem, 1.9dvh, 0.8rem);
   font-weight: 600;
   color: var(--res-text-muted);
 }
@@ -2896,19 +2913,19 @@ header {
 
 .res-input-icon {
   position: absolute;
-  left: 0.75rem;
+  left: 0.65rem;
   color: var(--res-accent);
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 2dvh, 0.9rem);
   pointer-events: none;
 }
 
 .reservation-modal input,
 .reservation-modal select {
   width: 100%;
-  padding: 0.6rem 0.75rem;
+  padding: clamp(0.26rem, 1.3dvh, 0.6rem) 0.65rem;
   border-radius: 8px;
   border: 1px solid var(--res-border);
-  font-size: 0.88rem;
+  font-size: clamp(0.78rem, 2.1dvh, 0.88rem);
   color: var(--res-text);
   background: #fff;
   transition: border-color 0.15s ease;
@@ -2916,7 +2933,7 @@ header {
 
 .res-input-wrap input,
 .res-input-wrap select {
-  padding-left: 2.15rem;
+  padding-left: 1.95rem;
 }
 
 .reservation-modal input:focus,
@@ -2932,11 +2949,11 @@ header {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  padding-right: 2.15rem;
+  padding-right: 1.95rem;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%231da194'%3e%3cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 14px;
+  background-position: right 0.65rem center;
+  background-size: 13px;
 }
 
 /* Caixa de destaque "Tour selecionado" — nome do tour vem sempre do próprio
@@ -2944,23 +2961,23 @@ header {
 .res-tour-box {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.55rem;
   background: var(--res-accent-light);
   border-radius: 10px;
-  padding: 0.7rem 0.85rem;
+  padding: clamp(0.3rem, 1.5dvh, 0.65rem) 0.7rem;
 }
 
 .res-tour-icon {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: clamp(22px, 5dvh, 30px);
+  height: clamp(22px, 5dvh, 30px);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #ffffff;
   color: var(--res-accent);
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 2dvh, 0.85rem);
 }
 
 .res-tour-info {
@@ -2971,13 +2988,13 @@ header {
 }
 
 .res-tour-label {
-  font-size: 0.72rem;
+  font-size: clamp(0.6rem, 1.7dvh, 0.7rem);
   color: var(--res-accent-dark);
   font-weight: 600;
 }
 
 .res-tour-name {
-  font-size: 0.95rem;
+  font-size: clamp(0.78rem, 2.2dvh, 0.92rem);
   font-weight: 700;
   color: var(--res-text);
   overflow: hidden;
@@ -2994,11 +3011,11 @@ header {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.75rem;
+  gap: 0.45rem;
+  padding: clamp(0.26rem, 1.3dvh, 0.6rem) 0.65rem;
   border-radius: 8px;
   border: 1px solid var(--res-border);
-  font-size: 0.88rem;
+  font-size: clamp(0.78rem, 2.1dvh, 0.88rem);
   background: #fff;
   color: var(--res-text);
   cursor: pointer;
@@ -3013,15 +3030,6 @@ header {
 .res-date-display:hover,
 .res-date-display:focus-visible {
   border-color: var(--res-accent);
-}
-
-/* Telas estreitas: Nome+Data e Hora+Quantidade empilham em vez de dividir
-   a largura do modal ao meio — com 2 colunas fica apertado demais junto
-   com o teclado nativo do celular aberto. */
-@media (max-width: 480px) {
-  .res-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .res-calendar-popover {
@@ -3130,9 +3138,9 @@ header {
 
 .reservation-modal-actions {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-  padding-top: 0.9rem;
+  gap: 0.6rem;
+  margin-top: clamp(0.2rem, 1.4dvh, 0.7rem);
+  padding-top: clamp(0.25rem, 1.4dvh, 0.8rem);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
@@ -3143,8 +3151,8 @@ header {
   justify-content: center;
   gap: 0.4rem;
   border-radius: 999px;
-  padding: 0.7rem 1.25rem;
-  font-size: 0.85rem;
+  padding: clamp(0.38rem, 1.8dvh, 0.7rem) 1rem;
+  font-size: clamp(0.75rem, 2dvh, 0.85rem);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
