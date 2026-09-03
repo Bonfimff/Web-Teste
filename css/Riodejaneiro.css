@@ -1107,9 +1107,17 @@ body {
 }
 
 /* Botão de compartilhar (link direto ?tour=<id>, gerado em Gerenciamento >
-   Editar Tour) — ícone redondo discreto, ao lado do "Reservar Agora". */
+   Editar Tour) — canto superior direito da imagem do tour, sobre a foto (ver
+   ensureShareButton em Riodejaneiro.js/site-shell.js: é anexado dentro de
+   .rio-tour-images, não de .rio-tour-actions). Fundo escuro translúcido
+   porque a foto por baixo muda de tour pra tour — um fundo claro sumiria
+   contra céu/areia clara. Os pontos do slideshow ficam embaixo
+   (.rio-tour-slider-dots), então não disputam espaço com o botão. */
 .rio-link-share {
-    order: 2;
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 15;
     flex: 0 0 auto;
     width: 34px;
     height: 34px;
@@ -1117,18 +1125,19 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    border: 1px solid rgba(29, 161, 148, 0.35);
-    background: rgba(255, 255, 255, 0.75);
-    color: #1da194;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    color: #ffffff;
     cursor: pointer;
     padding: 0;
     font-size: 0.85rem;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.2s ease;
 }
 
 .rio-link-share:hover {
     background: #1da194;
-    color: #ffffff;
 }
 
 /* Destaque temporário no card ao chegar por um link direto (?tour=<id>) —

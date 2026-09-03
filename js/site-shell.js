@@ -3220,8 +3220,11 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
     // re-processados a cada troca de idioma) pra não duplicar.
     const ensureShareButton = (card, tour) => {
         if (!tour || tour.id == null) return;
-        const actionsDiv = card.querySelector('.rio-tour-actions');
-        if (!actionsDiv || actionsDiv.querySelector('.rio-link-share')) return;
+        // Fica sobre a foto (canto superior direito), não na barra de ações —
+        // ver .rio-link-share em Riodejaneiro.css/Lencoismaranhenses.css
+        // (position:absolute).
+        const imagesDiv = card.querySelector('.rio-tour-images');
+        if (!imagesDiv || imagesDiv.querySelector('.rio-link-share')) return;
 
         const shareBtn = document.createElement('button');
         shareBtn.type = 'button';
@@ -3248,7 +3251,7 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 console.warn('Falha ao copiar link do tour:', error);
             }
         });
-        actionsDiv.appendChild(shareBtn);
+        imagesDiv.appendChild(shareBtn);
     };
 
     // Link direto pra um tour (?tour=<id>): rola até o card assim que ele
