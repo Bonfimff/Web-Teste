@@ -202,6 +202,10 @@ const applyAccountsSearchFilter = () => {
   renderAccountsTable(visibleAccounts);
 };
 
+// 'colaboradores'/'clientes' filtram a MESMA tabela de contas; 'auditoria' e
+// 'atividade_clientes' são conteúdo totalmente diferente (colunas próprias),
+// então viram troca de painel — só um fica visível por vez, como abas de uma
+// pasta (accounts-tabbar), em vez de ficarem sempre visíveis abaixo da tabela.
 const setAccountsFilterTab = (tab) => {
   accountsFilterTab = tab;
   const styleActive = (btn, active) => {
@@ -213,7 +217,33 @@ const setAccountsFilterTab = (tab) => {
   };
   styleActive(document.getElementById('accountsFilterColaboradores'), tab === 'colaboradores');
   styleActive(document.getElementById('accountsFilterClientes'), tab === 'clientes');
-  applyAccountsSearchFilter();
+  styleActive(document.getElementById('accountsFilterAuditoria'), tab === 'auditoria');
+  styleActive(document.getElementById('accountsFilterAtividadeClientes'), tab === 'atividade_clientes');
+
+  const setDisplay = (id, show) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  };
+
+  const isAccountsTab = tab === 'colaboradores' || tab === 'clientes';
+  setDisplay('accountsTableWrapper', isAccountsTab);
+  setDisplay('accountsSearchTab', isAccountsTab);
+  setDisplay('addAccountBtn', isAccountsTab);
+  // Reaplica a permissão de managePerfis (não força visível: quem não tem
+  // essa permissão continua sem ver o painel de níveis, mesmo na aba Contas).
+  setDisplay('rolesManager', isAccountsTab && !!currentUserPermissions?.managePerfis);
+  setDisplay('reservaSyncPlataformasManager', isAccountsTab);
+  setDisplay('auditoriaManager', tab === 'auditoria');
+  setDisplay('atividadeClientesManager', tab === 'atividade_clientes');
+
+  if (isAccountsTab) {
+    applyAccountsSearchFilter();
+  } else if (tab === 'auditoria') {
+    carregarAuditoria();
+  } else if (tab === 'atividade_clientes') {
+    carregarAtividadeClientes();
+    carregarToursMaisClicados();
+  }
 };
 const IMPORTANT_INFO_DISMISSED_KEY = 'importantInfoDismissedItems';
 
@@ -603,14 +633,19 @@ const applyAccessControls = (perms) => {
     document.querySelectorAll('.role-management-panel, #rolePermissionsSection, #rolesManager').forEach(el => { if (el) el.style.display = 'none'; });
   }
 
-  // Auditoria e Ações dos Clientes: mesma permissão (a princípio, só super_admin).
-  const auditoriaManager = document.getElementById('auditoriaManager');
-  if (auditoriaManager) {
-    auditoriaManager.style.display = perms.viewAuditoria ? '' : 'none';
-  }
-  const atividadeClientesManager = document.getElementById('atividadeClientesManager');
-  if (atividadeClientesManager) {
-    atividadeClientesManager.style.display = perms.viewAuditoria ? '' : 'none';
+  // Auditoria e Ações dos Clientes: duas abas a mais na "pasta" de Contas
+  // (accounts-tabbar), mesma permissão pras duas (a princípio, só super_admin).
+  // A visibilidade do CONTEÚDO de cada uma é responsabilidade de
+  // setAccountsFilterTab (só a aba ativa fica visível) — aqui só se decide se
+  // o BOTÃO da aba aparece ou não.
+  const auditoriaBtn = document.getElementById('accountsFilterAuditoria');
+  if (auditoriaBtn) auditoriaBtn.style.display = perms.viewAuditoria ? '' : 'none';
+  const atividadeClientesBtn = document.getElementById('accountsFilterAtividadeClientes');
+  if (atividadeClientesBtn) atividadeClientesBtn.style.display = perms.viewAuditoria ? '' : 'none';
+  // Permissão caiu com uma dessas abas ativa: volta pra Colaboradores, senão
+  // o painel ficaria preso numa aba cujo botão acabou de sumir.
+  if (!perms.viewAuditoria && (accountsFilterTab === 'auditoria' || accountsFilterTab === 'atividade_clientes')) {
+    setAccountsFilterTab('colaboradores');
   }
 
   // Controle de edição
@@ -4501,6 +4536,16 @@ const carregarContasDoBanco = async () => {
     if (clientesBtn && !clientesBtn.dataset.filterAttached) {
       clientesBtn.addEventListener('click', () => setAccountsFilterTab('clientes'));
       clientesBtn.dataset.filterAttached = '1';
+    }
+    const auditoriaBtn = document.getElementById('accountsFilterAuditoria');
+    const atividadeClientesBtn = document.getElementById('accountsFilterAtividadeClientes');
+    if (auditoriaBtn && !auditoriaBtn.dataset.filterAttached) {
+      auditoriaBtn.addEventListener('click', () => setAccountsFilterTab('auditoria'));
+      auditoriaBtn.dataset.filterAttached = '1';
+    }
+    if (atividadeClientesBtn && !atividadeClientesBtn.dataset.filterAttached) {
+      atividadeClientesBtn.addEventListener('click', () => setAccountsFilterTab('atividade_clientes'));
+      atividadeClientesBtn.dataset.filterAttached = '1';
     }
     setAccountsFilterTab(accountsFilterTab);
 
