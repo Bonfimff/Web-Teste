@@ -4448,6 +4448,10 @@
         const reservationModal = document.getElementById('reservationModal');
         const reservationForm = document.getElementById('reservationForm');
         const reservationTour = document.getElementById('reservationTour');
+        // Elemento só de exibição (caixa "Tour selecionado") — reservationTour
+        // continua sendo o campo de verdade lido no submit, mas agora fica
+        // hidden; quem mostra o nome do tour pro usuário é este aqui.
+        const reservationTourDisplay = document.getElementById('reservationTourDisplay');
         const reservationName = document.getElementById('reservationName');
         const reservationDate = document.getElementById('reservationDate');
         const reservationTimeField = document.getElementById('reservationTimeField');
@@ -4490,9 +4494,10 @@
             if (horarios.length) {
                 reservationTimeField.hidden = false;
                 reservationTime.setAttribute('required', 'required');
-                if (horarios.length === 1) {
-                    reservationTime.value = horarios[0];
-                }
+                // Antes, com um único horário disponível, ele já vinha
+                // pré-selecionado — o cliente nunca via nem escolhia de
+                // fato. Agora o campo sempre nasce em branco (placeholder),
+                // mesmo com uma opção só; é o próprio cliente quem escolhe.
             } else {
                 reservationTimeField.hidden = true;
                 reservationTime.removeAttribute('required');
@@ -4523,8 +4528,22 @@
             }
         };
 
+        // Depois de escolher a data, leva o cliente direto pro campo de
+        // horário — focus() sempre funciona; showPicker() (Chrome/Edge
+        // recentes) já abre o dropdown sozinho, mas é opcional: navegadores
+        // sem suporte simplesmente ignoram e o campo fica focado, pronto
+        // pra abrir com Enter/seta ou um clique.
+        const focarCampoHorario = () => {
+            if (!reservationTime || !reservationTimeField || reservationTimeField.hidden) return;
+            reservationTime.focus();
+            try { reservationTime.showPicker?.(); } catch (_err) { /* navegador sem suporte */ }
+        };
+
         if (reservationDate) {
-            reservationDate.addEventListener('change', updateReservationTimeForSelectedDate);
+            reservationDate.addEventListener('change', () => {
+                updateReservationTimeForSelectedDate();
+                focarCampoHorario();
+            });
         }
 
         // Calendário customizado: o popup nativo de <input type="date"> não é
@@ -4628,7 +4647,7 @@
             calendarDisplay = document.createElement('button');
             calendarDisplay.type = 'button';
             calendarDisplay.className = 'res-date-display';
-            calendarDisplay.innerHTML = '<span class="res-date-display-text">Selecione uma data</span><i class="fa fa-calendar"></i>';
+            calendarDisplay.innerHTML = '<i class="fas fa-calendar-alt"></i><span class="res-date-display-text">Selecione uma data</span>';
             reservationDate.insertAdjacentElement('afterend', calendarDisplay);
             calendarDisplay.addEventListener('click', openCalendarPopover);
         };
@@ -4670,6 +4689,7 @@
             }
 
             reservationTour.value = tourName;
+            if (reservationTourDisplay) reservationTourDisplay.textContent = tourName;
             reservationName.value = userName || '';
             reservationDate.value = '';
             if (calendarDisplay) calendarDisplay.querySelector('.res-date-display-text').textContent = formatDateDisplay('');

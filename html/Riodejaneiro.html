@@ -31,7 +31,7 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400;600&family=Karla:wght@300..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=53">
+    <link rel="stylesheet" href="../css/Riodejaneiro.css?v=54">
     <link rel="stylesheet" href="../css/hero-lockup.css?v=5">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=8">
 </head>
@@ -209,39 +209,79 @@
 
         <div id="reservationModal" class="reservation-modal-overlay hidden" role="dialog" aria-modal="true" data-i18n-aria="reservation_modal_title" aria-label="Formulário de reserva">
             <div class="reservation-modal">
-                <h2 data-i18n="reservation_modal_title">Reservar Tour</h2>
+                <div class="res-modal-header">
+                    <span class="res-modal-icon" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+                    <div class="res-modal-heading">
+                        <h2 data-i18n="reservation_modal_title">Reservar Tour</h2>
+                        <p class="res-modal-subtitle" data-i18n="reservation_modal_subtitle">Preencha os dados abaixo para confirmar sua reserva.</p>
+                    </div>
+                </div>
                 <form id="reservationForm">
-                    <label><span data-i18n="reservation_tour_label">Tour</span>
-                        <input type="text" id="reservationTour" readonly>
-                    </label>
-                    <label><span data-i18n="reservation_name_label">Nome</span>
-                        <input type="text" id="reservationName" data-i18n-placeholder="reservation_name_placeholder" placeholder="Seu nome" required>
-                    </label>
-                    <label><span data-i18n="reservation_date_label">Data da reserva</span>
-                        <input type="date" id="reservationDate" required>
-                    </label>
-                    <label id="reservationTimeField" hidden><span data-i18n="reservation_time_label">Horário</span>
-                        <select id="reservationTime">
-                            <option value="" data-i18n="reservation_time_placeholder">Selecione um horário</option>
-                        </select>
-                    </label>
-                    <label><span data-i18n="reservation_quantity_label">Quantidade de pessoas</span>
-                        <input type="number" id="reservationQuantity" min="1" value="1" required>
-                    </label>
-                    <label><span data-i18n="reservation_language_label">Idioma</span>
-                        <select id="reservationLanguage" required>
-                            <option value="" data-i18n="reservation_language_placeholder">Selecione um idioma</option>
-                        </select>
-                    </label>
-                    <label><span data-i18n="reservation_phone_label">Celular/WhatsApp</span>
-                        <input type="tel" id="reservationPhone" data-i18n-placeholder="reservation_phone_placeholder" placeholder="(00) 00000-0000" required>
-                    </label>
-                    <label><span data-i18n="reservation_email_label">Email</span>
-                        <input type="email" id="reservationEmail" data-i18n-placeholder="reservation_email_placeholder" placeholder="seuemail@exemplo.com" required>
-                    </label>
+                    <input type="hidden" id="reservationTour">
+                    <div class="res-tour-box">
+                        <span class="res-tour-icon" aria-hidden="true"><i class="fas fa-mountain"></i></span>
+                        <div class="res-tour-info">
+                            <span class="res-tour-label" data-i18n="reservation_tour_selected_label">Tour selecionado</span>
+                            <strong id="reservationTourDisplay" class="res-tour-name"></strong>
+                        </div>
+                    </div>
+                    <div class="res-grid">
+                        <div class="res-field">
+                            <label for="reservationName" data-i18n="reservation_name_label">Nome</label>
+                            <div class="res-input-wrap">
+                                <i class="fas fa-user res-input-icon" aria-hidden="true"></i>
+                                <input type="text" id="reservationName" data-i18n-placeholder="reservation_name_placeholder" placeholder="Seu nome" required>
+                            </div>
+                        </div>
+                        <div class="res-field">
+                            <label for="reservationDate" data-i18n="reservation_date_label">Data da reserva</label>
+                            <input type="date" id="reservationDate" required>
+                        </div>
+                    </div>
+                    <div class="res-grid">
+                        <div class="res-field" id="reservationTimeField" hidden>
+                            <label for="reservationTime" data-i18n="reservation_time_label">Horário</label>
+                            <div class="res-input-wrap">
+                                <i class="fas fa-clock res-input-icon" aria-hidden="true"></i>
+                                <select id="reservationTime">
+                                    <option value="" data-i18n="reservation_time_placeholder">Selecione um horário</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="res-field">
+                            <label for="reservationQuantity" data-i18n="reservation_quantity_label">Quantidade de pessoas</label>
+                            <div class="res-input-wrap">
+                                <i class="fas fa-users res-input-icon" aria-hidden="true"></i>
+                                <input type="number" id="reservationQuantity" min="1" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="res-field">
+                        <label for="reservationLanguage" data-i18n="reservation_language_label">Idioma</label>
+                        <div class="res-input-wrap">
+                            <i class="fas fa-globe res-input-icon" aria-hidden="true"></i>
+                            <select id="reservationLanguage" required>
+                                <option value="" data-i18n="reservation_language_placeholder">Selecione um idioma</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="res-field">
+                        <label for="reservationPhone" data-i18n="reservation_phone_label">Celular/WhatsApp</label>
+                        <div class="res-input-wrap">
+                            <i class="fab fa-whatsapp res-input-icon" aria-hidden="true"></i>
+                            <input type="tel" id="reservationPhone" data-i18n-placeholder="reservation_phone_placeholder" placeholder="(00) 00000-0000" required>
+                        </div>
+                    </div>
+                    <div class="res-field">
+                        <label for="reservationEmail" data-i18n="reservation_email_label">Email</label>
+                        <div class="res-input-wrap">
+                            <i class="fas fa-envelope res-input-icon" aria-hidden="true"></i>
+                            <input type="email" id="reservationEmail" data-i18n-placeholder="reservation_email_placeholder" placeholder="seuemail@exemplo.com" required>
+                        </div>
+                    </div>
                     <div class="reservation-modal-actions">
                         <button type="button" id="reservationCancel" class="btn-book" data-i18n="reservation_cancel_btn">Cancelar</button>
-                        <button type="submit" class="btn-book" data-i18n="reservation_confirm_btn">Confirmar Reserva</button>
+                        <button type="submit" class="btn-book"><i class="fas fa-check-circle" aria-hidden="true"></i> <span data-i18n="reservation_confirm_btn">Confirmar Reserva</span></button>
                     </div>
                 </form>
             </div>
@@ -250,7 +290,7 @@
     </div>
     <script src="../js/Translation.js?v=9"></script>
     <script src="../js/tour-interacoes.js?v=10"></script>
-    <script src="../js/Riodejaneiro.js?v=70"></script>
+    <script src="../js/Riodejaneiro.js?v=71"></script>
     <script src="../js/presenca.js?v=1"></script>
     <script src="../js/atividade-cliente.js?v=1"></script>
     <script src="../js/cidade-visual.js?v=5"></script>

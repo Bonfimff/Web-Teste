@@ -2781,11 +2781,21 @@ header {
 }
 
 .reservation-modal {
+  /* Paleta local do modal — teal, igual ao botão "Confirmar Reserva" que já
+     existia (#1da194); o resto do site usa verde (#18b015)/azul (#0b3c6d),
+     então isso fica isolado aqui em vez de virar variável global. */
+  --res-accent: #1da194;
+  --res-accent-dark: #178f84;
+  --res-accent-light: #e5f6f4;
+  --res-border: #e2e8f0;
+  --res-text: #1f2937;
+  --res-text-muted: #6b7280;
+
   width: min(90vw, 520px);
-  max-height: min(90vh, 640px);
+  max-height: min(90vh, 680px);
   background: #ffffff;
   border-radius: 16px;
-  padding: 1.2rem;
+  padding: 1.4rem 1.4rem 1.2rem;
   box-shadow: 0 12px 40px rgba(0,0,0,0.28);
   overflow: hidden;
   /* Layout em coluna com o form como único item flexível: em telas
@@ -2798,9 +2808,46 @@ header {
   flex-direction: column;
 }
 
+.res-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.res-modal-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--res-accent-light);
+  color: var(--res-accent);
+  font-size: 1.05rem;
+}
+
+.res-modal-heading {
+  min-width: 0;
+}
+
+.reservation-modal h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--res-text);
+}
+
+.res-modal-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--res-text-muted);
+}
+
 .reservation-modal form {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.9rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -2816,54 +2863,165 @@ header {
   border-radius: 999px;
 }
 
-
-.reservation-modal h2 {
-  margin-top: 0;
-  margin-bottom: 0.9rem;
-  font-size: 1.3rem;
+/* Duas colunas pra Nome+Data e Hora+Quantidade — no mobile cai pra uma
+   coluna só (ver media query mais abaixo) porque não há espaço horizontal
+   pros dois campos lado a lado com o teclado nativo aberto. */
+.res-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
 }
 
-.reservation-modal form {
-  display: grid;
-  gap: 0.75rem;
+.res-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .reservation-modal label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--res-text-muted);
+}
+
+/* Ícone à esquerda, dentro do campo — input/select não aceitam filhos, então
+   o ícone é posicionado por cima via wrapper relative + input com
+   padding-left reservado pro espaço do ícone. */
+.res-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.res-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--res-accent);
   font-size: 0.9rem;
+  pointer-events: none;
 }
 
 .reservation-modal input,
 .reservation-modal select {
   width: 100%;
-  padding: 0.55rem 0.65rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 1px solid var(--res-border);
+  font-size: 0.88rem;
+  color: var(--res-text);
+  background: #fff;
+  transition: border-color 0.15s ease;
+}
+
+.res-input-wrap input,
+.res-input-wrap select {
+  padding-left: 2.15rem;
+}
+
+.reservation-modal input:focus,
+.reservation-modal select:focus {
+  outline: none;
+  border-color: var(--res-accent);
+}
+
+/* Setinha própria pro <select>, na cor do tema — a nativa do navegador não
+   dá pra recolorir, e aqui ela também precisa deixar espaço à direita
+   equivalente ao ícone da esquerda, pra ficar visualmente simétrico. */
+.reservation-modal select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.15rem;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%231da194'%3e%3cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 14px;
+}
+
+/* Caixa de destaque "Tour selecionado" — nome do tour vem sempre do próprio
+   tour clicado (openReservationModal), nunca é fixo: cada tour mostra o seu. */
+.res-tour-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--res-accent-light);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+}
+
+.res-tour-icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--res-accent);
   font-size: 0.9rem;
+}
+
+.res-tour-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.res-tour-label {
+  font-size: 0.72rem;
+  color: var(--res-accent-dark);
+  font-weight: 600;
+}
+
+.res-tour-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--res-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Calendário customizado da data de reserva — o popup nativo de
    <input type="date"> não é estilizável, então o campo vira um botão que
    abre este mini-calendário próprio, onde os dias em que o tour funciona
-   (ver horarios_por_dia) ficam em verde. */
+   (ver horarios_por_dia) ficam em verde. Estilizado igual aos demais campos
+   (mesma borda/altura/ícone à esquerda) pra não destoar do restante do form. */
 .res-date-display {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.55rem 0.65rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.2);
-  font-size: 0.9rem;
+  border: 1px solid var(--res-border);
+  font-size: 0.88rem;
   background: #fff;
-  color: inherit;
+  color: var(--res-text);
   cursor: pointer;
   text-align: left;
 }
 
+.res-date-display i {
+  color: var(--res-accent);
+  font-size: 0.9rem;
+}
+
 .res-date-display:hover,
 .res-date-display:focus-visible {
-  border-color: rgba(11, 77, 139, 0.6);
+  border-color: var(--res-accent);
+}
+
+/* Telas estreitas: Nome+Data e Hora+Quantidade empilham em vez de dividir
+   a largura do modal ao meio — com 2 colunas fica apertado demais junto
+   com o teclado nativo do celular aberto. */
+@media (max-width: 480px) {
+  .res-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .res-calendar-popover {
@@ -2972,7 +3130,6 @@ header {
 
 .reservation-modal-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.75rem;
   padding-top: 0.9rem;
@@ -2980,9 +3137,13 @@ header {
 }
 
 .reservation-modal-actions .btn-book {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   border-radius: 999px;
-  min-width: 130px;
-  padding: 0.65rem 1.25rem;
+  padding: 0.7rem 1.25rem;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.03em;
