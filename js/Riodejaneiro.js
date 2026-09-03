@@ -412,16 +412,13 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
         return matchers.tourByFolder.get(cardFolder) || matchers.tourByName.get(cardNameKey) || null;
     };
 
-    // URL que leva direto a este tour (mesma página, só com ?tour=<id>) —
-    // Gerenciamento > Editar Tour gera a mesma URL a partir do id + cidade;
-    // aqui é mais simples, já estamos na página certa.
-    const buildTourShareUrl = (tourId) => {
-        const url = new URL(window.location.href);
-        url.search = '';
-        url.hash = '';
-        url.searchParams.set('tour', tourId);
-        return url.toString();
-    };
+    // Link de compartilhar: não é a URL direta da página (?tour=<id>), e sim
+    // uma rota do backend (/compartilhar/tour/<id>) que gera as meta tags
+    // Open Graph certas pra ESTE tour (nome + primeira foto) e redireciona
+    // pra a página real na hora — o HTML estático da página não tem como
+    // saber qual tour é até o JS rodar, e o crawler do WhatsApp/Facebook não
+    // roda JS. Ver compartilhar_tour() em app.py.
+    const buildTourShareUrl = (tourId) => `${API_BASE_URL}/compartilhar/tour/${tourId}`;
 
     // Ícone de compartilhar em cada card — some se já existir (cards são
     // re-processados a cada troca de idioma) pra não duplicar.

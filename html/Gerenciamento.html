@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=65">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=70">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -189,15 +189,24 @@
 
         <section id="accountsSection" style="display:none; margin-top: 2rem;">
             <div class="rio-notice-text" style="background:rgba(255,255,255,0.9); border-radius:12px; padding:1rem; margin-bottom:1rem;">
-                <div id="countryChartContainer" style="margin-top:0.5rem; color:#374151; display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
-                    <div id="countryPie" style="width:150px; height:150px; border-radius:50%; background: conic-gradient(#e53e3e 0deg 0deg, #3182ce 0deg 0deg, #38a169 0deg 0deg, #dd6b20 0deg 0deg);"></div>
-                    <div id="countryLegend" style="font-size:0.9rem; line-height:1.4;">Carregando dados do país...</div>
-                </div>
+                <!-- Pizza (clientes por país) e colunas (top 5 tours) lado a lado;
+                     empilham só no celular (ver .contas-charts-grid no CSS). As
+                     legendas dos dois viraram tooltip no hover pra caberem na
+                     metade da largura. -->
+                <div class="contas-charts-grid">
+                    <div class="contas-chart-card">
+                        <strong class="contas-chart-title">Clientes por país</strong>
+                        <div id="countryChartContainer" class="country-chart">
+                            <div id="countryPie" class="country-pie" tabindex="0" aria-describedby="countryLegend"></div>
+                            <div id="countryLegend" class="country-legend" role="tooltip">Carregando dados do país...</div>
+                        </div>
+                    </div>
 
-                <div style="margin-top:1.25rem;">
-                    <strong style="font-size:0.9rem; color:#1f2937;">Top 5 tours mais clicados</strong>
-                    <div id="toursMaisClicadosBarChart" style="margin-top:0.6rem; display:flex; align-items:flex-end; gap:1rem; min-height:160px; padding:0.5rem 0.25rem 0;">
-                        <span style="color:#6b7280; font-size:0.85rem;">Carregando...</span>
+                    <div class="contas-chart-card">
+                        <strong class="contas-chart-title">Top 5 tours mais clicados</strong>
+                        <div id="toursMaisClicadosBarChart" class="tours-bar-chart">
+                            <span class="tours-bar-empty">Carregando...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1517,9 +1526,9 @@
     </div>
 
     <script src="../js/Translation.js?v=3"></script>
-    <script src="../js/Riodejaneiro.js?v=79"></script>
+    <script src="../js/Riodejaneiro.js?v=80"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=111"></script>
+    <script src="../js/Gerenciamento.js?v=113"></script>
 </body>
 </html>
 

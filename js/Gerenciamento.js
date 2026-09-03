@@ -3782,6 +3782,17 @@ const updateCountryPie = (accounts) => {
   if (!pie || !legend) return;
 
   const clientAccounts = accounts.filter(user => (user.role || '').trim() === 'cliente_user');
+
+  // Sem nenhum cliente cadastrado ainda: mostra um estado vazio explícito em
+  // vez de deixar o círculo com o gradiente degenerado do HTML inicial
+  // (todos os stops em "0deg 0deg" colapsam e o navegador pinta um círculo
+  // sólido na última cor — parecia dado de verdade sem ser).
+  if (!clientAccounts.length) {
+    pie.style.background = '#e5e7eb';
+    legend.innerHTML = '<div style="color:#6b7280;">Nenhum cliente cadastrado ainda.</div>';
+    return;
+  }
+
   const counts = clientAccounts.reduce((acc, user) => {
     const country = (user.pais_origem || 'Desconhecido').trim() || 'Desconhecido';
     acc[country] = (acc[country] || 0) + 1;
@@ -5509,21 +5520,23 @@ const renderToursMaisClicadosBarChart = (ranking) => {
 
   const lista = (Array.isArray(ranking) ? ranking : []).slice(0, 5);
   if (!lista.length) {
-    container.innerHTML = '<span style="color:#6b7280; font-size:0.85rem;">Nenhum clique registrado ainda.</span>';
+    container.innerHTML = '<span class="tours-bar-empty">Nenhum clique registrado ainda.</span>';
     return;
   }
 
   const maxTotal = Math.max(...lista.map((item) => (item.visualizacoes || 0) + (item.cliquesReservar || 0)), 1);
 
+  // O nome do tour saiu de baixo da barra e virou tooltip (.tours-bar-label):
+  // com a pizza ao lado, sobra pouca largura por coluna. O número total
+  // continua sempre visível em cima da barra.
   container.innerHTML = lista.map((item) => {
     const total = (item.visualizacoes || 0) + (item.cliquesReservar || 0);
     const alturaPct = Math.max((total / maxTotal) * 100, 4); // barra mínima visível mesmo com total baixo
     return `
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:0.3rem; min-width:0;">
-        <strong style="font-size:0.85rem; color:#1f2937;">${escapeHtml(total)}</strong>
-        <div title="${escapeHtml(item.tour)}: ${escapeHtml(item.visualizacoes)} visualizações, ${escapeHtml(item.cliquesReservar)} cliques em reservar"
-             style="width:100%; max-width:48px; height:${alturaPct}px; max-height:110px; background:linear-gradient(180deg, #1da194, #0b3c6d); border-radius:6px 6px 0 0;"></div>
-        <span style="font-size:0.72rem; color:#4b5563; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;" title="${escapeHtml(item.tour)}">${escapeHtml(item.tour)}</span>
+      <div class="tours-bar-item" tabindex="0">
+        <span class="tours-bar-label">${escapeHtml(item.tour)}<br>${escapeHtml(item.visualizacoes)} visualizações · ${escapeHtml(item.cliquesReservar)} cliques em reservar</span>
+        <strong class="tours-bar-value">${escapeHtml(total)}</strong>
+        <div class="tours-bar-fill" style="height:${alturaPct}px; max-height:110px;"></div>
       </div>
     `;
   }).join('');
@@ -5538,13 +5551,13 @@ const carregarToursMaisClicadosBarChart = async () => {
     const response = await fetchWithApiFallback(`/get_tours_mais_clicados?email=${encodeURIComponent(email)}&limite=5`);
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) {
-      container.innerHTML = `<span style="color:#6b7280; font-size:0.85rem;">${escapeHtml(result.message || 'Erro ao carregar.')}</span>`;
+      container.innerHTML = `<span class="tours-bar-empty">${escapeHtml(result.message || 'Erro ao carregar.')}</span>`;
       return;
     }
     renderToursMaisClicadosBarChart(result.ranking);
   } catch (error) {
     console.error('Erro ao carregar gráfico de tours mais clicados:', error);
-    container.innerHTML = '<span style="color:#6b7280; font-size:0.85rem;">Não foi possível conectar ao servidor.</span>';
+    container.innerHTML = '<span class="tours-bar-empty">Não foi possível conectar ao servidor.</span>';
   }
 };
 

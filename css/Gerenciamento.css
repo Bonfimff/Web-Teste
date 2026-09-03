@@ -418,14 +418,9 @@ body {
   animation: countryPieIn 0.9s ease forwards;
 }
 
-#countryLegend {
-  font-size: 0.92rem;
-  max-width: 320px;
-  padding: 0.75rem 0.8rem;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
+/* Estilo de fundo/borda deste ID foi absorvido por .country-legend (tooltip
+   escuro no hover, ver mais abaixo) — essa regra sobrepunha o fundo escuro
+   com um branco translúcido e deixava o texto claro ilegível. */
 
 .status-group {
   background: transparent !important;
@@ -4270,4 +4265,206 @@ section,
 .tour-modal-share:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ─── Contas > gráficos (pizza de países + colunas do top 5 tours) ─────────
+   Os dois lado a lado, empilhando só no celular. minmax(0,1fr) e não 1fr:
+   sem isso a coluna não encolhe abaixo do conteúdo e o card estoura a
+   largura. */
+.contas-charts-grid {
+  display: grid;
+  /* Pizza (país) 25%, colunas (top 5 tours) 75% — pedido explícito, já que o
+     gráfico de barras tem mais itens/legendas pra mostrar. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .contas-charts-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.contas-chart-card {
+  min-width: 0;
+}
+
+.contas-chart-title {
+  display: block;
+  font-size: 0.9rem;
+  color: #1f2937;
+  margin-bottom: 0.6rem;
+}
+
+.country-chart {
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.25rem 0;
+  color: #374151;
+}
+
+.country-pie {
+  width: 150px;
+  height: 150px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  /* Cinza neutro até updateCountryPie() rodar (ou quando não há cliente
+     nenhum) — um conic-gradient com todos os stops em "0deg 0deg" colapsa e
+     o navegador pinta um círculo sólido na última cor da lista, parecendo
+     dado de verdade sem ser. */
+  background: #e5e7eb;
+  cursor: help;
+}
+
+/* Legenda do país: só no hover/foco da pizza. Ocupava a metade da largura que
+   agora é do gráfico de colunas. visibility (e não display) pra a transição
+   funcionar; pointer-events:none pra ela não roubar o hover de si mesma. */
+.country-legend {
+  position: absolute;
+  top: 50%;
+  /* Ao lado da pizza (150px de largura, alinhada à esquerda do card), não em
+     cima: cobrir as fatias enquanto se lê a legenda derrota o propósito. */
+  left: 158px;
+  transform: translate(0.4rem, -50%);
+  z-index: 5;
+  min-width: 170px;
+  max-width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  background: rgba(17, 24, 39, 0.94);
+  color: #f9fafb;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+}
+
+.country-chart:hover .country-legend,
+.country-pie:focus-visible ~ .country-legend {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+}
+
+/* Sem largura pra caber ao lado (celular / card estreito): volta pra cima da
+   pizza, senão a legenda sai do card. */
+@media (max-width: 900px) {
+  /* Coluna estreita (grid empilhado no celular): sem espaço ao lado, a
+     legenda volta a abrir por cima da pizza, centralizada. */
+  .country-chart {
+    justify-content: center;
+  }
+
+  .country-legend {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -0.4rem);
+  }
+
+  .country-chart:hover .country-legend,
+  .country-pie:focus-visible ~ .country-legend {
+    transform: translate(-50%, 0);
+  }
+}
+
+.country-legend strong {
+  color: #ffffff;
+}
+
+/* ─── Colunas do top 5 ─────────────────────────────────────────────────── */
+.tours-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  min-height: 160px;
+  padding: 0.5rem 0.25rem 0;
+}
+
+.tours-bar-empty {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.tours-bar-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.tours-bar-value {
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+.tours-bar-fill {
+  width: 100%;
+  max-width: 48px;
+  background: linear-gradient(180deg, #1da194, #0b3c6d);
+  border-radius: 6px 6px 0 0;
+  cursor: help;
+}
+
+/* Nome do tour: tooltip no hover da coluna. Antes ficava embaixo da barra
+   cortado com "…" — com os dois gráficos lado a lado não sobra largura pra
+   nome nenhum. */
+.tours-bar-label {
+  position: absolute;
+  bottom: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translate(-50%, 0.3rem);
+  z-index: 5;
+  width: max-content;
+  max-width: 200px;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  background: rgba(17, 24, 39, 0.94);
+  color: #f9fafb;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+}
+
+.tours-bar-item:hover .tours-bar-label,
+.tours-bar-item:focus-within .tours-bar-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* Tooltip das colunas das pontas: centralizado ele vazaria pra fora do card
+   (a 1ª pra esquerda, a última pra direita), invadindo o gráfico vizinho. */
+.tours-bar-item:first-child .tours-bar-label {
+  left: 0;
+  transform: translate(0, 0.3rem);
+}
+
+.tours-bar-item:first-child:hover .tours-bar-label,
+.tours-bar-item:first-child:focus-within .tours-bar-label {
+  transform: translate(0, 0);
+}
+
+.tours-bar-item:last-child .tours-bar-label {
+  left: auto;
+  right: 0;
+  transform: translate(0, 0.3rem);
+}
+
+.tours-bar-item:last-child:hover .tours-bar-label,
+.tours-bar-item:last-child:focus-within .tours-bar-label {
+  transform: translate(0, 0);
 }
