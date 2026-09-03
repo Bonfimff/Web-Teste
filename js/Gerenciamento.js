@@ -865,25 +865,44 @@ const writeTourLangFieldsToInputs = (valores) => {
 // seletores de horas/minutos abaixo só existem pra facilitar o preenchimento
 // no formato usual ("2h15", "3h"); digitar direto no campo continua
 // funcionando pra casos fora do padrão (ex: "Dia inteiro").
-const formatDuracaoFromSelects = (horas, minutos) => {
+const formatDuracaoFromSelects = (dias, horas, minutos) => {
+  const d = parseInt(dias, 10);
   const h = parseInt(horas, 10);
   const m = parseInt(minutos, 10);
+  const temDias = !Number.isNaN(d) && d > 0;
   const temHoras = !Number.isNaN(h) && h > 0;
   const temMinutos = !Number.isNaN(m) && m > 0;
-  if (!temHoras && !temMinutos) return Number.isNaN(h) && Number.isNaN(m) ? null : '';
-  if (!temHoras) return `${m}min`;
-  if (!temMinutos) return `${h}h`;
-  return `${h}h${String(m).padStart(2, '0')}`;
+
+  if (!temDias && !temHoras && !temMinutos) {
+    return (Number.isNaN(d) && Number.isNaN(h) && Number.isNaN(m)) ? null : '';
+  }
+
+  // Passeios de vários dias ("3 dias", "2 dias 4h"): a parte de dias vem
+  // primeiro e o resto do tempo, quando existe, é anexado no formato antigo.
+  const partes = [];
+  if (temDias) partes.push(`${d} ${d === 1 ? 'dia' : 'dias'}`);
+  if (temHoras && temMinutos) partes.push(`${h}h${String(m).padStart(2, '0')}`);
+  else if (temHoras) partes.push(`${h}h`);
+  else if (temMinutos) partes.push(`${m}min`);
+  return partes.join(' ');
 };
 
 const parseDuracaoToSelects = (valor) => {
+  const diasSelect = document.getElementById('tourModalDuracaoDias');
   const horasSelect = document.getElementById('tourModalDuracaoHoras');
   const minutosSelect = document.getElementById('tourModalDuracaoMinutos');
   if (!horasSelect || !minutosSelect) return;
 
   const texto = String(valor || '').trim();
-  const matchH = texto.match(/^(\d{1,2})h(\d{1,2})?$/i);
-  const matchMin = texto.match(/^(\d{1,2})min$/i);
+  // "2 dias 4h30", "3 dias", "1 dia 45min" — a parte de dias é opcional e o
+  // resto (horas/minutos) segue o formato antigo, então o texto legado sem
+  // dias continua sendo lido normalmente.
+  const matchDias = texto.match(/^(\d{1,3})\s*dias?(?:\s+(.*))?$/i);
+  const dias = matchDias ? matchDias[1] : '';
+  const resto = (matchDias ? (matchDias[2] || '') : texto).trim();
+
+  const matchH = resto.match(/^(\d{1,2})h(\d{1,2})?$/i);
+  const matchMin = resto.match(/^(\d{1,2})min$/i);
 
   if (matchH) {
     horasSelect.value = matchH[1];
@@ -891,12 +910,23 @@ const parseDuracaoToSelects = (valor) => {
   } else if (matchMin) {
     horasSelect.value = '0';
     minutosSelect.value = matchMin[1];
+  } else if (matchDias && !resto) {
+    // Só dias, sem hora ("3 dias") — os seletores de hora/min ficam zerados.
+    horasSelect.value = '';
+    minutosSelect.value = '';
   } else {
     // Valor fora do padrão (texto livre legado, ex: "Dia inteiro") — não dá
     // pra representar nos seletores, então eles voltam pro estado neutro em
     // vez de mostrar um horário que não bate com o texto real.
     horasSelect.value = '';
     minutosSelect.value = '';
+  }
+
+  if (diasSelect) {
+    // Um valor de dias fora da lista (ex.: "9 dias" digitado na mão) não tem
+    // <option>: mantém o seletor neutro em vez de perder o texto do campo.
+    const temOpcao = dias && Array.from(diasSelect.options).some((o) => o.value === dias);
+    diasSelect.value = temOpcao ? dias : '';
   }
 };
 
@@ -905,6 +935,7 @@ const syncDuracaoSelectsFromField = () => {
 };
 
 const initTourDuracaoSelects = () => {
+  const diasSelect = document.getElementById('tourModalDuracaoDias');
   const horasSelect = document.getElementById('tourModalDuracaoHoras');
   const minutosSelect = document.getElementById('tourModalDuracaoMinutos');
   const input = document.getElementById('tourModalDuracao');
@@ -912,10 +943,11 @@ const initTourDuracaoSelects = () => {
   horasSelect.dataset.bound = '1';
 
   const aplicarSelecao = () => {
-    const formatado = formatDuracaoFromSelects(horasSelect.value, minutosSelect.value);
+    const formatado = formatDuracaoFromSelects(diasSelect?.value, horasSelect.value, minutosSelect.value);
     if (formatado !== null) input.value = formatado;
   };
 
+  diasSelect?.addEventListener('change', aplicarSelecao);
   horasSelect.addEventListener('change', aplicarSelecao);
   minutosSelect.addEventListener('change', aplicarSelecao);
   // Editar o texto na mão (formato fora do padrão) também deve refletir nos
@@ -2156,9 +2188,18 @@ const atualizarTourModalDirectUrl = () => {
   const cidade = document.getElementById('tourModalCidade')?.value || '';
   const url = montarTourDirectUrl(currentlyEditingTourId, cidade);
   input.value = url;
-  input.placeholder = currentlyEditingTourId
-    ? 'Selecione a cidade do tour para gerar o link'
-    : 'Salve o tour para gerar o link';
+  // O botão de compartilhar só faz sentido quando já existe link (tour salvo
+  // + cidade escolhida) — antes disso fica desabilitado, no lugar da mensagem
+  // que o placeholder do campo antigo mostrava.
+  const shareBtn = document.getElementById('tourModalCopyDirectUrl');
+  if (shareBtn) {
+    shareBtn.disabled = !url;
+    shareBtn.title = url
+      ? 'Copiar link direto deste tour'
+      : (currentlyEditingTourId
+          ? 'Selecione a cidade do tour para gerar o link'
+          : 'Salve o tour para gerar o link');
+  }
 };
 
 const openTourEditModal = (tourData) => {
@@ -2473,7 +2514,12 @@ const saveTourEditModal = async () => {
   const periodo = ptFields.periodo || '';
   const saida = ptFields.saida || '';
   const grupo = ptFields.grupo || '';
-  const duracao = ptFields.duracao || '';
+  // Lido direto do campo, NÃO de ptFields: duracao é o mesmo valor pra todos
+  // os idiomas e por isso ficou de fora de TOUR_LANG_FIELD_IDS (ver o
+  // comentário lá). Como ptFields só carrega os campos daquele mapa,
+  // ptFields.duracao era sempre undefined e a duração ia embora como ''
+  // em todo salvamento — nenhum tour do banco tinha duração gravada.
+  const duracao = document.getElementById('tourModalDuracao').value.trim();
   const diasSemana = document.getElementById('tourModalDiasSemana').value.trim();
   const inclui = ptFields.inclui || '';
   const roteiro = ptFields.roteiro || '';
@@ -5082,17 +5128,24 @@ const setupAccountModalEvents = () => {
   document.getElementById('tourModalCidade')?.addEventListener('change', atualizarTourModalDirectUrl);
 
   document.getElementById('tourModalCopyDirectUrl')?.addEventListener('click', async () => {
-    const input = document.getElementById('tourModalDirectUrl');
-    if (!input?.value) {
+    const url = document.getElementById('tourModalDirectUrl')?.value;
+    if (!url) {
       alert('Salve o tour e selecione a cidade antes de copiar o link.');
       return;
     }
     try {
-      await navigator.clipboard.writeText(input.value);
+      if (navigator.share) {
+        await navigator.share({ title: document.getElementById('tourModalName')?.value || '', url });
+        return;
+      }
+    } catch (error) {
+      return; // usuário cancelou o compartilhamento nativo — não é erro
+    }
+    try {
+      await navigator.clipboard.writeText(url);
       alert('Link copiado!');
     } catch (error) {
-      input.select();
-      alert('Não foi possível copiar automaticamente — o link já está selecionado, use Ctrl+C.');
+      alert(`Não foi possível copiar automaticamente. Link: ${url}`);
     }
   });
 
@@ -5314,7 +5367,9 @@ const carregarAuditoria = async () => {
 const ATIVIDADE_CLIENTE_TIPO_LABEL = {
   login: 'Login', cadastro: 'Cadastro', liberacao_solicitar: 'Pediu liberação',
   reserva_criar: 'Criou reserva', reserva_atualizar: 'Alterou reserva', reserva_cancelar: 'Cancelou reserva',
-  tour_visualizar: 'Viu detalhes do tour', tour_reservar_clique: 'Clicou em Reservar'
+  tour_visualizar: 'Viu detalhes do tour', tour_reservar_clique: 'Clicou em Reservar',
+  tour_compartilhar: 'Compartilhou o tour', tour_acesso_link: 'Entrou por link do tour',
+  tour_favoritar: 'Favoritou o tour'
 };
 
 const renderAtividadeClientesTable = (registros) => {

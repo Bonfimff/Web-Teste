@@ -2235,3 +2235,50 @@ body.modal-open > :not(.login-modal-overlay):not(.register-modal-overlay) {
         color: #f7f2e7;
     }
 }
+
+/* Cards do modal "Tours Favoritos" (menu de perfil) — reaproveita o overlay
+   e o título de .my-reservations-*, só os itens da lista são próprios.
+   Ver openMyFavoritesModal em site-shell.js/Riodejaneiro.js. */
+.my-favorites-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.my-favorites-card:last-child {
+  border-bottom: none;
+}
+
+.my-favorites-thumb {
+  width: 84px;
+  height: 60px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.my-favorites-info {
+  min-width: 0;
+}
+
+.my-favorites-name {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2d3d;
+}
+
+.my-favorites-meta {
+  margin: 0 0 0.3rem;
+  font-size: 0.85rem;
+  color: #6b7a8d;
+}
+
+.my-favorites-link {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1da194;
+  text-decoration: underline;
+}

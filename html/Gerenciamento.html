@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <link rel="stylesheet" href="../css/Gerenciamento.css?v=62">
+    <link rel="stylesheet" href="../css/Gerenciamento.css?v=65">
 </head>
 <body class="gerenciamento-page">
     <header class="gerenciamento-header">
@@ -346,6 +346,9 @@
                         <option value="reserva_cancelar">Cancelou reserva</option>
                         <option value="tour_visualizar">Viu detalhes do tour</option>
                         <option value="tour_reservar_clique">Clicou em Reservar</option>
+                        <option value="tour_compartilhar">Compartilhou o tour</option>
+                        <option value="tour_acesso_link">Entrou por link do tour</option>
+                        <option value="tour_favoritar">Favoritou o tour</option>
                     </select>
                 </div>
                 <div style="overflow:hidden; overflow-x:auto; border:1px solid #d1d5db; border-radius:0.6rem;">
@@ -1060,15 +1063,16 @@
           <form id="tourEditForm">
             <fieldset>
               <legend>Dados básicos</legend>
-              <p class="tour-modal-id"><strong>ID:</strong> <span id="tourModalId">--</span></p>
-              <div style="margin:0.5rem 0 0.75rem;">
-                <label style="display:block; font-size:0.85rem; font-weight:600; color:#374151; margin-bottom:0.3rem;">URL de redirecionamento direto</label>
-                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                  <input type="text" id="tourModalDirectUrl" readonly placeholder="Salve o tour para gerar o link" style="flex:1; min-width:220px; background:#f3f4f6; color:#374151;" />
-                  <button type="button" id="tourModalCopyDirectUrl" class="btn-book" style="white-space:nowrap; background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Copiar link</button>
-                </div>
-                <p style="font-size:0.78rem; color:#6b7280; margin:0.3rem 0 0;">Gerado automaticamente — leva direto a este tour, sem mostrar os avisos importantes nem o card de premiação da cidade.</p>
-              </div>
+              <p class="tour-modal-id">
+                <strong>ID:</strong> <span id="tourModalId">--</span>
+                <!-- Link direto pro tour (?tour=<id>): antes era um campo de
+                     texto + botão "Copiar link" ocupando uma faixa inteira do
+                     formulário; virou só este ícone, que copia a mesma URL. -->
+                <button type="button" id="tourModalCopyDirectUrl" class="tour-modal-share" title="Copiar link direto deste tour" aria-label="Copiar link direto deste tour">
+                  <i class="fa fa-share-alt" aria-hidden="true"></i>
+                </button>
+                <input type="hidden" id="tourModalDirectUrl" />
+              </p>
               <div class="tour-modal-json-toolbar">
                 <button type="button" id="tourModalDownloadJson" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Baixar JSON deste tour</button>
                 <button type="button" id="tourModalImportJson" class="btn-book" style="background:#fff; color:#0b3c6d; border:1px solid rgba(11,60,109,0.3);">Importar JSON para este tour</button>
@@ -1130,6 +1134,19 @@
                     <label class="tour-lang-only-pt">
                       Duração
                       <div class="tour-duracao-picker">
+                        <select id="tourModalDuracaoDias" aria-label="Dias de duração">
+                          <option value="">Dias</option>
+                          <option value="0">0d</option>
+                          <option value="1">1 dia</option>
+                          <option value="2">2 dias</option>
+                          <option value="3">3 dias</option>
+                          <option value="4">4 dias</option>
+                          <option value="5">5 dias</option>
+                          <option value="6">6 dias</option>
+                          <option value="7">7 dias</option>
+                          <option value="10">10 dias</option>
+                          <option value="15">15 dias</option>
+                        </select>
                         <select id="tourModalDuracaoHoras" aria-label="Horas de duração">
                           <option value="">Horas</option>
                           <option value="0">0h</option>
@@ -1153,7 +1170,11 @@
                           <option value="30">30</option>
                           <option value="45">45</option>
                         </select>
-                        <input type="text" id="tourModalDuracao" placeholder="Ex: 2h15 (ou selecione horas/min ao lado)" />
+                        <!-- Fonte da verdade da duração ("2 dias 4h30"), montada pelos três
+                             seletores acima (formatDuracaoFromSelects) e lida no salvamento.
+                             Era um campo de texto visível; virou hidden porque o admin passou
+                             a preencher só pelos seletores. -->
+                        <input type="hidden" id="tourModalDuracao" />
                       </div>
                     </label>
                   </div>
@@ -1496,9 +1517,9 @@
     </div>
 
     <script src="../js/Translation.js?v=3"></script>
-    <script src="../js/Riodejaneiro.js?v=73"></script>
+    <script src="../js/Riodejaneiro.js?v=79"></script>
     <script src="../js/color-alpha-picker.js?v=1"></script>
-    <script src="../js/Gerenciamento.js?v=107"></script>
+    <script src="../js/Gerenciamento.js?v=111"></script>
 </body>
 </html>
 

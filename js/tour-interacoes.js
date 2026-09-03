@@ -155,7 +155,7 @@
         lightbox.querySelector('.tour-foto-lightbox-next').hidden = isSingle;
     }
 
-    function openLightbox(fotos, startIndex) {
+    function openLightbox(fotos, startIndex, label) {
         lightboxFotos = fotos;
         lightboxIndex = startIndex;
 
@@ -193,6 +193,12 @@
             document.body.appendChild(lightbox);
         }
 
+        // A mesma lightbox atende as fotos de avaliação e as fotos dos cards de
+        // tour, então o rótulo acessível é ajustado a cada abertura.
+        const titulo = label || 'Foto da avaliação';
+        lightbox.setAttribute('aria-label', titulo);
+        lightbox.querySelector('.tour-foto-lightbox-img').alt = `${titulo} em tamanho ampliado`;
+
         updateLightboxImage();
         lightbox.classList.add('open');
     }
@@ -206,6 +212,23 @@
         } catch (_e) {
             // ignore
         }
+    });
+
+    // Clique na foto de um card de tour: amplia na mesma lightbox, começando
+    // pela imagem que estava visível e navegando por todas as fotos do tour
+    // (setas / teclado). As bolinhas do slideshow são <button>, não
+    // .rio-tour-slide, então continuam trocando o slide normalmente.
+    document.addEventListener('click', (event) => {
+        const slide = event.target.closest('.rio-tour-slider .rio-tour-slide');
+        if (!slide) return;
+
+        const slider = slide.closest('.rio-tour-slider');
+        const slides = Array.from(slider.querySelectorAll('.rio-tour-slide'));
+        const fotos = slides.map((img) => img.currentSrc || img.src).filter(Boolean);
+        if (!fotos.length) return;
+
+        const nome = slide.closest('.rio-tour-card')?.querySelector('.rio-tour-name')?.textContent?.trim();
+        openLightbox(fotos, Math.max(0, slides.indexOf(slide)), nome || 'Foto do tour');
     });
 
     async function uploadComentarioFotos(email, comentarioId, files) {
@@ -445,8 +468,117 @@
         document.body.appendChild(banner);
     }
 
+    // ─── Favoritar tour (coração no card, seção #tours) ──────────────────
+    // Diferente das curtidas de relato (chaveadas por cidade + foto), aqui a
+    // chave é o id do tour em tours_pagina. A contagem é pública; favoritar
+    // exige login, igual às curtidas.
+
+    const aplicarEstadoFavorito = (btn, favorito) => {
+        btn.classList.toggle('is-fav', !!favorito);
+        btn.setAttribute('aria-pressed', favorito ? 'true' : 'false');
+        btn.setAttribute('aria-label', favorito ? 'Remover dos favoritos' : 'Favoritar este tour');
+    };
+
+    const setContagemFavorito = (btn, total) => {
+        const countEl = btn.querySelector('.rio-tour-fav-count');
+        if (countEl) countEl.textContent = String(total ?? 0);
+    };
+
+    // Os cards são montados um a um (e re-montados a cada troca de idioma), mas
+    // a contagem cabe em uma requisição só: agenda um refresh pro fim do tick
+    // atual, depois que todos os botões já existem no DOM.
+    let refreshFavoritosAgendado = false;
+
+    function agendarRefreshFavoritos() {
+        if (refreshFavoritosAgendado) return;
+        refreshFavoritosAgendado = true;
+        setTimeout(() => {
+            refreshFavoritosAgendado = false;
+            refreshTourFavoritos();
+        }, 0);
+    }
+
+    async function refreshTourFavoritos() {
+        const botoes = Array.from(document.querySelectorAll('.rio-tour-fav[data-tour-id]'));
+        if (!botoes.length) return;
+
+        const ids = Array.from(new Set(botoes.map((b) => b.dataset.tourId).filter(Boolean)));
+        if (!ids.length) return;
+
+        const qs = new URLSearchParams({ tours: ids.join(',') });
+        const email = getCurrentUserEmail();
+        if (email) qs.set('email', email);
+
+        try {
+            const result = await apiFetch(`/get_tour_favoritos?${qs.toString()}`, { method: 'GET' });
+            if (!result || !result.success) return;
+            const contagem = result.contagem || {};
+            const meus = Array.isArray(result.favoritos_por_mim) ? result.favoritos_por_mim.map(String) : [];
+            botoes.forEach((btn) => {
+                const id = btn.dataset.tourId;
+                setContagemFavorito(btn, contagem[id] || 0);
+                aplicarEstadoFavorito(btn, meus.includes(id));
+            });
+        } catch (err) {
+            console.warn('Erro ao carregar favoritos dos tours', err);
+        }
+    }
+
+    // Cria o botão de favoritar dentro do container passado (a barra flutuante
+    // .rio-tour-float-actions montada em site-shell.js/Riodejaneiro.js).
+    function mountTourFavButton(container, tourId) {
+        if (!container || tourId == null) return null;
+        if (container.querySelector('.rio-tour-fav')) return null;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rio-tour-fav';
+        btn.dataset.tourId = String(tourId);
+        btn.innerHTML = '<i class="fa fa-heart" aria-hidden="true"></i>'
+            + '<span class="rio-tour-fav-count">0</span>';
+        aplicarEstadoFavorito(btn, false);
+
+        btn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            if (!getCurrentUserEmail()) {
+                notify('Faça login para favoritar este tour.', 'info');
+                return;
+            }
+
+            btn.disabled = true;
+            try {
+                const result = await apiFetch('/toggle_tour_favorito', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: getCurrentUserEmail(), tour_id: tourId })
+                });
+                if (!result || !result.success) {
+                    notify((result && result.message) || 'Não foi possível favoritar o tour.', 'error');
+                    return;
+                }
+                aplicarEstadoFavorito(btn, result.favorito);
+                setContagemFavorito(btn, result.total);
+                if (result.favorito) {
+                    btn.classList.add('just-faved');
+                    setTimeout(() => btn.classList.remove('just-faved'), 400);
+                }
+            } catch (err) {
+                console.warn('Erro ao favoritar tour', err);
+                notify('Não foi possível favoritar o tour.', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        container.appendChild(btn);
+        agendarRefreshFavoritos();
+        return btn;
+    }
+
     window.TourInteracoes = {
         initRelatosLikes,
+        mountTourFavButton,
+        refreshTourFavoritos,
         attachCommentsToggle,
         openReviewPanel,
         showReviewPromptBanner

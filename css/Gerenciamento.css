@@ -1872,9 +1872,10 @@ tr.tours-mais-clicados-extra.hidden {
     min-width: 4.5rem;
   }
 
-  .tour-duracao-picker input {
-    flex: 1 1 auto;
-    min-width: 0;
+  /* Os seletores dividem a largura por igual — antes sobrava um campo de
+     texto no fim da linha, que foi removido (agora é um input hidden). */
+  .tour-duracao-picker select {
+    flex: 1 1 0;
   }
 
   /* Campos somente-leitura (ex: "Dias da semana", derivado dos horários)
@@ -4185,4 +4186,88 @@ section,
   text-decoration: underline;
   cursor: pointer;
   font-weight: 700;
+}
+
+/* Cards do modal "Tours Favoritos" (menu de perfil) — reaproveita o overlay
+   e o título de .my-reservations-*, só os itens da lista são próprios.
+   Ver openMyFavoritesModal em site-shell.js/Riodejaneiro.js. */
+.my-favorites-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.my-favorites-card:last-child {
+  border-bottom: none;
+}
+
+.my-favorites-thumb {
+  width: 84px;
+  height: 60px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.my-favorites-info {
+  min-width: 0;
+}
+
+.my-favorites-name {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2d3d;
+}
+
+.my-favorites-meta {
+  margin: 0 0 0.3rem;
+  font-size: 0.85rem;
+  color: #6b7a8d;
+}
+
+.my-favorites-link {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1da194;
+  text-decoration: underline;
+}
+
+/* Ícone de compartilhar ao lado do ID, no modal de editar tour — substitui o
+   campo "URL de redirecionamento direto" + botão "Copiar link", que ocupavam
+   uma faixa inteira do formulário. O link em si continua existindo, num
+   input hidden (#tourModalDirectUrl); este botão copia/compartilha ele. */
+.tour-modal-id {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tour-modal-share {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(11, 60, 109, 0.3);
+  background: #ffffff;
+  color: #0b3c6d;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tour-modal-share:hover:not(:disabled) {
+  background: #0b3c6d;
+  color: #ffffff;
+}
+
+.tour-modal-share:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

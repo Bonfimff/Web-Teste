@@ -430,7 +430,7 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
         // Fica sobre a foto (canto superior direito), não na barra de ações —
         // ver .rio-link-share em Riodejaneiro.css (position:absolute).
         const imagesDiv = card.querySelector('.rio-tour-images');
-        if (!imagesDiv || imagesDiv.querySelector('.rio-link-share')) return;
+        if (!imagesDiv || card.querySelector('.rio-link-share')) return;
 
         const shareBtn = document.createElement('button');
         shareBtn.type = 'button';
@@ -457,7 +457,31 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 console.warn('Falha ao copiar link do tour:', error);
             }
         });
-        imagesDiv.appendChild(shareBtn);
+        getFloatActions(card).appendChild(shareBtn);
+        ensureFavButton(card, tour);
+    };
+
+    // Barra flutuante dos ícones do card (compartilhar + favoritar): vai no
+    // card, e não em .rio-tour-images — essa div recorta a foto no 16/9
+    // (overflow:hidden) e cortaria os botões, que precisam vazar metade pra
+    // dentro do bloco de informações. Ver .rio-tour-float-actions em
+    // Riodejaneiro.css.
+    const getFloatActions = (card) => {
+        let box = card.querySelector('.rio-tour-float-actions');
+        if (!box) {
+            box = document.createElement('div');
+            box.className = 'rio-tour-float-actions';
+            card.appendChild(box);
+        }
+        return box;
+    };
+
+    // Favoritar tour: botão + contagem ficam em tour-interacoes.js (módulo
+    // compartilhado pelas 4 páginas de cidade), que fala com
+    // /get_tour_favoritos e /toggle_tour_favorito.
+    const ensureFavButton = (card, tour) => {
+        if (card.querySelector('.rio-tour-fav')) return;
+        window.TourInteracoes?.mountTourFavButton(getFloatActions(card), tour.id);
     };
 
     const carregarToursDoBanco = async () => {
@@ -1650,6 +1674,7 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 <div class="profile-user-info" style="padding:8px 12px; font-weight: 600; border-bottom: 1px solid #e0e0e0;"><span data-i18n="profile_hello">Olá</span>, ${userName}</div>
                 ${showManagement ? `<a href="#" class="profile-item profile-item--admin" data-profile-action="${managementAction}">${managementLabel}</a>` : ''}
                 <a href="#" class="profile-item" data-profile-action="my-reservations" data-i18n="profile_my_reservations">Minhas Reservas</a>
+                <a href="#" class="profile-item" data-profile-action="my-favorites" data-i18n="profile_my_favorites">Tours Favoritos</a>
                 <a href="#" class="profile-item" data-profile-action="my-data" data-i18n="profile_my_data">Meus Dados</a>
                 <a href="#" class="profile-item" data-profile-action="logout" data-i18n="profile_logout">Sair</a>
             `;
@@ -1734,6 +1759,10 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 menu.classList.remove('open');
                 button.setAttribute('aria-expanded', 'false');
                 window.openMyReservationsModal?.();
+            } else if (action === 'my-favorites') {
+                menu.classList.remove('open');
+                button.setAttribute('aria-expanded', 'false');
+                window.openMyFavoritesModal?.();
             } else if (action === 'logout') {
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userEmail');
@@ -2056,6 +2085,9 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 } else if (action === 'my-reservations') {
                     closeMobileMenu();
                     window.openMyReservationsModal?.();
+                } else if (action === 'my-favorites') {
+                    closeMobileMenu();
+                    window.openMyFavoritesModal?.();
                 } else if (action === 'my-data') {
                     closeMobileMenu();
                     window.openUserDataModal?.();
@@ -4482,7 +4514,116 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
         });
     };
 
+    // ─── Modal "Tours Favoritos" (menu de perfil) ────────────────────────
+    // Lista os tours que o usuário marcou com o coração no card. Diferente de
+    // "Minhas Reservas", não depende de permissão de aba: qualquer usuário
+    // logado pode ver os próprios favoritos. Reaproveita o CSS do modal de
+    // reservas (.my-reservations-*) pra manter o mesmo visual.
+    const openMyFavoritesModal = async () => {
+        const currentLang = typeof window.getCurrentLanguage === 'function'
+            ? window.getCurrentLanguage()
+            : (document.documentElement.lang || 'pt').slice(0, 2);
+        const ui = window.uiTranslations?.[currentLang] || window.uiTranslations?.pt || {};
+        const titulo = ui.profile_my_favorites || 'Tours Favoritos';
+
+        let modal = document.getElementById('myFavoritesModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'myFavoritesModal';
+            modal.className = 'my-reservations-overlay';
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-label', titulo);
+            modal.innerHTML = `
+                <div class="my-reservations-modal">
+                    <button type="button" class="my-reservations-close" aria-label="Fechar">&times;</button>
+                    <h2 class="my-reservations-title">${escapeHtml(titulo)}</h2>
+                    <div class="my-reservations-list"></div>
+                </div>
+            `;
+            modal.querySelector('.my-reservations-close').addEventListener('click', () => {
+                modal.classList.remove('open');
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('open');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('open')) modal.classList.remove('open');
+            });
+            document.body.appendChild(modal);
+        }
+
+        const listEl = modal.querySelector('.my-reservations-list');
+        modal.classList.add('open');
+        listEl.innerHTML = `<p class="my-reservations-empty">${escapeHtml(ui.favorites_loading || 'Carregando favoritos...')}</p>`;
+
+        const email = (localStorage.getItem('userEmail') || '').trim();
+        if (!email) {
+            listEl.innerHTML = `<p class="my-reservations-empty">${escapeHtml(ui.favorites_need_login || 'Faça login para ver seus tours favoritos.')}</p>`;
+            return;
+        }
+
+        let data = null;
+        for (const base of [API_BASE_URL, 'http://127.0.0.1:5000', 'https://api.exksvol.com']) {
+            try {
+                const res = await fetch(`${base}/get_meus_tours_favoritos?email=${encodeURIComponent(email)}`);
+                if (res.ok) { data = await res.json(); break; }
+            } catch {
+                // tenta o próximo endpoint
+            }
+        }
+
+        if (!data || !data.success) {
+            listEl.innerHTML = `<p class="my-reservations-empty">${escapeHtml(ui.favorites_error || 'Não foi possível carregar seus favoritos.')}</p>`;
+            return;
+        }
+
+        const tours = Array.isArray(data.tours) ? data.tours : [];
+        if (!tours.length) {
+            listEl.innerHTML = `<p class="my-reservations-empty">${escapeHtml(ui.favorites_empty || 'Você ainda não favoritou nenhum tour. Toque no coração no card de um tour para salvá-lo aqui.')}</p>`;
+            return;
+        }
+
+        listEl.innerHTML = tours.map((tour) => {
+            const valor = tour.valor != null
+                ? `R$ ${Number(tour.valor).toFixed(2).replace('.', ',')}`
+                : (ui.favorites_free || 'Gratuito');
+            const capa = tour.imagem
+                ? `<img class="my-favorites-thumb" src="${escapeHtml(tour.imagem)}" alt="" loading="lazy">`
+                : '';
+            const link = buildTourPageUrl(tour);
+            return `
+                <article class="my-favorites-card">
+                    ${capa}
+                    <div class="my-favorites-info">
+                        <h3 class="my-favorites-name">${escapeHtml(tour.nome_tour || '')}</h3>
+                        <p class="my-favorites-meta">${escapeHtml(tour.cidade || '')} · ${escapeHtml(valor)}</p>
+                        ${link ? `<a class="my-favorites-link" href="${escapeHtml(link)}">${escapeHtml(ui.favorites_open || 'Ver tour')}</a>` : ''}
+                    </div>
+                </article>
+            `;
+        }).join('');
+    };
+
+    // Link direto pro tour na página da cidade dele (?tour=<id>), pra funcionar
+    // mesmo quando o favorito é de outra cidade que não a página atual.
+    const buildTourPageUrl = (tour) => {
+        if (!tour || tour.id == null) return '';
+        const paginaPorCidade = {
+            'Rio de Janeiro': 'Riodejaneiro.html',
+            'Salvador': 'Salvador.html',
+            'Sao Luis': 'Saolu%C3%ADsdomaranhao.html',
+            'São Luís': 'Saolu%C3%ADsdomaranhao.html',
+            'Lencois': 'Lencoismaranhenses.html',
+            'Lençóis': 'Lencoismaranhenses.html'
+        };
+        const arquivo = paginaPorCidade[tour.cidade];
+        if (!arquivo) return `?tour=${encodeURIComponent(tour.id)}`;
+        return `${arquivo}?tour=${encodeURIComponent(tour.id)}`;
+    };
+
     window.openMyReservationsModal = openMyReservationsModal;
+    window.openMyFavoritesModal = openMyFavoritesModal;
 
     const openUserDataModal = async () => {
         const tabs = (getCurrentRolePermissions()?.tabs || []).map(tab => String(tab).toUpperCase());
@@ -4805,15 +4946,18 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 reservationTime.appendChild(option);
             });
 
+            // O campo de horário fica SEMPRE visível — some antes deixava um
+            // buraco no formulário e fazia o layout pular quando a data era
+            // escolhida. Sem horários ele mostra só o placeholder e deixa de
+            // ser obrigatório, pra não travar tours que não têm horário.
+            reservationTimeField.hidden = false;
             if (horarios.length) {
-                reservationTimeField.hidden = false;
                 reservationTime.setAttribute('required', 'required');
                 // Antes, com um único horário disponível, ele já vinha
                 // pré-selecionado — o cliente nunca via nem escolhia de
                 // fato. Agora o campo sempre nasce em branco (placeholder),
                 // mesmo com uma opção só; é o próprio cliente quem escolhe.
             } else {
-                reservationTimeField.hidden = true;
                 reservationTime.removeAttribute('required');
                 reservationTime.value = '';
             }
@@ -4848,7 +4992,10 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
         // sem suporte simplesmente ignoram e o campo fica focado, pronto
         // pra abrir com Enter/seta ou um clique.
         const focarCampoHorario = () => {
-            if (!reservationTime || !reservationTimeField || reservationTimeField.hidden) return;
+            // Só faz sentido focar quando há horário pra escolher — o campo
+            // agora fica sempre visível, então "não escondido" deixou de ser
+            // sinal de que existem opções.
+            if (!reservationTime || reservationTime.options.length <= 1) return;
             reservationTime.focus();
             try { reservationTime.showPicker?.(); } catch (_err) { /* navegador sem suporte */ }
         };
@@ -4857,6 +5004,43 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
             reservationDate.addEventListener('change', () => {
                 updateReservationTimeForSelectedDate();
                 focarCampoHorario();
+            });
+        }
+
+        // O campo de horário fica sempre visível, então dá pra tentar usá-lo
+        // antes de escolher a data. Como os horários dependem do dia da semana
+        // (tours com horarios_por_dia), abrir a lista sem data mostraria uma
+        // lista vazia ou errada — melhor avisar e mandar pro calendário.
+        // mousedown/keydown são interceptados ANTES do dropdown abrir; change
+        // fica como rede de segurança pra formas de seleção fora desses dois.
+        const exigirDataAntesDoHorario = (event) => {
+            if (!reservationDate || reservationDate.value) return false;
+            event.preventDefault();
+            reservationTime.blur();
+            const currentLang = typeof window.getCurrentLanguage === 'function'
+                ? window.getCurrentLanguage()
+                : (document.documentElement.lang || 'pt').slice(0, 2);
+            const ui = window.uiTranslations?.[currentLang] || window.uiTranslations?.pt || {};
+            showGlobalNotification(
+                ui.reservation_pick_date_first || 'Selecione primeiro a data da reserva.',
+                'info'
+            );
+            (calendarDisplay || reservationDate)?.focus?.();
+            return true;
+        };
+
+        if (reservationTime) {
+            reservationTime.addEventListener('mousedown', exigirDataAntesDoHorario);
+            reservationTime.addEventListener('keydown', (event) => {
+                // Teclas que abrem/percorrem a lista; Tab e Shift+Tab precisam
+                // continuar navegando normalmente pelo formulário.
+                if (['Tab', 'Escape'].includes(event.key)) return;
+                exigirDataAntesDoHorario(event);
+            });
+            reservationTime.addEventListener('change', () => {
+                if (reservationDate && !reservationDate.value) {
+                    reservationTime.value = '';
+                }
             });
         }
 
@@ -5060,8 +5244,23 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 event.preventDefault();
                 const card = button.closest('.rio-tour-card');
                 const tourName = card?.querySelector('.rio-tour-name')?.textContent?.trim() || '';
-                const languageText = card?.querySelector('.fa-language')?.parentElement?.textContent?.replace(/\s*Idiomas?:\s*/i, '').trim() || '';
-                const meetingTextRaw = card?.querySelector('.fa-map-marker-alt')?.parentElement?.textContent?.trim() || '';
+                // Lê o valor pelo .rio-tour-detail-value (e pelo texto original
+                // guardado em dataset.fullText quando a linha foi truncada em 3
+                // linhas), nunca pelo textContent da linha inteira: esse último
+                // engloba o botão "Ler mais", que acabava virando parte do nome
+                // do idioma na lista do modal ("EspanholLer mais").
+                const readDetail = (iconClass, labelRegex) => {
+                    const icon = card?.querySelector(iconClass);
+                    const line = icon?.closest('.rio-tour-detail-line') || icon?.parentElement;
+                    if (!line) return '';
+                    const valueEl = line.querySelector('.rio-tour-detail-value');
+                    const raw = valueEl
+                        ? (valueEl.dataset.fullText ?? valueEl.textContent ?? '')
+                        : (line.textContent ?? '');
+                    return raw.replace(labelRegex, '').replace(/…\s*$/, '').trim();
+                };
+                const languageText = readDetail('.fa-language', /\s*Idiomas?:\s*/i);
+                const meetingTextRaw = readDetail('.fa-map-marker-alt', /^$/);
                 const meetingText = meetingTextRaw.replace(/^\s*(Encontro|Meeting|Rendez-vous|Encuentro|Incontro|集合)\s*:\s*/i, '').trim();
                 openReservationModal(tourName, languageText, meetingText);
             });
@@ -5220,7 +5419,7 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
 
                         showGlobalNotification(ui.booking_success_title || 'Reserva concluída com sucesso.', 'success', {
                             titleText: '',
-                            gifUrl: 'imagem/assets/certo.mp4',
+                            gifUrl: '../imagem/assets/certo.mp4',
                             detailsHtml
                         });
                         closeReservationModal();

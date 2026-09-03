@@ -344,3 +344,14 @@
     font-size: 0.85rem;
     opacity: 0.85;
 }
+
+/* Clicar na foto de um card de tour amplia na lightbox (ver o listener de
+   .rio-tour-slide em tour-interacoes.js) — o cursor sinaliza isso. As
+   bolinhas do slideshow continuam com o cursor de clique normal. */
+.rio-tour-slider .rio-tour-slide {
+    cursor: zoom-in;
+}
+
+.rio-tour-slider-dots .rio-tour-dot {
+    cursor: pointer;
+}
