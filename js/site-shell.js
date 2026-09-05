@@ -442,13 +442,13 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
             });
         });
 
-        const dialog = modal.querySelector('.award-modal__dialog');
-        if (dialog) {
-            dialog.addEventListener('click', (e) => {
-                if (e.target.closest('[data-close-award]')) return;
-                closeModal();
-                window.location.href = awardLink;
-            });
+        // O card inteiro não é mais clicável — só o botão "Ver no TripAdvisor"
+        // abre o link (em nova aba, sem tirar o visitante do site), evitando
+        // que um clique acidental em qualquer parte do card redirecione.
+        const awardCta = document.getElementById('awardCta');
+        if (awardCta) {
+            awardCta.href = awardLink;
+            awardCta.addEventListener('click', () => closeModal());
         }
 
         document.addEventListener('app:language-changed', () => {

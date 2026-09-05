@@ -755,41 +755,74 @@ main {
     position: relative;
     pointer-events: auto;
     width: 100%;
-    background: rgba(8, 56, 47, 0.55);
-    color: #f7f3e5;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 16px;
-    border: 1px solid rgba(247, 243, 229, 0.38);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
-    padding: 1.1rem;
+    background: #0c352d;
+    color: #f5f2e9;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
     animation: awardToastIn 0.4s ease-out;
-    cursor: pointer;
+    overflow: hidden;
 }
 
-.award-modal__close {
-    position: absolute;
-    right: 0.7rem;
-    top: 0.4rem;
-    background: transparent;
-    border: none;
-    font-size: 1.7rem;
-    color: rgba(200, 200, 200, 0.6);
-    cursor: pointer;
+.award-modal__header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.award-modal__badge-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #f6df99;
+    color: #f6df99;
+    font-size: 1.05rem;
 }
 
 .award-modal__title {
-    margin-right: 1.8rem;
-    margin-bottom: 0.8rem;
-    font-size: 1.1rem;
+    flex: 1;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #f5f2e9;
+    letter-spacing: 0.2px;
+}
+
+.award-modal__close {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 10px;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: rgba(245, 242, 233, 0.85);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.award-modal__close:hover {
+    background: rgba(255, 255, 255, 0.16);
     color: #f6df99;
 }
 
 .hs-modal__body {
     display: grid;
-    grid-template-columns: 92px 1fr;
-    gap: 0.9rem;
+    grid-template-columns: 92px 1px 1fr;
+    gap: 1.1rem;
     align-items: center;
+    padding: 1.1rem 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .hs-modal__leftImage img {
@@ -797,19 +830,70 @@ main {
     height: 92px;
     border-radius: 14px;
     object-fit: contain;
-    border: 1px solid rgba(13, 85, 72, 0.35);
+}
+
+.award-modal__divider {
+    align-self: stretch;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .js-hs-description {
     line-height: 1.5;
+    font-size: 1rem;
+}
+
+.award-modal__footer {
+    display: grid;
+    grid-template-columns: 1fr 1px auto;
+    gap: 1.1rem;
+    align-items: center;
+    padding: 1rem 1.2rem;
+}
+
+.award-modal__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: #ece4d3;
+    color: var(--green-dark);
+    padding: 0.85rem 1.4rem;
+    border-radius: 40px;
+    font-weight: 800;
     font-size: 0.95rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: 0.25s;
+}
+
+.award-modal__cta:hover {
+    background: #f6df99;
+    transform: translateY(-1px) scale(1.02);
+}
+
+.award-modal__cta i {
+    font-size: 0.85rem;
+}
+
+.award-modal__countdown-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    color: rgba(245, 242, 233, 0.85);
+}
+
+.award-modal__countdown-wrap i {
+    color: #4fd1a5;
+    font-size: 1rem;
 }
 
 .award-modal__countdown {
-    margin-top: 0.7rem;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     letter-spacing: 0.2px;
-    color: rgba(247, 243, 229, 0.85);
 }
 
 @keyframes awardToastIn {
@@ -1189,18 +1273,68 @@ main {
         width: min(420px, calc(100vw - 1.5rem));
     }
 
-    .award-modal__dialog {
-        padding: 1rem 0.9rem;
+    /* A ordem e o agrupamento (imagem + divisória + texto / botão + divisória
+       + contador, tudo lado a lado) se mantêm iguais em qualquer tamanho de
+       tela — só os tamanhos encolhem, nunca empilha em coluna. */
+    .award-modal__header {
+        padding: 0.85rem 0.9rem;
+        gap: 0.6rem;
+    }
+
+    .award-modal__badge-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+
+    .award-modal__title {
+        font-size: 1rem;
+    }
+
+    .award-modal__close {
+        width: 30px;
+        height: 30px;
+        font-size: 1.2rem;
     }
 
     .hs-modal__body {
-        grid-template-columns: 1fr;
-        text-align: center;
+        grid-template-columns: 64px 1px 1fr;
+        gap: 0.7rem;
+        padding: 0.85rem 0.9rem;
     }
 
-    .hs-modal__leftImage {
-        display: flex;
-        justify-content: center;
+    .hs-modal__leftImage img {
+        width: 64px;
+        height: 64px;
+    }
+
+    .js-hs-description {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .award-modal__footer {
+        grid-template-columns: 1fr 1px auto;
+        gap: 0.6rem;
+        padding: 0.8rem 0.9rem;
+    }
+
+    .award-modal__cta {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.78rem;
+        gap: 0.3rem;
+    }
+
+    .award-modal__countdown-wrap {
+        gap: 0.35rem;
+    }
+
+    .award-modal__countdown-wrap i {
+        font-size: 0.85rem;
+    }
+
+    .award-modal__countdown {
+        font-size: 0.75rem;
     }
 }
 

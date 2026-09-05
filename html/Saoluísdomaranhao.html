@@ -26,7 +26,7 @@
     <link rel="icon" type="image/png" href="../imagem/Sao Luis/assets/Logo.png?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400&family=Karla:wght@300..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css?v=23">
+    <link rel="stylesheet" href="../css/style.css?v=24">
     <link rel="stylesheet" href="../css/Riodejaneiro.css?v=64">
     <link rel="stylesheet" href="../css/Saolu%C3%ADsdomaranhao.css?v=32">
     <link rel="stylesheet" href="../css/tour-interacoes.css?v=9">
@@ -223,16 +223,25 @@
 
         <div class="award-modal" id="awardModal" aria-hidden="true" aria-live="polite" aria-atomic="true">
             <div class="award-modal__dialog" role="status" aria-labelledby="awardTitle">
-                <button class="award-modal__close" type="button" data-close-award aria-label="Fechar">&times;</button>
-                <h3 id="awardTitle" class="award-modal__title" data-i18n="award_title">Reconhecimento Especial</h3>
+                <div class="award-modal__header">
+                    <span class="award-modal__badge-icon" aria-hidden="true"><i class="fa-solid fa-award"></i></span>
+                    <h3 id="awardTitle" class="award-modal__title" data-i18n="award_title">Reconhecimento Especial</h3>
+                    <button class="award-modal__close" type="button" data-close-award aria-label="Fechar">&times;</button>
+                </div>
                 <div class="hs-modal__body">
                     <section class="hs-modal__leftImage"><span class="hs-icon js-hs-icon"><img src="https://app.hoversignal.com/AppImage/Signals/4bd5923d-79aa-4fa7-9ac0-e9ecac175d3e" alt="Prêmio TripAdvisor"></span></section>
+                    <span class="award-modal__divider" aria-hidden="true"></span>
                     <section class="hs-modal__rightDescr">
-                        <div class="hs-modal__rightDescrBody">
-                            <div class="js-hs-description" data-signaltext="" data-i18n="award_text">Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰</div>
-                            <div class="award-modal__countdown" id="awardCountdown" aria-live="polite"></div>
-                        </div>
+                        <div class="js-hs-description" data-signaltext="" data-i18n="award_text">Sabia que fomos premiados como a <b>melhor escolha</b> pelo <b>TripAdvisor</b> em 2021? 🥰</div>
                     </section>
+                </div>
+                <div class="award-modal__footer">
+                    <a class="award-modal__cta" id="awardCta" href="#" target="_blank" rel="noopener" data-i18n="award_cta">Ver no TripAdvisor <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+                    <span class="award-modal__divider" aria-hidden="true"></span>
+                    <div class="award-modal__countdown-wrap">
+                        <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                        <div class="award-modal__countdown" id="awardCountdown" aria-live="polite"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -321,7 +330,7 @@
     </div>
 
     <script src="../js/translations.js?v=3"></script>
-    <script src="../js/ui-translations.js?v=8"></script>
+    <script src="../js/ui-translations.js?v=9"></script>
     <script src="../js/tour-interacoes.js?v=12"></script>
     <script src="../js/site-shell.js?v=79"></script>
     <script src="../js/presenca.js?v=1"></script>

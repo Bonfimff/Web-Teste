@@ -107,7 +107,9 @@ console.log('Layout da imagem de referência carregado.');
 	const modal = document.getElementById("awardModal");
 	if (modal) {
 		const countdownEl = document.getElementById("awardCountdown");
+		const awardCta = document.getElementById("awardCta");
 		const awardLink = "https://www.tripadvisor.com.br/Attraction_Review-g303506-d12219836-Reviews-Rio_by_Foot_Free_Walking_Tour-Rio_de_Janeiro_State_of_Rio_de_Janeiro.html";
+		if (awardCta) awardCta.href = awardLink;
 		let countdownTimer = null;
 
 		const getCountdownLabel = (seconds) => {
@@ -162,12 +164,12 @@ console.log('Layout da imagem de referência carregado.');
 			});
 		});
 
-		const dialog = modal.querySelector(".award-modal__dialog");
-		if (dialog) {
-			dialog.addEventListener("click", (e) => {
-				if (e.target.closest("[data-close-award]")) return;
+		// O card inteiro não é mais clicável — só o botão "Ver no TripAdvisor"
+		// abre o link (em nova aba, sem tirar o visitante do site), evitando
+		// que um clique acidental em qualquer parte do card redirecione.
+		if (awardCta) {
+			awardCta.addEventListener("click", () => {
 				closeModal();
-				window.location.href = awardLink;
 			});
 		}
 
