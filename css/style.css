@@ -907,6 +907,64 @@ main {
     }
 }
 
+/* Em telas grandes sobra espaço ao redor do card (ele fica isolado no canto
+   da página) — deixamos ele um pouco maior e com mais presença/acabamento
+   em vez de usar o mesmo tamanho compacto do mobile. */
+@media (min-width: 901px) {
+    .award-modal {
+        right: 1.5rem;
+        bottom: 1.5rem;
+        width: min(460px, calc(100vw - 3rem));
+    }
+
+    .award-modal__dialog {
+        border-radius: 24px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .award-modal__header {
+        padding: 1.2rem 1.4rem;
+        gap: 0.9rem;
+    }
+
+    .award-modal__badge-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.15rem;
+    }
+
+    .award-modal__title {
+        font-size: 1.3rem;
+    }
+
+    .hs-modal__body {
+        padding: 1.3rem 1.4rem;
+        gap: 1.2rem;
+    }
+
+    .hs-modal__leftImage img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .js-hs-description {
+        font-size: 1.05rem;
+    }
+
+    .award-modal__footer {
+        padding: 1.1rem 1.4rem;
+    }
+
+    .award-modal__cta {
+        padding: 0.9rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .award-modal__countdown {
+        font-size: 0.95rem;
+    }
+}
+
 /* Hero title animation */
 @keyframes heroIntro {
     from {
