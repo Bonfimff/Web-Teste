@@ -743,7 +743,10 @@ main {
     bottom: 1rem;
     display: none;
     pointer-events: none;
-    z-index: 2000;
+    /* Sempre atrás do aviso "Informações Importantes" (.rio-notice,
+       z-index:1000) — mesmo que os dois fiquem visíveis ao mesmo tempo por
+       algum motivo, o aviso tem prioridade. */
+    z-index: 900;
     width: min(420px, calc(100vw - 2rem));
 }
 
