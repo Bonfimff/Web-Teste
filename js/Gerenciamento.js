@@ -2964,9 +2964,12 @@ const initMaintenanceModeToggle = () => {
   const checkboxes = Array.from(document.querySelectorAll('.maintenance-target-checkbox'));
   if (!section || !checkboxes.length) return;
 
-  const role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
-  section.style.display = role === 'super_admin' ? '' : 'none';
-  if (role !== 'super_admin' || section.dataset.bound) return;
+  // Antes travado direto a role === 'super_admin'; agora é uma permissão
+  // configurável (Gerenciamento de Níveis de Acesso > Gerenciar modo de
+  // manutenção), igual às demais.
+  const podeGerenciar = !!currentUserPermissions?.manageMaintenanceMode;
+  section.style.display = podeGerenciar ? '' : 'none';
+  if (!podeGerenciar || section.dataset.bound) return;
   section.dataset.bound = '1';
 
   const status = document.getElementById('maintenanceModeStatus');
@@ -3750,6 +3753,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     manageComentarios: true,
     manageFinanceiro: true,
     viewAuditoria: false,
+    manageMaintenanceMode: false,
     financeiroCidades: TODAS_AS_CIDADES,
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
@@ -3768,6 +3772,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     manageComentarios: true,
     manageFinanceiro: true,
     viewAuditoria: true,
+    manageMaintenanceMode: true,
     financeiroCidades: TODAS_AS_CIDADES,
     financeiroSomenteVisualizar: false,
     reservasCidades: TODAS_AS_CIDADES,
@@ -3894,6 +3899,7 @@ const selectRole = (role) => {
   const roleCheckFinanceiro = document.getElementById('roleCheckFinanceiro');
   const roleCheckFinanceiroSomenteView = document.getElementById('roleCheckFinanceiroSomenteView');
   const roleCheckAuditoria = document.getElementById('roleCheckAuditoria');
+  const roleCheckManutencao = document.getElementById('roleCheckManutencao');
 
   if (roleCheckReservas) roleCheckReservas.checked = perms.manageReservas;
   if (roleCheckContas) roleCheckContas.checked = perms.manageContas;
@@ -3907,6 +3913,7 @@ const selectRole = (role) => {
   if (roleCheckFinanceiro) roleCheckFinanceiro.checked = !!perms.manageFinanceiro;
   if (roleCheckFinanceiroSomenteView) roleCheckFinanceiroSomenteView.checked = !!perms.financeiroSomenteVisualizar;
   if (roleCheckAuditoria) roleCheckAuditoria.checked = !!perms.viewAuditoria;
+  if (roleCheckManutencao) roleCheckManutencao.checked = !!perms.manageMaintenanceMode;
 
   Array.from(document.querySelectorAll('.finance-city-perm')).forEach((el) => {
     el.checked = (perms.financeiroCidades || []).includes(el.dataset.cidade);
@@ -3942,6 +3949,7 @@ const updateSelectedRoleConfig = () => {
   const manageFinanceiro = !!document.getElementById('roleCheckFinanceiro')?.checked;
   const financeiroSomenteVisualizar = !!document.getElementById('roleCheckFinanceiroSomenteView')?.checked;
   const viewAuditoria = !!document.getElementById('roleCheckAuditoria')?.checked;
+  const manageMaintenanceMode = !!document.getElementById('roleCheckManutencao')?.checked;
 
   const pageChecks = Array.from(document.querySelectorAll('.page-perm'));
   const tabChecks = Array.from(document.querySelectorAll('.tab-perm'));
@@ -3965,6 +3973,7 @@ const updateSelectedRoleConfig = () => {
     manageComentarios,
     manageFinanceiro,
     viewAuditoria,
+    manageMaintenanceMode,
     financeiroCidades,
     financeiroSomenteVisualizar,
     reservasCidades,
@@ -3986,7 +3995,8 @@ const setupRoleCheckboxHandlers = () => {
     'roleCheckComentarios',
     'roleCheckFinanceiro',
     'roleCheckFinanceiroSomenteView',
-    'roleCheckAuditoria'
+    'roleCheckAuditoria',
+    'roleCheckManutencao'
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
