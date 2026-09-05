@@ -5046,13 +5046,40 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
         // próprio pintando de verde os dias em que o tour funciona. O input
         // nativo continua no DOM (oculto) como fonte da verdade — o resto do
         // fluxo (payload, updateReservationTimeForSelectedDate) não muda.
-        const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        //
+        // Nome do mês e abreviação dos dias da semana vêm do Intl do próprio
+        // navegador (não de um array fixo em português) — assim cobrem os 6
+        // idiomas do site automaticamente, sem precisar manter uma lista de
+        // traduções por mês. O resto dos textos do calendário (placeholder,
+        // legenda, aria-label dos botões de navegação) usa uiTranslations
+        // normalmente, igual ao restante do modal.
+        const CALENDAR_LOCALE_POR_IDIOMA = { pt: 'pt-BR', en: 'en-US', fr: 'fr-FR', es: 'es-ES', it: 'it-IT', zh: 'zh-CN' };
+        const calendarStrings = () => {
+            const lang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
+            return window.uiTranslations?.[lang] || window.uiTranslations?.pt || {};
+        };
+        const nomeMesCalendario = (year, month) => {
+            const lang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
+            const locale = CALENDAR_LOCALE_POR_IDIOMA[lang] || 'pt-BR';
+            const nome = new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(year, month, 1));
+            // Intl devolve em minúsculo em pt/es/it/fr ("setembro") — o inglês já
+            // vem maiúsculo, então isso só afeta os idiomas que precisam.
+            return nome.charAt(0).toUpperCase() + nome.slice(1);
+        };
+        const diasSemanaAbreviados = () => {
+            const lang = typeof window.getCurrentLanguage === 'function' ? window.getCurrentLanguage() : 'pt';
+            const locale = CALENDAR_LOCALE_POR_IDIOMA[lang] || 'pt-BR';
+            const formatter = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+            // 1º de janeiro de 2017 foi um domingo — base conhecida pra gerar
+            // dom..sáb (ou equivalente no idioma) sem depender do dia de hoje.
+            return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2017, 0, 1 + i)));
+        };
         let calendarViewDate = new Date();
         let calendarPopover = null;
         let calendarDisplay = null;
 
         const formatDateDisplay = (dateStr) => {
-            if (!dateStr) return 'Selecione uma data';
+            if (!dateStr) return calendarStrings().reservation_date_placeholder || 'Selecione uma data';
             const [y, m, d] = dateStr.split('-');
             return `${d}/${m}/${y}`;
         };
@@ -5089,15 +5116,21 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
                 cells += `<button type="button" class="${classes.join(' ')}" data-date="${dateStr}" ${disponivel ? '' : 'disabled'}>${day}</button>`;
             }
 
+            const strings = calendarStrings();
+            const prevMonthLabel = strings.reservation_calendar_prev_month || 'Mês anterior';
+            const nextMonthLabel = strings.reservation_calendar_next_month || 'Próximo mês';
+            const legendLabel = strings.reservation_calendar_legend || 'Dias disponíveis para este tour';
+            const weekdayCells = diasSemanaAbreviados().map((d) => `<span>${d}</span>`).join('');
+
             calendarPopover.innerHTML = `
                 <div class="res-calendar-header">
-                    <button type="button" class="res-calendar-nav" data-nav="-1" aria-label="Mês anterior">&lsaquo;</button>
-                    <span class="res-calendar-title">${MESES_PT[month]} ${year}</span>
-                    <button type="button" class="res-calendar-nav" data-nav="1" aria-label="Próximo mês">&rsaquo;</button>
+                    <button type="button" class="res-calendar-nav" data-nav="-1" aria-label="${prevMonthLabel}">&lsaquo;</button>
+                    <span class="res-calendar-title">${nomeMesCalendario(year, month)} ${year}</span>
+                    <button type="button" class="res-calendar-nav" data-nav="1" aria-label="${nextMonthLabel}">&rsaquo;</button>
                 </div>
-                <div class="res-calendar-weekdays"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+                <div class="res-calendar-weekdays">${weekdayCells}</div>
                 <div class="res-calendar-grid">${cells}</div>
-                ${porDia ? '<div class="res-calendar-legend"><span class="res-calendar-legend-dot"></span> Dias disponíveis para este tour</div>' : ''}
+                ${porDia ? `<div class="res-calendar-legend"><span class="res-calendar-legend-dot"></span> ${legendLabel}</div>` : ''}
             `;
 
             calendarPopover.querySelectorAll('[data-nav]').forEach((btn) => {
@@ -5167,12 +5200,23 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
             calendarDisplay = document.createElement('button');
             calendarDisplay.type = 'button';
             calendarDisplay.className = 'res-date-display';
-            calendarDisplay.innerHTML = '<i class="fas fa-calendar-alt"></i><span class="res-date-display-text">Selecione uma data</span>';
+            calendarDisplay.innerHTML = `<i class="fas fa-calendar-alt"></i><span class="res-date-display-text">${calendarStrings().reservation_date_placeholder || 'Selecione uma data'}</span>`;
             reservationDate.insertAdjacentElement('afterend', calendarDisplay);
             calendarDisplay.addEventListener('click', openCalendarPopover);
         };
 
         initCustomReservationCalendar();
+
+        // O botão do calendário é criado uma única vez (guard em
+        // dataset.customCalendarInit lá em cima) — sem isso, quem troca de
+        // idioma DEPOIS de o modal já ter sido aberto uma vez ficava preso no
+        // idioma de quando o botão nasceu, mesmo com o resto do modal
+        // reagindo normalmente ao "app:language-changed".
+        document.addEventListener('app:language-changed', () => {
+            if (!calendarDisplay || reservationDate?.value) return; // já tem data escolhida: não mexe
+            const span = calendarDisplay.querySelector('.res-date-display-text');
+            if (span) span.textContent = calendarStrings().reservation_date_placeholder || 'Selecione uma data';
+        });
 
         const matchTourByName = (tourName) => getTours().find(t => normalizeTourKey(t.name || t.nome_tour) === normalizeTourKey(tourName));
 
