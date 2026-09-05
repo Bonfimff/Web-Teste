@@ -2133,15 +2133,9 @@ window.__tourDirectLinkId = new URLSearchParams(window.location.search).get('tou
 
         mainView.innerHTML = nav.innerHTML;
 
-        const accountEntry = document.createElement('button');
-        accountEntry.type = 'button';
-        accountEntry.className = 'mobile-menu-launcher';
-        accountEntry.textContent = 'Conta';
-        accountEntry.addEventListener('click', (event) => {
-            event.stopPropagation();
-            toggleMobileMenu('user');
-        });
-        mainView.insertBefore(accountEntry, mainView.firstChild);
+        // Botão "Conta" removido do menu mobile: o ícone de perfil já fica
+        // visível separadamente no cabeçalho em qualquer tamanho de tela,
+        // então essa entrada era um acesso duplicado a mesma função.
 
         mainView.querySelectorAll('a').forEach((link) => {
             link.addEventListener('click', () => {
