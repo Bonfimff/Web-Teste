@@ -98,6 +98,17 @@
             text-decoration: none;
         }
         .maintenance-contact a:hover { background: #fff; }
+        .maintenance-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 1.5rem;
+            color: #fff;
+            opacity: 0.85;
+            font-size: 0.85rem;
+            text-decoration: underline;
+        }
+        .maintenance-back-link:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -125,6 +136,10 @@
                 <a id="maintenanceContactEmail" href="mailto:contato@exksvol.com"><i class="fa fa-envelope"></i> contato@exksvol.com</a>
                 <a id="maintenanceContactWhatsapp" href="https://wa.me/5521970018590" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
             </div>
+            <a id="maintenanceBackHome" class="maintenance-back-link" href="index.html">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                <span id="maintenanceBackHomeLabel">Voltar para o início</span>
+            </a>
         </div>
     </main>
     <script>
@@ -132,24 +147,26 @@
             var API_BASE_URL = 'https://api-tour.exksvol.com';
 
             var STRINGS = {
-                pt: { title: 'Site em manutenção', body: 'Pedimos desculpas pelo transtorno. Estamos com o site temporariamente indisponível e voltaremos em breve. Qualquer dúvida, fale com a nossa equipe:' },
-                en: { title: 'Site under maintenance', body: 'We apologize for the inconvenience. Our site is temporarily unavailable and will be back soon. For any questions, contact our team:' },
-                fr: { title: 'Site en maintenance', body: 'Nous nous excusons pour la gêne occasionnée. Notre site est temporairement indisponible et sera bientôt de retour. Pour toute question, contactez notre équipe :' },
-                es: { title: 'Sitio en mantenimiento', body: 'Pedimos disculpas por las molestias. Nuestro sitio está temporalmente no disponible y volverá pronto. Para cualquier duda, contacta a nuestro equipo:' },
-                it: { title: 'Sito in manutenzione', body: 'Ci scusiamo per il disagio. Il nostro sito è temporaneamente non disponibile e tornerà presto online. Per qualsiasi dubbio, contatta il nostro team:' },
-                zh: { title: '网站维护中', body: '给您带来的不便，我们深表歉意。网站暂时无法访问，我们会尽快恢复。如有任何疑问，请联系我们：' }
+                pt: { title: 'Site em manutenção', body: 'Pedimos desculpas pelo transtorno. Estamos com o site temporariamente indisponível e voltaremos em breve. Qualquer dúvida, fale com a nossa equipe:', backHome: 'Voltar para o início' },
+                en: { title: 'Site under maintenance', body: 'We apologize for the inconvenience. Our site is temporarily unavailable and will be back soon. For any questions, contact our team:', backHome: 'Back to home' },
+                fr: { title: 'Site en maintenance', body: 'Nous nous excusons pour la gêne occasionnée. Notre site est temporairement indisponible et sera bientôt de retour. Pour toute question, contactez notre équipe :', backHome: "Retour à l'accueil" },
+                es: { title: 'Sitio en mantenimiento', body: 'Pedimos disculpas por las molestias. Nuestro sitio está temporalmente no disponible y volverá pronto. Para cualquier duda, contacta a nuestro equipo:', backHome: 'Volver al inicio' },
+                it: { title: 'Sito in manutenzione', body: 'Ci scusiamo per il disagio. Il nostro sito è temporaneamente non disponibile e tornerà presto online. Per qualsiasi dubbio, contatta il nostro team:', backHome: "Torna alla home" },
+                zh: { title: '网站维护中', body: '给您带来的不便，我们深表歉意。网站暂时无法访问，我们会尽快恢复。如有任何疑问，请联系我们：', backHome: '返回首页' }
             };
             var LANG_LABELS = { pt: 'Português', en: 'English', fr: 'Français', es: 'Español', it: 'Italiano', zh: '中文(普通话)' };
 
             var titleEl = document.getElementById('maintenanceTitle');
             var bodyEl = document.getElementById('maintenanceBody');
             var langBtnLabel = document.getElementById('langBtnLabel');
+            var backHomeLabel = document.getElementById('maintenanceBackHomeLabel');
 
             var applyLang = function (lang) {
                 var strings = STRINGS[lang] ? STRINGS[lang] : STRINGS.pt;
                 var finalLang = STRINGS[lang] ? lang : 'pt';
                 titleEl.textContent = strings.title;
                 bodyEl.textContent = strings.body;
+                backHomeLabel.textContent = strings.backHome;
                 langBtnLabel.textContent = LANG_LABELS[finalLang];
                 document.documentElement.lang = finalLang;
                 try { localStorage.setItem('preferredLanguage', finalLang); } catch (e) {}
